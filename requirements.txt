@@ -1,0 +1,22 @@
+# PAKFIRE: the environment used is ~/flood/venv (Python 3.12). Versions in use are in docs/PAKFIRE_ARCH_Document.pdf, Ch. 4.
+numpy
+scipy
+numba
+rasterio
+pyproj
+shapely
+geopandas
+pandas
+pyarrow
+scikit-image
+flask
+requests
+pillow
+psycopg2-binary        # road database (evacuation panel, road barrier option)
+weasyprint             # PDF reports
+imageio-ffmpeg         # time-lapse MP4
+pytest
+# optional
+cupy-cuda13x           # GPU solver (CUDA 13); without it the CPU solver is used
+pystac-client          # MODIS burned-area download (tools); kept in ~/fire_pylib
+playwright             # browser tests and screenshots (tools/ui_review.py, smoke.py, landing_shots.py)

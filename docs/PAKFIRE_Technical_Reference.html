@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PAKFIRE Technical Reference</title>
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 20mm 18mm;
+  @bottom-right { content: "PAKFIRE Technical Reference \2022  Page " counter(page); font: 8.5pt "DejaVu Sans", sans-serif; color: #7a625b; }
+}
+@page cover { margin: 0; @bottom-right { content: none; } }
+:root { --teal: #a8340f; --teal-2: #e2561c; --ink: #2a1b17; --muted: #6b5650; --rule: #e3d3cc; --tint: #fbf0ea; --amber: #8a5a00; --amber-bg: #fff6e3; }
+html { font-family: "DejaVu Sans", "Liberation Sans", sans-serif; font-size: 9.6pt; line-height: 1.5; color: var(--ink); }
+body { margin: 0; }
+.cover { page: cover; height: 297mm; box-sizing: border-box; padding: 62mm 24mm 24mm; background: linear-gradient(160deg, #4a1608 0%, #a8340f 55%, #e2561c 100%); color: #fff; }
+.cover .eyebrow { letter-spacing: 0.32em; font-size: 9pt; text-transform: uppercase; opacity: 0.85; }
+.cover h1 { font-size: 46pt; margin: 18mm 0 4mm; letter-spacing: 0.04em; font-weight: bold; }
+.cover .expand { font-size: 13pt; max-width: 140mm; opacity: 0.95; }
+.cover .lede { font-size: 12pt; margin-top: 10mm; max-width: 140mm; }
+.cover .scope { margin-top: 26mm; font-size: 10pt; max-width: 150mm; line-height: 1.6; opacity: 0.92; }
+.cover .date { margin-top: 10mm; font-size: 10pt; opacity: 0.85; }
+h1.chapter { page-break-before: always; font-size: 19pt; color: var(--teal); margin: 0 0 4mm; border-bottom: 2px solid var(--teal); padding-bottom: 2mm; }
+h2 { font-size: 11.5pt; color: var(--teal); margin: 6mm 0 2mm; padding-left: 3mm; border-left: 3px solid var(--teal-2); page-break-after: avoid; }
+h3 { font-size: 10pt; margin: 4mm 0 1.5mm; color: var(--ink); page-break-after: avoid; }
+p { margin: 0 0 2.4mm; text-align: left; }
+ul, ol { margin: 0 0 2.6mm; padding-left: 6mm; }
+li { margin-bottom: 1.2mm; }
+code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.4pt; background: var(--tint); padding: 0 1mm; border-radius: 1mm; }
+.formula { font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; background: var(--tint); border-left: 3px solid var(--teal-2); padding: 2.5mm 4mm; margin: 2mm 0 3mm; white-space: pre-wrap; page-break-inside: avoid; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 8.6pt; page-break-inside: auto; }
+th { text-align: left; background: var(--teal); color: #fff; font-weight: bold; padding: 1.6mm 2mm; font-size: 8.2pt; text-transform: uppercase; letter-spacing: 0.03em; }
+td { padding: 1.5mm 2mm; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:nth-child(even) td { background: #fcf6f2; }
+tr { page-break-inside: avoid; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--amber-bg); border-left: 3px solid #d39a2a; padding: 2.5mm 4mm; margin: 2mm 0 4mm; color: #3d2c00; page-break-inside: avoid; }
+.new { display: inline-block; font-size: 7pt; font-weight: bold; color: #fff; background: var(--teal-2); padding: 0.3mm 1.6mm; border-radius: 1mm; vertical-align: 1pt; margin-left: 1.5mm; letter-spacing: 0.04em; }
+.toc { page-break-before: always; }
+.toc h1 { font-size: 19pt; color: var(--teal); border-bottom: 2px solid var(--teal); padding-bottom: 2mm; margin: 0 0 4mm; }
+.toc .part { font-weight: bold; color: var(--teal); margin: 3.5mm 0 1mm; }
+.toc .item { margin: 0 0 0.8mm 5mm; }
+.toc .item a { color: var(--ink); text-decoration: none; }
+.toc .item a::after { content: leader('.') target-counter(attr(href), page); color: var(--muted); }
+.changes td:first-child { white-space: nowrap; font-weight: bold; color: var(--teal); }
+.bug h3 { color: var(--teal); }
+.refs li { font-size: 8.6pt; }
+.badge { display:inline-block; font-size:7pt; font-weight:bold; color:#fff; background:var(--teal-2); padding:0.3mm 1.6mm; border-radius:1mm; vertical-align:1pt; margin-left:1.5mm; letter-spacing:.04em; text-transform:uppercase; }
+.badge.no { background:#a32a1f; } .badge.rm { background:#8a5a00; }
+.f { font-family:"DejaVu Sans Mono",monospace; font-size:9pt; background:var(--tint); border-left:3px solid var(--teal-2); padding:2.5mm 4mm; margin:2mm 0 3mm; white-space:pre-wrap; page-break-inside:avoid; display:block; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="eyebrow">Technical Reference &amp; System Documentation</div>
+  <h1>PAKFIRE</h1>
+  <div class="expand">Pakistan Wildfire Spread Simulation, Exposure &amp; Response Analytics</div>
+  <div class="lede">A GPU-first, physics-grounded wildfire spread simulator for the whole of Pakistan</div>
+  <div class="scope">Complete technical reference covering system architecture, the spread engine and every formula in it, every data source, every feature, the validation record, the major bugs found and fixed, and the stated limitations.</div>
+  <div class="date">Second edition of 26 October 2026, revised 28 October, 31 October and 7 November 2026 (supersedes the first edition of 24 October 2026).</div>
+</section>
+
+<section class="toc">
+  <h1>Contents</h1>
+  <div class="part">Part I — Overview</div>
+  <div class="item"><a href="#c0">What changed in this edition</a></div>
+  <div class="item"><a href="#c1">1. Executive summary</a></div>
+  <div class="item"><a href="#c2">2. System architecture</a></div>
+  <div class="item"><a href="#c3">3. Data sources</a></div>
+  <div class="part">Part II — The spread engine</div>
+  <div class="item"><a href="#c4">4. Rothermel surface fire</a></div>
+  <div class="item"><a href="#c5">5. Wind, slope and the fire ellipse</a></div>
+  <div class="item"><a href="#c6">6. Fuel-model crosswalk for Pakistan</a></div>
+  <div class="item"><a href="#c7">7. Fuel moisture</a></div>
+  <div class="item"><a href="#c8">8. Minimum-travel-time propagation</a></div>
+  <div class="item"><a href="#c9">9. The GPU solver</a></div>
+  <div class="item"><a href="#c10">10. Ember spotting and crown fire</a></div>
+  <div class="item"><a href="#c11">11. Fire intensity and flame length</a></div>
+  <div class="part">Part III — Running a fire</div>
+  <div class="item"><a href="#c12">12. A run, end to end</a></div>
+  <div class="item"><a href="#c13">13. Weather forcing</a></div>
+  <div class="item"><a href="#c14">14. Ensemble and burn probability</a></div>
+  <div class="item"><a href="#c15">15. Outputs and derived products</a></div>
+  <div class="item"><a href="#c16">16. The tiers</a></div>
+  <div class="item"><a href="#c17">17. Discovery, context and monitoring</a></div>
+  <div class="item"><a href="#c18">18. Reports, comparison and scoring</a></div>
+  <div class="part">Part IV — The interface</div>
+  <div class="item"><a href="#c19">19. Layout and design system</a></div>
+  <div class="item"><a href="#c20">20. The 3D scene</a></div>
+  <div class="item"><a href="#c21">21. API reference</a></div>
+  <div class="part">Part V — Validation</div>
+  <div class="item"><a href="#c22">22. Verification of the engine</a></div>
+  <div class="item"><a href="#c23">23. Validation and accuracy record</a></div>
+  <div class="part">Part VI — Engineering history</div>
+  <div class="item"><a href="#c24">24. Chronicle of bugs found and fixed</a></div>
+  <div class="item"><a href="#c25">25. Considered and declined</a></div>
+  <div class="item"><a href="#c26">26. Known limitations</a></div>
+  <div class="item"><a href="#c27">27. Operations and testing</a></div>
+  <div class="item"><a href="#c28">28. Roadmap</a></div>
+  <div class="item"><a href="#c29">29. References</a></div>
+</section>
+
+<h1 class="chapter" id="c0">What changed in this edition</h1>
+<div class="note"><b>Read this first.</b> PAKFIRE is a research prototype. Its spread rates were calibrated against satellite-observed fires and then tested on held-back fires: the calibration fixes a large over-prediction of burned area, but on the held-back fires the model shows <b>no clear shape or direction skill over a simple equal-area circle</b>. Verification shows that the code does what the equations say (GPU equals CPU; wind, slope and barriers behave as theory requires), not that the predicted fires match real ones. Crown fire is modelled with assumed canopy values. Chapter 23 states exactly what has and has not been tested, and Chapter 26 lists the limitations.</div>
+
+<p>This edition documents the rebuild and everything added since the first edition of 24 October 2026. It documents a rebuild: an earlier version of PAKFIRE (23 October 2026) used a simplified single-class Rothermel implementation and a CPU-only solver. On 23 October the project folder was updated with the FIRELAB Margalla platform, whose Albini/Scott &amp; Burgan Rothermel module was verified against an independent implementation (pyretechnics). PAKFIRE was then rebuilt on that module.</p>
+<table>
+<tr><th style="width:22%">Area</th><th>State</th></tr>
+<tr><td>Surface fire <span class="new">NEW</span></td><td>Albini multi-class Rothermel with Scott &amp; Burgan (2005) and Anderson (1982) fuels, reused from <code>pkfire/vendor/rothermel.py</code> rather than re-implemented (Ch. 4).</td></tr>
+<tr><td>Fuel moisture <span class="new">NEW</span></td><td>Hourly 1/10/100 h dead moisture with a 48 h lead-in and a rain-wetting term; live moisture and grass curing from NDVI (Ch. 7).</td></tr>
+<tr><td>GPU solver <span class="new">NEW</span></td><td>CUDA kernel (via CuPy) that solves the same minimum-travel-time problem as the CPU heap solver, with identical arrival times on test grids (Ch. 9, 18). Order of preference: GPU, then data in RAM, then CPU.</td></tr>
+<tr><td>Ensemble <span class="new">NEW</span></td><td>24-member perturbed ensemble producing a burn-probability map and an area range (Ch. 14).</td></tr>
+<tr><td>GIS and sharing <span class="new">NEW</span></td><td>Hourly spread contours as GeoJSON, suggested fuel break, share link, run deletion (Ch. 17).</td></tr>
+<tr><td>Exposure <span class="new">NEW</span></td><td>People, hospitals, schools, grid stations and power lines exposed to a run, with arrival times (Ch. 17); data-status page; re-run with a new seed.</td></tr>
+<tr><td>Wind compass, danger class <span class="new">NEW</span></td><td>Clickable compass for the manual wind direction and a fire-weather danger class in the context panel (Ch. 17).</td></tr>
+<tr><td>Interface <span class="new">NEW</span></td><td>Rebuilt in the SAILAB/LANDLAB layout (first a 2D map over an animated 3D pane with right-hand panels; since 7 November 2026 the map-first layout, below), with four tier tabs, run history and comparison (Ch. 16, 19).</td></tr>
+<tr><td>Tiers <span class="new">NEW</span></td><td>Tier 1 instant footprint, Tier 2 spread run, Tier 3 ensemble and burn probability, Tier 4 mitigation with fuel breaks and treatments (Ch. 16).</td></tr>
+<tr><td>Discovery <span class="new">NEW</span></td><td>District ranking and hotspot list from live NASA satellite detections, weather and fuel context, live monitoring with automatic scenarios and webhooks (Ch. 17).</td></tr>
+<tr><td>Reports <span class="new">NEW</span></td><td>PDF incident report and batch report, run comparison, scoring against an observed perimeter (Ch. 18).</td></tr>
+<tr><td>3D scene <span class="new">NEW</span></td><td>SAILAB-style scene with four display modes, flame glow, animated flame sprites, sparks, embers, optional smoke, ignition flare, spread axis with arrows, wind streaks, timeline chart, probe, PNG/WebM export and the follow camera (Ch. 20).</td></tr>
+<tr><td>Correction</td><td>The length-to-breadth ratio of the fire ellipse used wind in mph with coefficients defined per m/s, which makes fires roughly twice too elongated. Found by comparing with the FIRELAB engine and fixed in both solvers on 24 October (Ch. 24, bug 8).</td></tr>
+<tr><td>Finding</td><td>For a single run on the tested scenes the CPU heap solver was faster than the GPU kernel (Ch. 9.4). GPU remains the default at the owner's instruction; the CPU path is a transparent fallback.</td></tr>
+<tr><td>Thermal guard</td><td>None. The owner removed it on 23 October 2026; PAKFIRE applies no temperature throttling or pausing.</td></tr>
+<tr><td>Accuracy work, 26 October <span class="new">NEW</span></td><td>Albini spotting, crown fire (assumed canopy values), fuel map v2 with CGLS forest type, assimilation of satellite detections, roads, an own GPU mass-conserving terrain wind model (replacing the unusable Windows WindNinja, which was deleted), burn-out and suppression proxies, each tested on the same 527 events (Ch. 23.3). The fuel map made the clear difference; the terrain wind a small consistent one; roads and crown fire none; burn-out and suppression were worse.</td></tr>
+<tr><td>Validation and calibration <span class="new">NEW</span></td><td>527 satellite-observed fires (2024–2026) scored against VIIRS footprints and MODIS burned area; five bounded rate settings fitted on 2024–2025; held-back 2026 results and a circle baseline reported honestly (Ch. 23). A "Rates" setting selects the calibrated or the uncalibrated physics.</td></tr>
+<tr><td>Start page and Instant, 7 November 2026 <span class="new">NEW</span></td><td>The start page (<code>/</code>) is a 3D night forest in which a small fire burns on two trees; the buttons <b>PAKFIRE Instant</b> and <b>PAKFIRE Physics</b> make it spread from tree to tree over the whole view and open <code>/instant</code> or <code>/app</code> (Ch. 19.1). PAKFIRE Instant is a new page: place a fire, pick a weather scenario, see the footprint in about a second (Ch. 19.2). The sun-lit "3D lit" basemap of the 3D scene was removed at the owner's request.</td></tr>
+<tr><td>Map-first interface, 7 November 2026 <span class="new">NEW</span></td><td>The page was rebuilt to follow SAILAB's current interface: a full-screen map, a floating toolbar (place search, basemap switch, job queue, light/dark theme), a floating side drawer, the 3D fire view as a floating card that can fill the screen, and a welcome card (Ch. 19, 20.7). Two small routes were added for it, <code>/places/search</code> and <code>/api/queue</code> (Ch. 21).</td></tr>
+<tr><td>Canopy height, 31 October 2026 <span class="new">NEW</span></td><td>The Meta/WRI 1 m canopy height map was downloaded for Pakistan (556 tiles, 71 GB), reduced to a 30 m national raster, and used to give crown fire a canopy base height and bulk density cell by cell. Scored on all 1,464 events it changed 41 of them and no score; it ships <b>off</b> (Ch. 10.3, 23.5).</td></tr>
+<tr><td>Tests</td><td>41 tests pass (7 November 2026; 30 physics and 11 route tests, 62 s). They cover Albini spotting against the FIRELAB reference, crown fire with fixed and with per-cell canopy values, assimilated ignitions, the road and suppression factors, the terrain wind model, terrain moisture, ensemble widths, the PBS lookup and the routes.</td></tr>
+<tr><td>Done since</td><td>On the owner's go-ahead the heavy checks were run on 24 October: the 21 physics and route tests pass, the 3D scene was reviewed in a real browser, and the solvers were re-timed (Ch. 9.4, 22). Calibration and validation against observed fires remain open (Ch. 23, 28).</td></tr>
+</table>
+
+<h1 class="chapter" id="c1">1. Executive summary</h1>
+<p>PAKFIRE answers one question for any point in Pakistan: if a vegetation fire starts here, under this weather, where does it go, how fast, and what does it threaten? It does so by cutting a local window (default 80 km × 80 km at 50 m) out of the national datasets, mapping land cover to fuel models, computing hourly fuel moisture from the preceding 48 h of weather, solving the fire-front arrival time with Rothermel rates and an elliptical fire shape in every cell, and animating the result on a 3D satellite map whose camera travels with the fire front.</p>
+<p>Everything the model reports is either a measurement, a published formula applied to real inputs, or an explicitly labelled approximation. The approximations that matter most are the land-cover-to-fuel crosswalk (Ch. 6), the simplified spotting scheme (Ch. 10) and the uniform wind (Ch. 26).</p>
+<h3>1.1 What PAKFIRE computes</h3>
+<ol>
+<li>Builds a local UTM grid centred on the ignition and fills it with 29 m SRTM terrain, 10 m ESRI land cover and 1 km MODIS NDVI.</li>
+<li>Converts land cover and NDVI into Scott &amp; Burgan / Anderson fuel models and a fuel-continuity factor.</li>
+<li>Fetches hourly temperature, humidity, wind and rain from 48 h before the start to the end of the run.</li>
+<li>Computes dead and live fuel moisture and, from it, a no-wind, no-slope spread rate for every fuel in every hour.</li>
+<li>Combines wind and slope into a head-fire rate and direction in each cell and an elliptical rate in all 16 neighbour directions.</li>
+<li>Solves the earliest arrival time of fire at every cell, on the GPU when available, with stochastic ember spot fires.</li>
+<li>Optionally repeats the run for 24 perturbed weather and moisture states to give a burn probability.</li>
+<li>Exports arrival time, intensity, spot fires, the spread axis, key events and statistics, and plays them back with a following camera.</li>
+</ol>
+
+<h1 class="chapter" id="c2">2. System architecture</h1>
+<h3>2.1 Components</h3>
+<table>
+<tr><th style="width:20%">Layer</th><th style="width:34%">Technology</th><th>Role</th></tr>
+<tr><td>Web server</td><td>Flask, one threaded process (<code>pkfire/app.py</code>), port 8020</td><td>Starts runs in a worker thread (one at a time, guarded by a lock), serves run files and the FIRMS and weather helpers.</td></tr>
+<tr><td>Scene builder</td><td>rasterio, pyproj, SciPy (<code>pkfire/terrain.py</code>)</td><td>Windowed reads of the national rasters, warping to the local grid, terrain derivatives, fuel crosswalk.</td></tr>
+<tr><td>Fuel physics</td><td>NumPy (<code>pkfire/fuels.py</code>, <code>pkfire/vendor/rothermel.py</code>)</td><td>Rothermel/Albini rates per fuel and hour; wind and slope coefficients.</td></tr>
+<tr><td>Moisture</td><td>NumPy (<code>pkfire/moisture.py</code>)</td><td>Hourly dead fuel moisture with lead-in and rain wetting.</td></tr>
+<tr><td>Solvers</td><td>CuPy RawKernel / CUDA (<code>kernel_gpu.py</code>); Numba (<code>kernel_cpu.py</code>)</td><td>Fire-front arrival time. <code>solver.py</code> chooses GPU first and falls back to the CPU on any GPU failure, recording the reason.</td></tr>
+<tr><td>Run orchestration</td><td><code>pkfire/run.py</code></td><td>Ignition snapping, weather, tables, solve, ensemble, export, events, camera track.</td></tr>
+<tr><td>Discovery, reports</td><td>GeoPandas, WeasyPrint, Pillow (<code>geo.py</code>, <code>overlay.py</code>, <code>report.py</code>, <code>instant.py</code>)</td><td>Districts and FIRMS, map overlays, PDF reports, the instant footprint.</td></tr>
+<tr><td>Interface</td><td>Mapbox GL JS 3.6 and Mapbox Draw 1.4.3, HTML canvas (<code>web/pk/app.html</code>, <code>web/pk/viewer/</code>)</td><td>Main dashboard and the 3D scene (an iframe, as in SAILAB).</td></tr>
+</table>
+<h3>2.2 Compute order</h3>
+<p>On the owner's instruction compute goes to the GPU first, then to arrays held in RAM, then to the CPU. In practice: the solver runs as a CUDA kernel on device arrays; all rasters are held in host RAM as NumPy arrays and uploaded once per run; the Numba CPU solver is used only if the GPU is absent, fails, or is requested explicitly (<code>backend: "cpu"</code>). The scene load (disk reads of the national rasters) is I/O and CPU bound and is the dominant cost of a typical run (Ch. 9.4). No thermal governor exists in the code.</p>
+<h3>2.3 Concurrency</h3>
+<p>A global lock allows one simulation at a time so that a shared server is not overloaded. Other requests (status, run files, FIRMS, weather) are served while a run is in progress. Job state is held in memory; a server restart forgets running jobs but keeps finished runs on disk.</p>
+<h3>2.4 Files</h3>
+<table>
+<tr><th style="width:30%">Path</th><th>Contents</th></tr>
+<tr><td><code>pkfire/fuels.py</code></td><td>Crosswalk targets, wind adjustment factors, table builder.</td></tr>
+<tr><td><code>pkfire/moisture.py</code></td><td>Dead fuel moisture model.</td></tr>
+<tr><td><code>pkfire/terrain.py</code></td><td>Scene builder and fuel crosswalk.</td></tr>
+<tr><td><code>pkfire/kernel_cpu.py</code>, <code>kernel_gpu.py</code>, <code>solver.py</code></td><td>The two solvers and the backend choice.</td></tr>
+<tr><td><code>pkfire/weather.py</code></td><td>Open-Meteo with MET Norway fallback and disk cache (<code>data/raw/weather</code>).</td></tr>
+<tr><td><code>pkfire/run.py</code></td><td>One run, ensemble, exports.</td></tr>
+<tr><td><code>pkfire/app.py</code></td><td>Flask application: pages, jobs, discovery, monitoring, reports.</td></tr>
+<tr><td><code>pkfire/geo.py</code>, <code>overlay.py</code>, <code>instant.py</code>, <code>report.py</code></td><td>Districts and FIRMS; 2D overlays and static maps; Tier 1; PDF reports.</td></tr>
+<tr><td><code>web/pk/app.html</code>, <code>web/pk/viewer/</code></td><td>Main dashboard; 3D scene page, script and stylesheet.</td></tr>
+<tr><td><code>data/runs/&lt;id&gt;/</code></td><td><code>meta.json</code>, <code>arrival.bin</code>, <code>intensity.bin</code>, optional <code>prob.bin</code>.</td></tr>
+<tr><td><code>Fire Simulation Model - FIRELAB legacy (archived 2026-11-07)</code></td><td>The earlier Margalla FIRELAB platform (its scripts, web pages, tests, documents, reference video); moved out of the project folder on 7 November 2026. PAKFIRE keeps only <code>pkfire/vendor/rothermel.py</code> and <code>spotting.py</code> from it.</td></tr>
+</table>
+
+<h1 class="chapter" id="c3">3. Data sources</h1>
+<p>All inputs are on the shared drive or free public services; none is synthetic.</p>
+<table>
+<tr><th style="width:22%">Dataset</th><th style="width:30%">Location / provider</th><th>Used for</th></tr>
+<tr><td>SRTM elevation, 29.16 m</td><td><code>3. Raster Data/DEM_SRTM/pakDEM/Pak_srtm.tif</code> (EPSG:32642, 52 189 × 64 499 px, tiled 128×128)</td><td>Elevation, slope, upslope azimuth, forest-type split at 1000 m. Read as a window, warped bilinearly to the local grid. Gaps are filled from the nearest valid cell.</td></tr>
+<tr><td>ESRI 10 m land cover 2025</td><td><code>2. ESRI_LandCover Data/lc2025/lc2025Pakistan.tif</code> (EPSG:4326, 139 879 × 194 180 px, overviews 2–16)</td><td>Fuel crosswalk. Classes present: 1 water, 2 trees, 4 flooded vegetation, 5 crops, 7 built area, 8 bare ground, 9 snow/ice, 11 rangeland. Nearest-neighbour; cloud and no-data cells take the nearest valid class.</td></tr>
+<tr><td>MODIS NDVI, 1 km</td><td><code>3. Raster Data/MODIS_NDVI_1km/</code> (599 composites, 2000 to 14 April 2026)</td><td>Rangeland fuel class, fuel continuity, live fuel moisture and grass curing. The composite chosen is the newest within 16 days of the day of year of the ignition.</td></tr>
+<tr><td>Hourly weather</td><td>Open-Meteo (forecast and archive APIs); MET Norway locationforecast as a fallback for the next 8 days</td><td>Temperature, relative humidity, 10 m wind speed and direction, precipitation. Cached on disk because the shared server has a small daily call budget.</td></tr>
+<tr><td>Active fires</td><td>NASA FIRMS VIIRS S-NPP near-real-time, key in <code>.secrets/firms_map_key</code></td><td>Satellite detections for the last 1–5 days, clipped to the Pakistan boundary, cached 30 min. A detection can be used as the ignition point.</td></tr>
+<tr><td>Roads and other national vectors (PostGIS)</td><td>SimCity database on port 5455, read-only role; <code>pk.roads</code> holds 1,113,962 OSM road lines with class, surface, width and one-way attributes (a window query takes 0.03–0.3 s)</td><td>Not used by the model yet; reserved for evacuation and access routing (Ch. 28).</td></tr>
+<tr><td>Fire stations</td><td><code>data/external/fire_stations.geojson</code>: 91 features (49 tagged <code>fire_station</code>, the rest named Rescue 1122 or Fire Brigade) read from the OSM Pakistan extract on the server (<code>Iliyan/CFI/Pluvial/data_external/pakistan-latest.osm.pbf</code>) after the Overpass service failed for a country-wide query</td><td>Not used by the model yet. OSM coverage of fire stations in Pakistan is sparse, so any response-time estimate would need an official station list.</td></tr>
+<tr><td>Districts</td><td><code>4. Vector Data/Pakistan Boundary/…/District_Boundary.shp</code> (164 districts, EPSG:4326)</td><td>District of an ignition, discovery ranking, joining satellite detections to districts and clipping them to Pakistan.</td></tr>
+<tr><td>Canopy height, 1 m (reduced to 30 m)</td><td>Meta/WRI high-resolution canopy height map, public AWS open data <code>s3://dataforgood-fb-data/forests/v1/alsgedi_global_v6_float/chm</code> (quadkey tiles, EPSG:3857, 8-bit metres); reduced to <code>data/national/canopy_height_pakistan.tif</code> (Ch. 10.3)</td><td>Optional per-cell canopy base height and bulk density for crown fire (profile key <code>canopy</code>, off). The 71 GB of source tiles were deleted after the raster was built; <code>tools/download_meta_chm.py</code> fetches them again.</td></tr>
+<tr><td>Basemap and 3D terrain</td><td>Mapbox (dark style by default; satellite-streets and streets imagery on request; terrain DEM v1), token in <code>.secrets/mapbox_token</code></td><td>Visual context only; the model uses SRTM, not the Mapbox terrain.</td></tr>
+</table>
+<p>Coverage limits: latitude 23.5–37.2, longitude 60.8–77.9. Ignitions outside are rejected with a message.</p>
+
+<h1 class="chapter" id="c4">4. Rothermel surface fire</h1>
+<p>PAKFIRE does not re-implement Rothermel's equations; it calls <code>pkfire/vendor/rothermel.py</code>, the module written and verified for FIRELAB (it matches the pyretechnics reference implementation in the FIRELAB test suite). The model is Rothermel (1972) with Albini (1976) size-class weighting. Six fuel classes are carried: dead 1 h, 10 h, 100 h, dead herbaceous, live herbaceous, live woody. Imperial units are used internally, as in the original equations, and converted to m/min at the boundary.</p>
+<h3>4.1 Base rate</h3>
+<div class="formula">R0 = I_R · ξ / (ρ_b · ε · Q_ig)                         no-wind, no-slope spread rate
+I_R = Γ' · w_n · h · η_M · η_S                             reaction intensity (BTU/ft²/min)
+Γ'  = Γ'max · (β/β_op)^A · exp(A·(1 − β/β_op))             optimum-corrected reaction velocity
+Γ'max = σ^1.5 / (495 + 0.0594 σ^1.5)       A = 133 σ^−0.7913       β_op = 3.348 σ^−0.8189
+ξ  = exp((0.792 + 0.681 σ^0.5)(β + 0.1)) / (192 + 0.2595 σ)   propagating flux ratio
+η_M = 1 − 2.59 r + 5.11 r² − 3.52 r³,  r = min(M_f/M_x, 1)     moisture damping
+η_S = min(0.174 · S_e^−0.19, 1)           S_e = 0.010           mineral damping
+Q_ig = 250 + 1116 M                      ε = exp(−138/σ)       heat of preascension, effective heating
+h = 8000 BTU/lb   ρ_p = 32 lb/ft³   S_T = 0.0555</div>
+<p>Here σ is the characteristic surface-area-to-volume ratio (1/ft), β the packing ratio, w_n the net fuel load and M_x the moisture of extinction. The live moisture of extinction follows Rothermel's eq. 88, M_x,live = max(2.9 W (1 − M_f,dead/M_x,dead) − 0.226, M_x,dead), with W the ratio of dead to live fine-fuel loading weighted by exp(−138/σ) and exp(−500/σ).</p>
+<h3>4.2 Dynamic fuels</h3>
+<p>For Scott &amp; Burgan dynamic models the live herbaceous load moves into the dead herbaceous class as the grass cures: fully cured at 30 % live herbaceous moisture, fully green at 120 %, linear in between, i.e. green fraction = clip(M_herb / 0.9 − 1/3, 0, 1).</p>
+<h3>4.3 Base rates at a reference moisture</h3>
+<p><b>Where these numbers come from.</b> They are not stored or fitted: they are the output of the Rothermel (1972) equations with the Albini (1976) corrections, implemented in <code>pkfire/vendor/rothermel.py</code> (FIRELAB), evaluated for the published fuel-model parameters of Anderson (1982) and Scott &amp; Burgan (2005): fuel loads by size class, surface-area-to-volume ratios, bed depth, heat content, moisture of extinction. The table below is that code run at one fixed moisture so that the models can be compared; at run time the rates are recomputed every hour from the modelled moisture. The only tuned quantities are the per-group multipliers in Ch. 23.</p>
+<p>No-wind, no-slope rates for each fuel in PAKFIRE with dead 1 h moisture 4.1 % (constant 34 °C, RH 20 %), live moisture from NDVI 0.30:</p>
+<table>
+<tr><th>Fuel model</th><th>R0 (m/min)</th><th>I_R (BTU/ft²/min)</th></tr>
+<tr><td>FM1 short grass</td><td>1.59</td><td>871</td></tr>
+<tr><td>FM2 timber with grass understory</td><td>0.98</td><td>3774</td></tr>
+<tr><td>FM3 tall grass / reeds</td><td>1.82</td><td>3242</td></tr>
+<tr><td>FM5 brush</td><td>0.46</td><td>3136</td></tr>
+<tr><td>FM6 dormant brush</td><td>0.70</td><td>2155</td></tr>
+<tr><td>FM9 long-needle pine litter</td><td>0.34</td><td>2688</td></tr>
+<tr><td>GR2 dry-climate grass (S&amp;B)</td><td>0.52</td><td>1232</td></tr>
+<tr><td>GS2 dry-climate grass-shrub (S&amp;B)</td><td>0.39</td><td>2298</td></tr>
+<tr><td>TU1 timber-grass-shrub (S&amp;B)</td><td>0.08</td><td>1788</td></tr>
+<tr><td>TL8 long-needle litter (S&amp;B)</td><td>0.30</td><td>3607</td></tr>
+</table>
+<div class="note">TU1 is very slow at rest (0.08 m/min). Wind and slope raise it, but forests below 1000 m will burn slowly in PAKFIRE unless the weather is severe. This follows from the fuel model, not from calibration (Ch. 6, 22).</div>
+
+<h1 class="chapter" id="c5">5. Wind, slope and the fire ellipse</h1>
+<h3>5.1 Midflame wind</h3>
+<p>The 10 m wind is reduced to midflame height with a wind adjustment factor (WAF) per fuel (Andrews 2012): 0.40 for grass and crop stubble, 0.36 for grass-shrub, 0.35 for brush, 0.44 for tall grass, 0.28 for TU1, 0.22–0.25 for needle-litter fuels. The wind in ft/min used in the Rothermel wind factor is U10 (m/s) × WAF × 196.85.</p>
+<h3>5.2 Wind and slope factors</h3>
+<div class="formula">Φ_w = C · U^B · (β/β_op)^−E        C = 7.47 exp(−0.133 σ^0.55)   B = 0.02526 σ^0.54   E = 0.715 exp(−3.59e−4 σ)
+Φ_s = 5.275 · β^−0.3 · tan²(slope)</div>
+<h3>5.3 Vector combination</h3>
+<p>The wind and slope contributions are added as vectors, wind along the direction the wind blows towards and slope along the upslope azimuth:</p>
+<div class="formula">D_w = R0·Φ_w   D_s = R0·Φ_s
+v = D_w·(sin az_w, cos az_w) + D_s·(sin az_s, cos az_s)
+Φ_e = |v| / R0           head direction = atan2(v_x, v_y)
+U_eff = (Φ_e (β/β_op)^E / C)^(1/B)       limited to 0.9 · I_R      (Rothermel's wind limit, applied to the effective wind)
+R_head = R0 · (1 + Φ_e)                  capped at 200 m/min</div>
+<p>With no wind and no slope the head direction falls back to the wind direction and the fire is circular.</p>
+<h3>5.4 Ellipse</h3>
+<p>The fire shape in each cell is an ellipse with the ignition at the rear focus (Richards 1990). The length-to-breadth ratio follows Anderson (1983) from the effective wind speed U in <b>m/s</b>:</p>
+<div class="formula">L/B = 0.936·exp(0.2566 U) + 0.461·exp(−0.1548 U) − 0.397          clamped to [1, 8]
+e   = sqrt(1 − 1/(L/B)²)
+R(θ) = R_head · (1 − e) / (1 − e·cos θ)           θ = angle between the travel direction and the head direction</div>
+
+<h3>5.5 Run-time adjustments (<code>pkfire/adjust.py</code>)</h3>
+<p>A calibration profile and four optional adjustments are applied to a scene before the solve, by the application and the validation alike. All except the first three groups default to off in the shipped profile, because validation showed no gain (Ch. 23.3).</p>
+<ul>
+<li><b>Rate multipliers per fuel group</b> (grass and crops, shrub and grass-shrub, forest), the <b>wind multiplier</b> (forecast and archive wind only) and the <b>dead-moisture multiplier</b>: the calibration.</li>
+<li><b>Roads as a barrier</b> (<code>pkfire/roads.py</code>): OSM motorway, trunk, primary, secondary and tertiary roads from the PostGIS <code>pk.roads</code> (read-only role) are rasterised (all touched cells) and multiply the spread rate of the cells they cross by 0.05–0.6 by class (motorway 0.05, trunk 0.08, primary 0.12, secondary 0.25, tertiary 0.5), raised to a calibrated weight; if the database cannot be reached the barrier is one everywhere and the scene records it. A road is far narrower than a cell, so this is a statistical slowing, not a break (breaks are Ch. 16.4).</li>
+<li><b>Terrain wind</b> (<code>wfield</code>): the mass-conserving wind model of Ch. 5.6, applied as a per-cell speed ratio and direction rotation, raised to the fitted strength (1.0, the physical value).</li>
+<li><b>Burn-out</b>: the spread rate fades as 1/(1 + t/τ) with the age of the fire, a proxy for fuel exhaustion and fire-fighting.</li>
+<li><b>Suppression proxy</b>: the spread rate is cut by a fraction s at a road or settlement and recovers with distance (2 km scale).</li>
+</ul>
+<h3>5.6 Mass-conserving terrain wind (<code>pkfire/windfield.py</code>)</h3>
+<p>FIRELAB used WindNinja (USDA Forest Service) for terrain wind, but the copy on the server was the Windows build and could not run here; it was deleted (851 MB) and a model of the same kind was written for PAKFIRE and solved on the GPU. It follows Sherman (1978) and the WindNinja papers (Forthofer et al. 2014): start from the reference 10 m wind with a logarithmic profile in height above ground (roughness length from land cover: 0.001 m water to 0.9 m forest and built land), then change it as little as possible, in the least-squares sense, so that the 3-D flow has no divergence and no air passes through the ground:</p>
+<div class="formula">minimise ∫ |u_h − u_h0|² + |w − w0|²/α² dV     subject to   ∇·u = 0
+u_h = u_h0 + ∇_h φ       w = w0 + α² ∂φ/∂z       ∇_h²φ + α² ∂²φ/∂z² = − ∇·u0</div>
+<p>φ is solved on a Cartesian grid (240 m horizontal, 40 m vertical, top 700 m above the highest terrain; cells below the terrain are solid) with open lateral and top boundaries (φ = 0 beyond them), by Jacobi-preconditioned conjugate gradients with a fused CUDA kernel for the operator (NumPy fallback). The ratio of the adjusted to the initial speed and the change of direction at the second level above ground (40–80 m) are returned for one wind direction (neutral flow, so they do not depend on speed) and interpolated to the fire grid. The run uses the dominant weather direction rounded to 22.5° and caches the solution on disk.</p>
+<p><b>The ratio α.</b> With α = 1 (Sherman's neutral value) a 400 m hill of 2.5 km width raises the crest wind by only 4 %, far below the 22 % that Jackson &amp; Hunt (1975) linear theory gives for it. α was therefore set to <b>0.35</b>, where the crest speed-up is 21 % (theory 22 %); this is a tuned parameter, chosen against theory on an idealised hill, not against measured winds. Tests: flat terrain gives ratio 1.000; divergence falls by about 4 orders of magnitude (the residual is 4.5·10⁻⁵ of the initial); GPU equals CPU; mirrored winds give mirrored fields; the crest speed-up matches theory within 0.08; the flanks speed up less than the crest; the wind far from the hill is unchanged; the kernels apply the rotation and the speed ratio. Cost: about 9 s for the largest case (±40 km window over 4,500 m of relief, 13 M cells, 570 iterations) and 1–3 s for typical ones, once per place and wind direction.</p>
+<p><b>Limits.</b> A diagnostic model: no thermal slope and valley winds (a large part of real mountain winds in the afternoon and night), no stability or inversions, no flow separation or lee rotors (the lee is as fast as the windward side in this model), staircase terrain at 40 m vertical resolution, one wind direction per run. It cannot be compared with WindNinja on the same terrain here, because WindNinja could not be run.</p>
+<h3>5.7 Stability-driven channelling (<code>chan</code>)</h3>
+<p>The terrain wind (5.6) uses Sherman's α, which sets how freely the flow may adjust horizontally compared with vertically. A small α makes the flow go around and along terrain (channelled by valleys and deflected around ridges) instead of over it, which is what stable air does at night and in light wind; a larger α lets it go over. With <code>chan</code> &gt; 0 the neutral α = 0.35 is lowered to as little as 0.35 &times; 0.4 using a stability index in 0–1: 1.0 at night and 0.6 by day, times 1/(1 + (U/8 m/s)²) because strong synoptic wind overrides the terrain, averaged over the hours of the run (<code>microclimate.channel_strength</code>; <code>adjust.chan_alpha</code>). Fields are cached per α. On a Margalla scene α = 0.15 changes the wind direction by 7° on average and the speed ratio by 0.11 relative to α = 0.35 (the median ratio falls from 0.85 to 0.75 because more air is diverted around the terrain).</p>
+<p><b>Validation.</b> On the 292 development events the objective was 0.129 for <code>chan</code> = 0, 0.5 and 1.0 and 0.128 for 1.5: no measurable effect. A curvature-based "valley axis" rotation tried first (weights above 0.3 on 7 % of cells, rotations of a few degrees) had the same null result and was removed. <b>Not modelled:</b> thermal up-slope and down-valley winds, which are a large part of real valley flow; this is a stability parameterisation of a diagnostic model, not a boundary-layer model.</p>
+<h1 class="chapter" id="c6">6. Fuel-model crosswalk for Pakistan</h1>
+<p>The 10 m ESRI land-cover class and the 1 km NDVI are converted to a fuel model and a continuity factor. This is the least certain input of the model: no field fuel inventory exists for Pakistan, and the FIRELAB roadmap already records that the choice for sparse woodland changes Margalla burned areas by a factor 3–13 (<code>docs/ROADMAP.md</code> in the FIRELAB legacy archive).</p>
+<table>
+<tr><th style="width:24%">Land cover</th><th style="width:28%">Fuel model</th><th>Rule</th></tr>
+<tr><td>Trees, elevation ≥ 1000 m</td><td>TL8 long-needle litter</td><td>The chir and blue pine belt; litter fire.</td></tr>
+<tr><td>Trees, elevation &lt; 1000 m</td><td>TU1 timber-grass-shrub</td><td>Scrub forest and plantations.</td></tr>
+<tr><td>Flooded vegetation</td><td>FM3 tall grass</td><td>Reeds.</td></tr>
+<tr><td>Crops</td><td>GR2 grass, continuity 0.7</td><td>Standing or harvested stubble, partly irrigated. Burns, but slowly and unevenly.</td></tr>
+<tr><td>Rangeland, NDVI &gt; 0.40</td><td>FM5 brush</td><td></td></tr>
+<tr><td>Rangeland, NDVI 0.20–0.40</td><td>GS2 grass-shrub</td><td></td></tr>
+<tr><td>Rangeland, NDVI 0.10–0.20</td><td>GR2 grass</td><td></td></tr>
+<tr><td>Rangeland, NDVI &lt; 0.10</td><td>does not burn</td><td>True desert: the fuel bed is too discontinuous to carry fire.</td></tr>
+<tr><td>Bare ground, NDVI ≥ 0.20</td><td>GR2, continuity 0.15</td><td>Sparse grass only; otherwise bare ground does not burn.</td></tr>
+<tr><td>Built, water, snow/ice</td><td>does not burn</td><td>Settlements are not fuel in this model; fire cannot cross them except by embers.</td></tr>
+</table>
+<p>The continuity factor multiplies R0. For rangeland it is clip((NDVI − 0.05)/0.25, 0.1, 1). The thresholds in the table came from a first test in which sparse desert scrub and bare ground burned thousands of hectares in the Thar; they are judgement, not calibration (Ch. 24, bug 4).</p>
+
+<h3>6.1 Fuel map v2 (26 October 2026)</h3>
+<p>The first crosswalk sampled the single 10 m land-cover pixel nearest each cell centre and split forest by elevation only. Two changes were validated (Ch. 23):</p>
+<ul>
+<li><b>Class fractions instead of a point sample.</b> The 10 m classes are read on a grid three times finer than the cell and counted: the cell's fuel is its majority class and its continuity is multiplied by the burnable share of the cell (trees, flooded vegetation, crops and rangeland count 1, bare ground 0.15, built land, water and snow 0), so fields, roads, bare patches and buildings inside a 50–100 m cell slow the fire instead of disappearing.</li>
+<li><b>Forest type from the Copernicus CGLS-LC100 map</b> (100 m, 2019; <code>data/national/cgls_lc100_pakistan.tif</code>, 18 MB): needleleaf classes (111, 121) give TL8 long-needle litter, broadleaf classes (112, 114, 122, 124) give TU1; forest of unknown or mixed type keeps the elevation rule (TL8 at or above 1000 m, TU1 below). CGLS is a 2019 map at 100 m and mislabels some forest.</li>
+</ul>
+<p>A canopy-height layer was also sought. On 26 October the ETH 10 m global canopy-height map had moved behind a DOI landing page and could not be downloaded automatically, so canopy base height and bulk density were fixed assumptions (Ch. 10.2). On 31 October the Meta/WRI 1 m map was found to be public on AWS open data, downloaded for Pakistan and reduced to a national 30 m raster; it is wired into crown fire as an option that is off because it showed no gain (Ch. 10.3, 23.5). Per-cell live fuel moisture from MODIS vegetation-moisture composites was not added: the available NDMI cube on the server covers a sub-area, and live moisture only affects the live herbaceous load of a few fuels, so it is not expected to matter for the validation events.</p>
+<h1 class="chapter" id="c7">7. Fuel moisture</h1>
+<h3>7.1 Dead fuel</h3>
+<p>Equilibrium moisture content (Simard 1968) for each hour from temperature T (°F) and relative humidity RH (%):</p>
+<div class="formula">RH &lt; 10 :  EMC = 0.03229 + 0.281073 RH − 0.000578 RH·T
+10 ≤ RH &lt; 50 :  EMC = 2.22749 + 0.160107 RH − 0.01478 T
+RH ≥ 50 :  EMC = 21.0606 + 0.005565 RH² − 0.00035 RH·T − 0.483199 RH          (percent)</div>
+<p>Each dead class relaxes towards the EMC with its time lag τ = 1, 10 and 100 h: m ← m + (EMC − m)(1 − e^(−1/τ)) every hour, starting from the EMC at the first hour. The simulation starts 48 h after the first weather hour, so the 1 h and 10 h classes carry the recent weather history; the 100 h class is only partly conditioned.</p>
+<h3>7.2 Rain wetting</h3>
+<p>When hourly rain r exceeds 0.05 mm, each class moves towards saturation: m ← m + (M_sat − m)·(1 − exp(−(r − 0.05)/8))/14. This is the rain branch of the WRF-SFIRE moisture model as adopted in FIRELAB (<code>docs/background/accuracy_improvements.md</code>), with the saturation capped at 60 % instead of WRF's 250 %, which lies far outside the range where a spread model is valid. Moisture is bounded between 2 % and 60 %. Coefficients are not locally calibrated.</p>
+<h3>7.3 Live fuel</h3>
+<p>The mean NDVI of the burnable cells in the window sets a greenness g = clip((NDVI − 0.15)/0.45, 0, 1). Live herbaceous moisture = 0.30 + 0.90 g and live woody moisture = 0.70 + 0.60 g (fractions). One value applies to the whole window. This is a proxy, not a measurement, and it is the reason PAKFIRE carries an NDVI input at all; FIRELAB's Sentinel-2 NDII scheme is not available nationally.</p>
+
+<h3>7.4 Terrain and canopy shading of dead fuel moisture (<code>pkfire/microclimate.py</code>, <code>tmoist</code>)</h3>
+<p>The weather is for one point, but dead fine fuel is hotter and drier on a sunlit slope and cooler and moister in shade, under canopy and higher up. For each cell the module estimates the difference in equilibrium moisture (Simard) from a flat open reference at the weather point, averaged over up to ten sampled daylight hours: solar position (NOAA formulae); beam exposure from the slope normal and a cast-shadow test against horizon angles from a 3 km search in 8 directions; fuel surface temperature T<sub>f</sub> = T<sub>air</sub> + 20 K &times; exposure &times; (1 − canopy shade), with shade 0.7 for trees and 0.3 for flooded vegetation; air temperature lowered 6.5 K/km above the weather point and dew point 2 K/km (so relative humidity at the fuel is 100 e / e<sub>s</sub>(T<sub>f</sub>)). The 20 K excess is an assumption (published values are 10–25 K), clear sky is assumed because cloud cover is not available, and the shade fractions are judgement. The moisture difference is turned into a spread-rate multiplier per fuel from the Rothermel rate at moisture raised or lowered by it (1 h fuel by the difference, 10 h by 0.6, 100 h by 0.3) and applied to the continuity field, so it is a first-order correction at the dryness of the fire's busiest hours, not a time-resolved moisture model. In the Margalla test scene it gives moisture differences of −1.7 to +2.3 percentage points (1st to 99th percentile) and rate multipliers of 0.89–1.37.</p>
+<p><b>Validation.</b> The objective on the development events was 0.129 without it and 0.128, 0.127 and 0.125 at strengths 0.5, 1.0 and 1.5: slightly worse, not better. The effect acts on slopes and canopy gaps at 60 m, which the 375–500 m satellite truth cannot resolve, so the test cannot confirm it either way; see Ch. 23.4 for the decision taken.</p>
+<h1 class="chapter" id="c8">8. Minimum-travel-time propagation</h1>
+<p>The fire front is found as the earliest arrival time t(x) at every cell (Finney 2002). From a cell i that ignites at t_i the fire reaches each of its 16 neighbours j (8 adjacent plus 8 knight-move cells, which removes most grid-direction bias) after</p>
+<div class="formula">Δt = d_ij / R_i(θ_ij)            t_j = min(t_j, t_i + Δt)</div>
+<p>where d_ij is the distance between cell centres, θ_ij the angle between that direction and the head direction of cell i, and R_i the elliptical rate of Section 5.4 evaluated with the fuel, slope and weather <i>of the hour in which cell i ignited</i>. Cells that do not burn (rate zero) block the fire. The scheme gives exact earliest arrival times for the discretised problem; the weather dependence is handled by evaluating each cell once, at its own ignition time, which is exact when the weather changes slowly compared with the time a cell takes to burn.</p>
+<p>The CPU solver is Dijkstra's algorithm with an indexed binary heap (<code>kernel_cpu.py</code>, Numba). Run time is proportional to the number of burning cells, not the size of the grid.</p>
+
+<h1 class="chapter" id="c9">9. The GPU solver</h1>
+<h3>9.1 Algorithm</h3>
+<p>Dijkstra is sequential, so the GPU uses an exact parallel equivalent (<code>kernel_gpu.py</code>). The run is cut into one-hour bands, because the weather changes hourly. Within a band:</p>
+<ol>
+<li><b>Relax.</b> Every cell pulls candidate arrival times from its 16 neighbours that already have an arrival time below the band end, computing each source's head rate and direction on the fly from the tables, and keeps the minimum. The update is in place and only ever decreases a time, so it is safe without atomics. Passes repeat (six at a time between convergence checks) until nothing changes.</li>
+<li><b>Finalise.</b> Cells whose arrival lies in the band are finalised once: their head rate and fireline intensity are written, and ember spotting is attempted (Ch. 10) using an atomic minimum on the target cell.</li>
+<li>If spotting created ignitions inside the band, the band is repeated.</li>
+</ol>
+<p>A cell with arrival below the band end can only be improved by cells with an earlier arrival, all of which take part, so after convergence those arrivals are exact; this is why the result equals Dijkstra's. To avoid launching over the whole grid every pass, the kernels run on the bounding box of the cells already reached, widened by the farthest possible advance in one hour (200 m/min × 60 min / cell size). Positive floating-point arrival times order like integers, which allows <code>atomicMin</code> on the bit pattern.</p>
+<h3>9.2 Spotting on the GPU</h3>
+<p>Ember random numbers come from a counter-based hash of the cell index and the seed, so GPU spot fires are statistically but not bit-for-bit equal to those of the CPU solver, which uses a sequential generator. With spotting off, the two solvers agree to floating-point precision (Ch. 22).</p>
+<h3>9.3 Backend choice</h3>
+<p><code>solver.simulate</code> uses the GPU when CuPy reports a device. If the GPU path raises any error in automatic mode it falls back to the CPU and records <code>gpu_error</code> in the run metadata, which the viewer displays; requesting <code>backend: "gpu"</code> explicitly does not fall back.</p>
+<h3>9.4 Measured performance</h3>
+<p>Re-measured on 24 October 2026 (after the length-to-breadth correction) on the DGX Spark (GB10, CUDA 13), whole runs through <code>run.run</code>, each backend run twice (the first GPU call compiles the kernels). The machine was shared and busy, so times vary:</p>
+<table>
+<tr><th>Case (grid)</th><th>Burned</th><th>GPU solve (1st, 2nd)</th><th>CPU solve (1st, 2nd)</th><th>Scene load</th></tr>
+<tr><td>Balochistan grass, 72 h, ±100 km, 100 m (2030 × 2040)</td><td>270,534 ha</td><td>4.2 s, 2.2 s</td><td>1.9 s, 0.5 s</td><td>5.8 s</td></tr>
+<tr><td>Punjab crops, 48 h, ±60 km, 75 m (1625 × 1633)</td><td>101,926 ha</td><td>0.67 s, 0.58 s</td><td>0.41 s, 0.40 s</td><td>2.4 s</td></tr>
+<tr><td>Sindh, 24 h, ±40 km, 50 m (1606 × 1614)</td><td>29,930 ha</td><td>0.62 s, 0.38 s</td><td>0.31 s, 1.22 s</td><td>2.1 s</td></tr>
+<tr><td>Margalla forest, 24 h, ±25 km, 50 m (1018 × 1022)</td><td>296 ha</td><td>0.11 s, 0.09 s</td><td>under 0.01 s</td><td>1.5 s</td></tr>
+</table>
+<div class="note"><b>Finding.</b> For a single run the CPU heap solver was as fast or faster in every case measured, because it touches only the burning cells while the GPU iterates about 800–1300 relaxation passes. A whole run takes 3–6 s, dominated by loading the scene (2–4 s) and weather; the solve is a small part of it. GPU remains the default because the owner asked for GPU first. The GPU should pay off for batched ensembles and for much larger grids, but that has not been measured, and an ensemble currently runs its members one after another. These timings predate the 24 October length-to-breadth correction and should be re-measured.</div>
+
+<h1 class="chapter" id="c10">10. Ember spotting and crown fire</h1>
+<h3>10.1 Spotting (Albini 1983)</h3>
+<p>The first version used an invented distance rule that needed 800 kW/m, which low-elevation forest never reaches, so forest fires never spotted. It was replaced on 26 October 2026 by the Albini (1983) maximum spotting distance already implemented for FIRELAB (<code>pkfire/vendor/spotting.py</code>; the two implementations agree to 0.5 m in a test), with Schroeder (1969) ignition probability:</p>
+<div class="formula">E = I · A · U^B                      thermal strength; I fireline intensity (kW/m), U 10 m wind (m/s)
+H = 0.173 √E                         maximum firebrand lofting height (m)
+h = H^0.337 − 1.22                   characteristic height (Chase 1981)
+D_max = descent(U, h, H) + lofting(U, h, H)       Albini's flight-path integrals, capped at 2000 m
+P(brand starts a fire) = Schroeder (1969) probability from air temperature and 1 h fuel moisture, per hour of the run</div>
+<p>For every cell as it is finalised, in a fuel that sheds firebrands and with intensity above 100 kW/m, an ember is thrown with probability 2·10⁻⁴ · min(I/1000, 1); its distance is min(D_max, D_max · 0.35 · exp(0.6 g)) with g ~ N(0,1), its direction downwind ± 0.17 rad (σ), and it starts a new fire if the target is burnable and it passes the Schroeder test; the landing time is the flight time plus 3 min. The coefficients (A, B) are Albini's Table 4 values for the nearest fuel type: conifer litter (TL8, FM9) 69.6 and −0.818; timber-grass (TU1) 129 and −1.238; brush and grass-shrub 83.9 and −1.04. Grass and crop fuels carry no coefficient and never spot. The 2·10⁻⁴ rate and the 0.35 distance fraction are assumptions that were not calibrated.</p>
+<p><b>Why a heuristic at all.</b> Albini (1983) gives only the <i>maximum</i> distance a firebrand can travel and still be burning; his model does not say how landings are spread between the fire and that distance, and no Pakistani spot-fire data exist to fit one. The log-normal with median 0.35 &times; D<sub>max</sub>, the ember rate and the ±0.17 rad direction spread are therefore judgement; they are not derived from the physics. Sensitivity was tested: switching spotting on or off left every validation score unchanged, so the numbers matter little for the scored events, but they are the least-founded part of the engine.</p>
+<p>Effect: forest fires now spot (across 40 forest events, 5 spot fires in 4 events), but in the 527 validation events the change left every score unchanged, because most events burn grass, crops and rangeland, and the low-elevation forest fuel TU1 still rarely reaches 100 kW/m. This is a correctness change, not a measured accuracy gain.</p>
+<h3>10.2 Crown fire</h3>
+<p>Pine fuels (TL8, FM9) can burn as crown fire. A surface fire whose intensity reaches the Van Wagner (1977) initiation intensity I₀ = (0.010 · CBH · (460 + 25.9 · FMC))^1.5 (kW/m) becomes a crown fire if the Cruz et al. (2005) active crown rate R = 11.02 · U₁₀^0.90 · CBD^0.19 · exp(−0.17 · M₁) (U₁₀ in km/h, M₁ the 1 h dead moisture in percent) is at least the critical rate 3/CBD (Van Wagner). Then the spread rate is the larger of the surface and crown rates (capped at 200 m/min) and 150 · R kW/m is added to the fireline intensity for the burned canopy fuel. Canopy base height is taken as 3 m (an effective height including shrub and sapling ladder fuel; a 5 m canopy over bare litter never ignites in this model), bulk density as 0.10 kg/m³ and foliar moisture as 100 %, giving I₀ = 875 kW/m. <b>These are assumed stand values, not measured for Pakistan, and crown fire is not validated</b>: in a test TL8 fire the crown phase starts at 20 m/s wind and 5 % humidity (surface 1,238 kW/m becomes 36,900 kW/m at the 200 m/min cap), and a 10 m/s Margalla fire burned 62 ha as crown fire. Runs report the crown-fire area and a warning. Crown fire did not change the validation scores for the same reason as spotting. A variant that takes canopy base height and bulk density from a measured canopy map is described in 10.3.</p>
+<h3>10.3 Measured canopy height for crown fire (31 October 2026)</h3>
+<p><b>Source and processing.</b> The Meta/WRI high-resolution canopy height map (a model trained on aerial lidar and applied to very high resolution satellite imagery; global, created 17 December 2024, updated 6 October 2025) is stored as 8-bit metre tiles of 65,536 &times; 65,536 pixels at 1.19 m in EPSG:3857. <code>tools/download_meta_chm.py</code> fetched the 556 tiles that cover Pakistan from the public bucket (71 GB, no failures). <code>tools/build_canopy.py</code> reduced every tile in 32 &times; 32 blocks (about 38 m) to the mean height and the 90th-percentile height of the 1 m pixels (cached in <code>data/cache/canopy_tiles/</code>, 4.4 GB), then warped the reduced tiles into one GeoTIFF: <code>data/national/canopy_height_pakistan.tif</code>, EPSG:4326 at 1/3600&deg; (about 31 m), 48,600 &times; 61,560 cells, two 8-bit bands (1 = mean height, 2 = 90th percentile, whole metres), 512 &times; 512 tiles, deflate, overviews 2&ndash;16, 607 MB. The scene builder reads it as it reads the other national rasters (<code>terrain.load_canopy</code>, <code>terrain.canopy_for_scene</code>). A tiled GeoTIFF was chosen over Zarr because every other national raster is read this way and a window read of a scene needs no new reader.</p>
+<p><b>Check against known places</b> (10 km windows, mean of the cell values): Murree 4.3 m mean and 7.7 m 90th percentile with trees up to 32 m; Swat/Kalam 4.0 and 7.0 m (up to 42 m); Margalla 2.8 and 5.1 m; Lahore 0.9 and 2.9 m; Gilgit 0.5 and 1.2 m; Karachi 0.2 and 0.7 m; Thar 0.1 and 0.2 m. Forest and farmland and desert separate as expected. The mean is rounded to whole metres, so a cell with a mean under half a metre reads zero.</p>
+<p><b>How it enters crown fire</b> (<code>fuels.canopy_crown</code>, profile key <code>canopy</code>; <code>canopy</code> = 0 keeps the fixed values of Ch. 10.2). The map gives height only, so the two crown-fuel properties are derived, and these relations are <b>assumptions, not fitted to Pakistani stands</b>:</p>
+<div class="formula">H   = 90th-percentile height of the cell       (no crown fire below 4 m)
+CBH = max(0.35 H, 1 m)                            canopy base height
+CBD = 0.15 kg/m&sup3; &times; (mean / H)                   canopy bulk density
+I&#8320;  = (0.010 CBH (460 + 25.9 FMC))^1.5          Van Wagner initiation intensity</div>
+<p>Only the fuels that already carry crown fire (TL8 and FM9, the pines) are affected. Both kernels (CPU and GPU) now read the initiation intensity and bulk density per cell (<code>fuels.crown_cells</code>); without canopy data they fall back to the fixed per-fuel values, so default behaviour is unchanged. A test covers the formula, the fall-back and a kernel run in which canopy-free cells carry no crown fire.</p>
+<p><b>Result.</b> Scored on all 1,464 events it changed 41 and no average score (Ch. 23.5), so it ships off. <b>Limits of the map itself</b> (from its WRI data page): the imagery was collected at varying dates and atmospheric conditions, so the map is not a single-time snapshot; there is no field validation for trees over 25 m; terrain slope may bias heights.</p>
+
+<h1 class="chapter" id="c11">11. Fire intensity and flame length</h1>
+<div class="formula">I_B (kW/m) = I_R (kW/m²) · R (m/min) · τ_r (min)          I_R(kW/m²) = I_R(BTU/ft²/min) · 0.18927
+τ_r = 384 / σ  (min, Anderson 1969)
+flame length L = 0.0775 · I_B^0.46  (m, Byram)</div>
+<p>Intensity is stored per cell at the moment the cell is finalised and drives the colour brightness of the flaming front and the flame-length chart.</p>
+
+<h1 class="chapter" id="c12">12. A run, end to end</h1>
+<ol>
+<li><b>Request.</b> latitude, longitude, start time (UTC), duration 1–120 h (default 24 h), half-width 5–100 km, cell size 20–250 m, spotting on/off, optional manual weather, ensemble size, backend.</li>
+<li><b>Grid.</b> Local UTM zone from the longitude (zones 41–43 in Pakistan). The grid is square, centred on the ignition; the cell size is increased by factors of 1.25 until no side exceeds 2400 cells.</li>
+<li><b>Scene.</b> Terrain, land cover and NDVI are read and fuel rows built (Ch. 6).</li>
+<li><b>Ignition.</b> The point is converted to the grid and, if the cell does not burn, moved to the nearest burnable cell within 600 m; if none exists the run is refused with the land-cover class found there.</li>
+<li><b>Weather and tables.</b> Weather is fetched (Ch. 13), dead moisture computed (Ch. 7) and the rate tables built for every hour.</li>
+<li><b>Solve.</b> Ch. 8–10, GPU first.</li>
+<li><b>Duration.</b> Nothing is fixed at 48 h: 48 h is only the moisture lead-in before the start. The run length is the user's choice up to 120 h (arrival times are stored as 16-bit integers in 1/8 min, which overflows at 136 h); the validation runs each fire for its own observed duration plus one hour (at most 72 h). A fire is not stopped automatically when it dies out: it simply stops spreading when fuel, moisture or rain stop it. Runs longer than the weather forecast available use the last values.</li>
+<li><b>Export.</b> Arrival time and intensity are warped to a north-up EPSG:4326 raster (at most 2400 px per side) for the viewer; statistics, events, the spread axis and the camera track are computed (Ch. 15).</li>
+</ol>
+
+<h1 class="chapter" id="c13">13. Weather forcing</h1>
+<p>Hourly weather comes from Open-Meteo: the forecast API for dates within about 80 days before to 15 days after today, the archive API otherwise. If Open-Meteo is unreachable and the run lies within the next 8 days, MET Norway's locationforecast is used instead, interpolated to hourly values (wind direction as a vector). Responses are cached on disk keyed by request.</p>
+<p>The weather starts 48 h before the start time so that dead fuel moisture is conditioned. If the source cannot supply history (for example MET Norway, which is forecast only, or manual weather) the first hour is held for 48 h with no antecedent rain, and the run metadata states this under <i>conditioning</i>. Manual weather holds one wind, temperature and humidity constant for the whole run and has no rain.</p>
+<p>The weather gives one 10 m wind per hour for the whole window. The mass-conserving terrain wind (Ch. 5.6) turns it into a per-cell speed ratio and direction; with the <code>chan</code> setting it is solved with a smaller Sherman alpha at night and in light wind, so that flow goes around and along terrain instead of over it (Ch. 5.7).</p>
+
+<h1 class="chapter" id="c14">14. Ensemble and burn probability</h1>
+<p>With <code>ensemble = 24</code> the run is repeated 24 times with perturbations that stand for forecast, fuel and model uncertainty. The widths were chosen on 28 October 2026 from the validation events (<code>tools/ensemble_widths.py</code>; stored in <code>calibration.json</code> as <code>ensemble_widths</code>):</p>
+<table>
+<tr><th>Quantity</th><th>Original (assumed)</th><th>Shipped</th></tr>
+<tr><td>Wind speed (all hours)</td><td>× N(1, 0.20)</td><td>× N(1, 0.40)</td></tr>
+<tr><td>Wind direction (all hours)</td><td>+ N(0, 12°)</td><td>+ N(0, 24°)</td></tr>
+<tr><td>Dead fuel moisture</td><td>× N(1, 0.15), limited to 0.6–1.5</td><td>× N(1, 0.30), same limits</td></tr>
+<tr><td>Mean NDVI (live moisture)</td><td>+ N(0, 0.03)</td><td>+ N(0, 0.06)</td></tr>
+<tr><td>Spread-rate error (all fuels)</td><td>none</td><td>× exp N(0, 0.9) <span class="new">NEW</span></td></tr>
+<tr><td>Ember random seed</td><td colspan="2">different for every member</td></tr>
+</table>
+<p>The burn probability of a cell is the fraction of members that burned it by the end of the run, stored as a percentage; the viewer shows it as a yellow-to-red layer. The summary gives the 10th, 50th and 90th percentile of burned area. The main (non-ensemble) run is the unperturbed one.</p>
+<h3>14.1 How the widths were chosen</h3>
+<p>For 50 events per split (development events before 2024, test events from 2024) that MODIS maps at 50 ha or more, 16-member ensembles were run under the shipped calibration with the four original widths multiplied by a common scale (0 to 3) and with a log-normal spread-rate error added (0 to 0.9). Three scores were computed against the MODIS burn mask: the Brier score of the burn probability over the cells within 3 km of the observed or any simulated burn (lower is better); the <i>coverage</i>, the share of events whose MODIS area lies inside the members' 10–90 % range (a reliable 80 % range gives 0.80); and the <i>area PIT</i>, the mean rank of the MODIS area among the member areas (0.5 is unbiased).</p>
+<table>
+<tr><th>Held-back test events 2024–2026</th><th class="num">Brier</th><th class="num">Coverage</th><th class="num">Area PIT</th></tr>
+<tr><td>No perturbation</td><td class="num">0.117</td><td class="num">0.00</td><td class="num">0.43</td></tr>
+<tr><td>Original widths</td><td class="num">0.106</td><td class="num">0.20</td><td class="num">0.42</td></tr>
+<tr><td>Original widths &times; 3</td><td class="num">0.089</td><td class="num">0.35</td><td class="num">0.43</td></tr>
+<tr><td>Original widths + spread-rate 0.9</td><td class="num">0.070</td><td class="num">0.62</td><td class="num">0.51</td></tr>
+<tr><td><b>Shipped: widths &times; 2 + spread-rate 0.9</b></td><td class="num">0.069</td><td class="num">0.64</td><td class="num">0.53</td></tr>
+</table>
+<div class="note"><b>Finding.</b> The original ensemble was far too narrow: only 20 % of the MODIS areas fell inside its 10–90 % range (a reliable range gives 80 %). Widening the weather and moisture terms alone barely helps (35 % at three times the width) because most of the error is in the spread rate itself, not in the inputs; adding a spread-rate error is what brings the ensemble toward reliability (64 % on the test events). Even the shipped widths are still under-dispersive (64 % against 80 %), and the best tested spread-rate width (0.9) is the edge of the grid, so wider values were not tried. On the development events (2012–2023) the model's area is biased high (PIT 0.32), so the ensemble covers only 54 % there. The probability map should be read as a sensitivity map, not a calibrated chance of burning.</div>
+
+<h1 class="chapter" id="c15">15. Outputs and derived products</h1>
+<table>
+<tr><th style="width:24%">Product</th><th>Definition</th></tr>
+<tr><td><code>arrival.bin</code></td><td>uint16 arrival time in 1/8 min (65535 = not reached) on the north-up export grid.</td></tr>
+<tr><td><code>intensity.bin</code></td><td>uint8 fireline intensity / 40 kW/m, capped at 255 (10.2 MW/m).</td></tr>
+<tr><td><code>prob.bin</code></td><td>uint8 burn probability in percent (ensemble only).</td></tr>
+<tr><td>Area series</td><td>Burned hectares at every 30 min.</td></tr>
+<tr><td>Spread-rate series</td><td>Maximum head rate (m/min) among cells ignited in each 30 min.</td></tr>
+<tr><td>Flame-length series</td><td>Byram flame length for the most intense cell ignited in each 30 min.</td></tr>
+<tr><td>Spread axis</td><td>Every 15 min, the mean position of the cells ignited in that interval whose distance from the ignition is in the top 20 %; connected as a polyline with cumulative length and the SRTM elevation at each point (down-sampled to at most 80 points). This is the "head of the fire" path, shown with timed waypoints.</td></tr>
+<tr><td>Key events</td><td>Ignition; first spot fire; fastest growth (the 30 min interval with the largest area increase, located at its fastest cell); first arrival at the window edge; first arrival within 300 m of built-up land cover.</td></tr>
+<tr><td>Settlement exposure</td><td>Built-up area (ESRI class 7, ha) within 1 km of the burned area but not burned, and built-up area burned. The built-up class at 10 m is coarse and misses informal housing.</td></tr>
+<tr><td>Burned by land cover / fuel</td><td>Hectares per class.</td></tr>
+<tr><td>Camera track</td><td>Keyframes every 4 min (Ch. 20.7).</td></tr>
+</table>
+
+<h1 class="chapter" id="c16">16. The tiers</h1>
+<p>As in SAILAB and LANDLAB, the interface is organised in tiers of increasing cost; the right-hand column shows one tier at a time.</p>
+<h3>16.1 Tier 1: instant footprint</h3>
+<p>A real but small simulation: the same engine on a 24 km window (±12 km, 50 m cells) on the CPU, with the weather of the current hour held constant (or the manual weather of Tier 2), contoured at 1, 3 and 6 h (12 h on request) with marching squares at the levels h × 60 min. The contours of each level are merged and simplified (0.0003°) and drawn as nested polygons. It also reports the head spread rate at the ignition cell and the weather used. It is a quick first look while the ignition is being placed; its cost is dominated by building the small scene (1–3 s).</p>
+<h3>16.2 Tier 2: spread run</h3>
+<p>Two panels feed the run. <b>Weather &amp; timing</b>: start time (entered in PKT, sent as UTC), duration 1–72 h, and the weather source: Open-Meteo live/forecast/archive with the 48 h moisture lead-in, or a constant manual wind, direction, temperature and humidity. A preview button draws the hourly wind and humidity and reports the driest 1 h fuel moisture the run will see. <b>Window &amp; solver</b>: the window comes from the drawn area (half the larger side of its bounding box × 1.05, limited to 5–100 km) or a fixed ±25, 40, 60 or 100 km; cell size is chosen from the window (50, 75 or 100 m) unless given; backend GPU first, GPU only or CPU; ember spotting; random seed. The result panel shows the burned area, peak spread, spot fires, settlement exposure, peak intensity, axis length, burned area by land cover, key events and the warnings of Ch. 15.</p>
+<h3>16.3 Tier 3: ensemble</h3>
+<p>The Tier 2 inputs with the perturbations of Ch. 14 (12, 24 or 48 members; the server accepts up to 60). The result adds the burn-probability layer and the 10–90 % area range.</p>
+<h3>16.4 Tier 4: mitigation</h3>
+<p>Fuel breaks (lines) and fuel treatments (polygons) are drawn on the map and applied to a copy of the fuel grids:</p>
+<ul>
+<li><b>Fuel break.</b> The line is buffered to the chosen width (at least three cells) and its cells are made non-burnable. The width floor exists because the solver also moves along knight moves (two cells in one direction), which would hop over a one-cell line; fire can then cross a break only by embers.</li>
+<li><b>Treatment, remove fuel.</b> The polygon becomes non-burnable (a cleared area).</li>
+<li><b>Treatment, reduce.</b> The fuel-continuity factor is multiplied by 0.5 or 0.25, which scales the spread rate in the polygon (grazing, thinning, prescribed burning). The factors are the user's assumptions; no measured treatment performance is used.</li>
+</ul>
+<p>The job runs the unmitigated baseline and then the mitigated case with identical weather, window and random seed, and reports the change in burned area, built-up area within 1 km, peak spread and spot fires. Suppression, changed ember production and any effect of treatments on moisture are not modelled.</p>
+<h3>16.5 Jobs</h3>
+<p>Each launch creates a job (queued, running, done, error, cancelled) polled for stage, fraction and elapsed time. Stage fractions are fixed (terrain 12 %, weather 30 %, spread 50 %, ensemble 72 %, export 90 %); paired runs split the bar in two. Cancelling sets a flag that is checked between stages, not inside the solve. Only one job computes at a time; others wait in the queue.</p>
+
+<h1 class="chapter" id="c17">17. Discovery, context and monitoring</h1>
+<h3>17.1 Placing the fire</h3>
+<p>The ignition is a point drawn with the map tool, dragged, set from a satellite hotspot, a district or an uploaded file; extra points become additional simultaneous ignitions. An optional polygon sets the simulation window. Uploads accept GeoJSON or a zipped shapefile (several polygons are merged to their convex hull). If the ignition is not on fuel it is moved to the nearest burnable cell within 600 m; otherwise the run is refused and the land-cover class found there is reported.</p>
+<h3>17.2 District discovery</h3>
+<p>The 164 districts (<code>District_Boundary.shp</code>) are ranked by the number of VIIRS detections or their summed fire radiative power over the last 1, 3 or 5 days, with a name or province filter. "Use" draws the district as the area and, if no ignition exists yet, puts one at the district centroid; the centroid may fall on non-fuel, in which case the snap rule above applies. The map button "Districts" shades the choropleth by the same counts.</p>
+<h3>17.3 Fire hotspots</h3>
+<p>The strongest or most recent NASA VIIRS S-NPP near-real-time detections inside Pakistan (spatially joined to districts). Each can start a simulation. A detection is a 375 m pixel containing a thermal anomaly seen at one overpass; it can be a gas flare, kiln or small agricultural burn, and FRP is not a measure of the size of the later fire.</p>
+<h3>17.4 Weather and fuel context</h3>
+<p>For the ignition the panel shows the current weather, the 72 h peak wind and lowest humidity, rain in the previous 48 h and the next 72 h, the 1 h dead-fuel moisture now and at its driest, and, from a ±25 km scene at 100 m, the land-cover mix, the share of burnable land, NDVI and the 5–95 % elevation range.</p>
+<h3>17.4a Fire-weather danger class</h3>
+<p>The context panel shows a screening class from three numbers over the next 72 h: the driest 1 h dead fuel moisture m (%), the peak wind U (m/s) and the rain in the previous 48 h R (mm). Score = (3 if m &lt; 5, 2 if m &lt; 8, 1 if m &lt; 12) + (2 if U ≥ 10, 1 if U ≥ 5) − (2 if R ≥ 10, 1 if R ≥ 2); class = low (score ≤ 1), moderate (2), high (3), very high (4), extreme (5). It is not a standard index (no Fire Weather Index or KBDI); the thresholds follow Rothermel's 12 % moisture of extinction for grass and typical wind effects and are judgement, not calibration.</p>
+<h3>17.4b Exposure</h3>
+<p>For any saved run, <code>/runs/&lt;id&gt;/exposure.json</code> (cached in the run folder, shown in the result panel under "Exposure" and in the PDF report) reports:</p>
+<ul>
+<li><b>People</b> in the burned area and within 1 km of it, from WorldPop 2020 (UN-adjusted, 1 km, <code>Iliyan/WorldPop/pak_ppp_2020_1km_UNadj.tif</code>). Each 1 km pixel's persons are spread evenly over the export grid (bilinear, divided by the source pixel area), so for small fires the figure is an order of magnitude only. The count is also scaled to the 2023 census (below).</li>
+<li><b>Census (PBS 2023)</b> from the district tables on the shared drive (<code>PBS DATA district/csvs</code>, built by <code>tools/build_pbs.py</code> into <code>data/external/pbs_districts.json</code>): district population, households, the share of homes that are pakka, semi-pakka or kacha (mud, thatch or timber construction) and the share of households cooking with firewood. WorldPop 2020 is multiplied by census / WorldPop for the district containing the ignition (median factor 1.04 over 141 districts, 10–90 % range 0.79–1.59), but only when the factor lies in 0.7–1.5: for some districts the PBS table does not match the boundary polygon (Lahore, Quetta and the Karachi sub-districts give 0.36–0.58 or 1.8), and then WorldPop is left unscaled and flagged. PBS has no table for Azad Kashmir and Gilgit-Baltistan.</li>
+<li><b>Informal settlements</b> (<code>data/external/informal/informal_settlements_2025.gpkg</code>): the only open map found covers Karachi (1,450 polygons, 205 km²) and Lahore (28,747 polygons, 162 km²) for 2025, from the VHR-GSIS dataset (Zenodo 18606153, CC BY 4.0, mapped from satellite imagery). The hectares of informal settlement burned and within 1 km of the burn are reported there; elsewhere the panel says no map exists. The World Bank/ESA EO4SD-Urban Karachi 2017 layer is a coarser alternative that was not used. No national katchi abadi boundary dataset was found.</li>
+<li><b>Hospitals, schools and grid stations</b> (national shapefiles under <code>4. Vector Data</code>) inside the window: how many burned, how many unburned but within 1 km of the burn scar at the end of the run, and for each the time the model's front reached it (the list is ordered burned first by arrival time, then threatened by distance). They are also drawn on the map, red if burned and yellow if threatened.</li>
+<li><b>Power lines</b>: kilometres burned and kilometres within 1 km, sampled every 100 m. The national line layer is sparse (418 lines) and has none in the Islamabad window.</li>
+</ul>
+<p>The arrival time is the time the fire reached the facility's model cell (50–100 m); evacuation and road access are in a separate analysis (Ch. 23.1). Facility completeness and positional accuracy are unknown (many schools have no name or enrolment). Protected areas were not used: the national park layer holds points, not boundaries.</p>
+<h3>17.4c Re-run and data status</h3>
+<p>A result's "Run again with a new random seed" button repeats the run with seed + 1 and the stored parameters, which is the quickest way to see how much a run depends on the random ember spotting. <code>/data-status</code> lists every dataset the model reads (path, existence, size, whether it is required) and the number of NDVI composites, like SAILAB's data-status page.</p>
+<h3>17.4d Spread contours, sharing and housekeeping</h3>
+<ul>
+<li><b>Spread contours.</b> <code>/runs/&lt;id&gt;/perimeters.geojson?step_min=60</code> (button "Spread contours (GeoJSON, hourly)") returns nested polygons of the burned area at each step (5–360 min, default 60), contoured from the arrival raster by marching squares and simplified by 0.0002° (about 20 m). Each feature carries the elapsed minutes and the area in hectares; the file is in EPSG:4326 and starts at the run's UTC start time, ready for QGIS or ArcGIS.</li>
+<li><b>Suggested fuel break.</b> In Tier 4 the "Suggest a break" button places a line perpendicular to the last run's spread axis at 45 % of its length, 1.5 km or 12 % of the half-window long each side, which the user can drag. It is a starting point, not an optimised placement; no search is made for the best position.</li>
+<li><b>Share link.</b> The page address records the ignition, duration and weather settings (<code>#ign=lon,lat&amp;h=24&amp;w=manual&amp;ws=8&amp;wd=270&amp;t=36&amp;rh=20</code>); opening it restores them and flies to the ignition. Drawn areas, breaks and treatments are not in the link.</li>
+<li><b>Deleting runs.</b> The × button in the history list removes a run's folder (after confirmation); the route accepts only identifiers that resolve inside the runs directory.</li>
+</ul>
+<h3>17.5 Live monitoring</h3>
+<p>A watch stores a centre, a radius (2–100 km), a check interval and an optional webhook, and persists in <code>data/monitor.json</code>. A background thread wakes every minute; for each watch that is due it reads the last day of FIRMS detections, and if a new detection (not seen before) lies inside the radius it runs a 24 h scenario (±40 km, live weather) from the strongest one, keeps the last five alerts and posts a short message (detection FRP, burned area, run id) to the webhook. The scenario waits behind any running job. The feature is experimental: it does not screen false detections and its scenarios are as uncalibrated as any other run.</p>
+
+<h3>17.6 Assimilating satellite detections</h3>
+<p>With "Start from the satellite detections near the ignition" on, the run takes the NASA detections of the last three days within 6 km of the ignition, starts at the hour of the earliest, and seeds every detection (snapped to the nearest burnable cell within 300 m, up to 600 cells) as an ignition at the minute it was seen; the fire then spreads from this observed state. In validation (all 490 events with at least three detections after the first 12 h; the model seeded with the first 12 h and scored on detections after that) it raised detection capture from 0.79 to 0.83 and later-detection IoU from 0.186 to 0.189, and changed the final MODIS extent IoU from 0.270 to 0.287, so the benefit is small; detections are pixels with errors of a few hundred metres, and the first overpass is hours after ignition. A run states how many detections were assimilated.</p>
+
+<h1 class="chapter" id="c18">18. Reports, comparison and scoring</h1>
+<ul>
+<li><b>PDF report</b> (WeasyPrint): incident header, key figures, a static map of the scar coloured by arrival time (no basemap), area and spread-rate charts, ensemble range, key events, burned area by land cover and fuel, weather and moisture summary, warnings and the model statement. A batch report concatenates up to 30 runs.</li>
+<li><b>Compare two runs</b>: burned area of each, area burned in both, only in A, only in B (A's export grid; B is looked up by geographic position, so runs from different windows overlap only where they cover the same ground), peak spread and spot fires.</li>
+<li><b>Score against an observed perimeter</b>: the uploaded polygons are rasterised onto the run's export grid and compared with the final footprint: IoU, Dice, omission (observed area missed), commission (simulated area not observed), area error and centroid offset. Timing is not scored.</li>
+<li><b>History</b>: the 60 most recent runs, with labels (baseline, mitigated) and an Open button that reloads the scene, layers and result.</li>
+</ul>
+
+<h1 class="chapter" id="c19">19. Layout and design system</h1>
+<p>Since 7 November 2026 PAKFIRE follows SAILAB's current, map-first interface and the design system shared with LANDLAB, so the hazard dashboards look and behave alike. The 2D Mapbox map fills the whole screen. A <b>floating toolbar</b> along the top carries the brand, a place search, the basemap switch (Dark, Satellite, Streets), a job-queue chip, a light/dark toggle and the hardware line. A rounded <b>floating drawer</b> on the right holds the panels (place the fire, district discovery, hotspots, weather and fuel context, monitoring), the sticky tier tabs and the tier content, then layers of this run, run history and compare, and the disclaimer; a tab on its edge hides or shows it, and the map controls, the legend and the 3D card move with it. The animated <b>3D fire view is a floating card</b> at the bottom left; it opens when a run is opened, can be expanded to fill the screen, hidden, or opened as a full page, and a "Fire view" button brings it back. A <b>welcome card</b> on the first visit of a session offers three starts: search a place, place an ignition on the map, or start from a satellite hotspot. The earlier layout (2D map above the 3D pane with draggable resizers) was replaced; the drag-to-resize code was removed.</p>
+<p>Tokens are SAILAB's (dark surfaces, Barlow Condensed headings, Public Sans body, IBM Plex Mono figures, glow on focus) with a fire accent (#FF6A2B) in place of SAILAB's teal and LANDLAB's amber. A <b>light theme</b> redefines the same tokens (accent #D4440F, light surfaces) through <code>data-theme</code> on the page element; the choice is kept in the browser (<code>localStorage</code> key <code>pakfireTheme</code>) and the page renders without it. Mapbox GL JS 3.6 and Mapbox Draw 1.4.3 are used, as in SAILAB.</p>
+<p><b>Place search.</b> The box in the toolbar queries two sources as the user types: district names from <code>/places/search</code> (a district can be used at once as the area, with an ignition at its centre) and places from the Mapbox geocoder restricted to Pakistan (the map flies to the result). Arrow keys, Enter and Escape work. <b>Basemap.</b> The dark style (<code>dark-v11</code>) stays the default, as asked; satellite (<code>satellite-streets-v12</code>) and street (<code>streets-v12</code>) imagery are raster layers shown on request and placed beneath every run layer, so switching never removes the map overlays. <b>Queue chip.</b> It shows the number of queued or running jobs (<code>/api/queue</code>, polled every 5 s) and lists them with a Cancel button; cancellation acts between stages (Ch. 26).</p>
+<table style="border:none;margin:2mm 0"><tr>
+<td style="border:none;width:68%;vertical-align:top"><img src="figures/pakfire_ui_desktop.png" style="width:100%;border:1px solid #cbd8e0"></td>
+<td style="border:none;vertical-align:top;text-align:center"><img src="figures/pakfire_ui_phone.png" style="height:62mm;border:1px solid #cbd8e0"></td></tr>
+<tr><td colspan="2" style="border:none;font-size:8.4pt;color:#555">Figure 19.1 The map-first interface with a finished run open (7 November 2026): desktop at 1500 &times; 900 (toolbar, floating drawer, 3D fire card, legend) and phone at 390 &times; 800 (drawer closed). Headless Chromium with software GL.</td></tr></table>
+<p>The map has four tools below the toolbar (satellite fire detections, districts, clear overlay, PNG export) and a legend for the active run layer. Drawn features are styled by role: area (orange dashed), treatment area (green), fuel break (yellow line), ignition (red point with halo). Run layers (time of arrival, fire intensity, burn probability) are server-rendered PNGs draped on the 2D map with their legend. The 3D card is an iframe of <code>/runs/&lt;id&gt;/mapbox3d</code> with an Expand/Shrink button, a Hide button and a "Full Page" link. On a phone (760 px and narrower) the toolbar wraps onto two lines, the drawer starts closed and opens over the map, and the 3D card spans the screen width.</p>
+
+<h3>19.1 Start page (<code>web/pk/landing.html</code>, rebuilt 7 November 2026)</h3>
+<p>Following SAILAB's start page, <code>/</code> serves a full-screen scene with centred text and, as in SAILAB, two buttons: <b>PAKFIRE Instant</b> (<code>/instant</code>, Ch. 19.2) and <b>PAKFIRE Physics</b> (the full model at <code>/app</code>). Colours are PAKFIRE's (ember orange on black) in place of SAILAB's aqua; the type (Archivo), the header and footer bars and the outlined buttons follow SAILAB. The header carries the AI Geo Navigators logo, copied from SAILAB's start page (<code>web/pk/agn-logo.png</code>).</p>
+<p><b>The scene is a real 3D forest, not a picture of a fire.</b> The first version (a flat shader with two logs whose flames simply grew on the click) read as a zoom and was replaced. The current scene (<code>web/pk/landing/scene.js</code>, three.js r160 vendored in <code>web/pk/vendor/three</code>, no CDN) contains about 750 conifers and 360 shrubs placed over a 144 m &times; 113 m forest, seen from 46 m away at night: each conifer is a tapered trunk and a crown of about 560 needle-textured branch cards in 20 tiers (a procedurally drawn fir frond, alpha-tested, two crossed layers, darker towards the trunk), in two variants, instanced; ferns on the forest floor; a starry sky with a faint moon and two distant ridges; fog; moonlight and sky light; a pool of ten point lights that follow the fire; and bloom, ACES tone mapping, film grain and a faint heat shimmer as post-processing.</p>
+<p><b>How the fire behaves.</b> The fire is a small model of its own (<code>web/pk/landing/forestfire.js</code>, plain JavaScript, tested in Node by <code>tools/forestfire_test.mjs</code>). Every tree and shrub is a fuel node. A burning node heats its neighbours by radiation and convection, with a flux that falls as 1/(1 + (d/3 m)&sup2;), is stronger downwind and scales with flame size; an unburnt node ignites when the heat it has accumulated reaches 1 (it loses heat to the air meanwhile). A surface fire climbs into the crown when its line intensity, which grows with wind speed and with heat from neighbours, passes a threshold (after Van Wagner, Ch. 10.2); a crowning tree burns far brighter and taller. Crowning trees throw embers that loft, drift with the wind and fall at a terminal speed, and an ember that lands alive near fuel can start a spot fire (after Albini's spotting, Ch. 10.1). Before the click the fire sits on two trees and three shrubs and stays small: the test shows at most six nodes burning over two minutes. On the click the wind rises from 1.3 to 11 m/s and the model's heat transfer is multiplied (up to 31 times) so that minutes of spread happen in seconds; <b>this time compression is a theatrical choice</b>, the equations are the same. In the test the fire reaches 92&ndash;95 % of the trees in the field of view in 4.8 s, and spotting alone, with heat transfer between trees switched off, started 30&ndash;40 spot fires in 90 s.</p>
+<p><b>How it is drawn.</b> Flames are upright tongues (instanced quads that always face the camera about the vertical axis, sheared by the wind) whose shape comes from layered noise and whose colour is a blackbody: each tongue has a temperature of 1100&ndash;1800 K, the colour is the Planckian colour of that temperature and the brightness follows the Stefan&ndash;Boltzmann law (T&#8308;), cooling towards the tip and the edge. Smoke is dark, soft puffs lit orange near the flames; sparks and the embers of the model are small hot points; burning crowns glow through their needles, shrink as their needles are consumed, and trunks char. The ten lights are placed on the strongest burning clusters with a flicker, and a soft halo stands in for light scattered by smoke.</p>
+<p><b>The click.</b> Pressing either button runs 4.8 s: the text fades; the wind and the spread rate rise; the fire runs from tree to tree, climbs into the crowns and throws embers while the unburnt forest stays dark ahead of the front; the camera, which drifts slowly at rest, walks forward into the forest and shakes with the heat; and the frame fades to a flat warm colour (#FFCC73) as the page navigates. The destination opens under a veil of that colour with an ember glow that fades in about 1.6 s. With reduced-motion set the buttons are plain links. A link carrying a share hash (<code>#ign=...</code>) skips the start page. Without WebGL, or if the scene fails to load, a CSS night-forest glow replaces it and the click fades to the warm colour.</p>
+<p><b>Performance and debugging.</b> The resolution adapts in the first 50 frames (disable with <code>?notune</code>); <code>?q=low|mid|high</code> sets particle budgets. For checking, the page takes <code>t</code> (seconds of idle fire to pre-run), <code>rise</code> (0&ndash;1, the click animation pre-run to that point), <code>flash</code>, <code>scale</code> and <code>frames</code> (draw that many frames and stop); <code>tools/landing_shots.py</code> uses them.</p>
+<div style="break-inside:avoid;page-break-inside:avoid"><table style="border:none;margin:2mm 0"><tr>
+<td style="border:none;width:33%;vertical-align:top"><img src="figures/pakfire_landing3d_calm.png" style="width:98%;border:1px solid #333"></td>
+<td style="border:none;width:33%;vertical-align:top"><img src="figures/pakfire_landing3d_spread.png" style="width:98%;border:1px solid #333"></td>
+<td style="border:none;vertical-align:top"><img src="figures/pakfire_landing3d_engulf.png" style="width:98%;border:1px solid #333"></td></tr>
+<tr><td colspan="3" style="border:none;font-size:8.4pt;color:#555">Figure 19.2 The start page at rest (a small fire on two trees), 40 % and 80 % of the way through the click animation (the front spreading through the crowns; the whole view alight). 1200 &times; 750, software GL at 60 % render scale, so softer than on a GPU.</td></tr></table></div>
+
+<h3>19.2 PAKFIRE Instant (<code>web/pk/instant.html</code>, 7 November 2026)</h3>
+<p>Like SAILAB Instant, a separate page at <code>/instant</code> for a quick answer: a full-screen map with a floating toolbar (brand, an &ldquo;Instant&rdquo; pill, place search, Satellite, 3D tilt with terrain, light/dark theme, a link to the full model) and a welcome card (search a place, choose a scenario, or just click the map). Clicking the map places the fire; a floating panel offers the scenarios <i>Calm</i> (2 m/s, 45 % humidity), <i>Breezy</i> (6 m/s, 30 %), <i>Strong wind</i> (12 m/s, 18 %), <i>Extreme, dry</i> (18 m/s, 10 %) and <i>Live weather</i>, sliders for wind speed, wind direction and humidity, and the duration (3, 6 or 12 h). Every change re-runs <code>POST /area/instant-footprint</code> (the Tier 1 engine of Ch. 16: a real simulation of a 24 km window, about one second with typed weather) after 0.35 s, ignoring answers that arrive late, and draws the fire front at 1, 3 and 6&ndash;12 h with the burned area of each, the head spread rate at ignition, the weather used and a note. The ignition is kept in the page address (<code>#ign=lon,lat&amp;h=</code>), and a button opens the same place in the full model. Because it uses the same engine, the answer is as limited as Tier 1: in forest at moderate wind the footprint is small (about 1 ha after 6 h at the Margalla test point), which is what the engine gives there, not a fault of the page.</p>
+
+<h1 class="chapter" id="c20">20. The 3D scene</h1>
+<p>The scene is the main visual product. Its panel, timeline card, probe, fullscreen and export controls reuse SAILAB's 3D viewer stylesheet with the accent changed; the content is fire-specific. Its look follows a forensic-style reference video kept in <code>reference/video2</code> (dark translucent burn scar with a glowing ember edge, a bright ignition flare with a time label, a yellow spread axis with timed waypoints and direction arrows); the reference uses mock data.</p>
+<h3>20.1 What to show</h3>
+<table>
+<tr><th style="width:22%">Mode</th><th>Content</th></tr>
+<tr><td>Fire over time</td><td>Cells coloured by the time since the front passed: white-yellow flaming front (under 4 min), orange (to 15 min), red glow (to 60 min), dark red to charcoal (to 240 min), then charcoal. Embers glow in a scattering of cells behind the front (pseudo-random per cell, more for intense cells), 6–45 min after passage.</td></tr>
+<tr><td>Time of arrival</td><td>Burned cells shaded by when the front reached them, yellow (early) to dark (late), over the run duration.</td></tr>
+<tr><td>Fire intensity</td><td>Byram fireline intensity, 0–6000 kW/m.</td></tr>
+<tr><td>Burn probability</td><td>Share of ensemble members that burned the cell (available after Tier 3).</td></tr>
+</table>
+<h3>20.2 Painting</h3>
+<p>One arrival raster per run is downloaded and any time T is painted from it, so scrubbing, replay and speed changes need no further requests. The burnt cells are sorted by arrival time once (a counting sort); for a time T the cells that have ignited are coloured through a look-up table indexed by age and intensity. Cells older than 240 min are written once and not touched again, so each frame repaints only the last four hours; moving backwards repaints from scratch. The canvas is draped on the map as an image layer and refreshed by briefly starting and stopping the canvas source. Burned area at T is a binary search on the sorted arrivals.</p>
+<h3>20.3 Flames, glow and smoke</h3>
+<ul>
+<li><b>Flame glow:</b> the cells that ignited in the last 8 min (at most 1100, sampled evenly) feed a heat-map layer with a black-body colour ramp, so the front blooms (this is the main flame look). Weight combines intensity and recency; radius and intensity grow with zoom. Refreshed every 110 ms.</li>
+<li><b>Flames</b> (on by default): a physical flame model drawn on a canvas over the map from up to 300 of the cells that ignited in the last 8 min (fireline intensity above 60 kW/m). Each sprite is one pre-rendered teardrop bitmap whose size and shape follow the physics at <b>true scale by default</b> (1×): length L = 0.0775 I^0.46 m (Byram 1959); tilt from vertical θ with tan θ = U / w, where U is the mid-flame wind (0.4 of the 10 m wind) and w = (g I / (ρ c<sub>p</sub> T))^(1/3) the buoyant velocity scale (ρ = 1.1 kg/m³, c<sub>p</sub> = 1 kJ/kg/K, T = 300 K), so a 1000 kW/m fire in 5 m/s wind is a 1.9 m flame tilted 33°; visible length varies between 0.35 and 1.3 of the mean (flame intermittency) at the Heskestad pulsation frequency f = 1.5 / √L Hz; the base is one model cell wide; height is scaled by the map pitch and metres per pixel. Because real flames are 1–5 m long they become visible only at close zoom (about level 16 and above); at lower zoom the heat-map glow carries the picture. A "Flame size" slider (1–20×, default 1×) exaggerates the length for visibility and is labelled as such; the readout under the timeline gives the head flame length and tilt. The sprite is still a drawn teardrop, not a simulated flame: flame depth (rate of spread times residence time), radiation and plume dynamics are not modelled. An earlier version extruded the same cells as 3D squares and then drew sprites 12× exaggerated; both were replaced.</li>
+<li><b>Sparks:</b> three small glowing points per recently ignited cell scattered within about 70 m of the burning cells and re-randomised every 90 ms; a visual cue, not an ember-transport model.</li>
+<li><b>Smoke</b> (optional): points from cells ignited in the last 30 min, shifted downwind by a distance that grows with their age and the wind speed (about 100–500 m plus 25 m per minute), drawn as a grey heat map. It is a visual cue only, not a plume model.</li>
+<li><b>Ignition flare:</b> a pulsing white-orange glow at each ignition with an "Ignition" label and the clock time.</li>
+<li><b>Spot fires</b> appear as blue rings with a halo at their landing time.</li>
+</ul>
+<h3>20.4 Spread axis</h3>
+<p>The axis of Ch. 15 is drawn as a solid yellow line for the part already travelled and a dashed line for the rest, with three to five labelled waypoints (+h:mm and kilometres along the axis; three when the axis is shorter than 3 km), direction arrows at the waypoints and a marker for the current head position. It is computed from the main fire only: the burned cells are dilated by two cells and labelled, and only the component containing the ignition is used, so spot fires that landed away from the main body do not pull the path sideways; the position is then smoothed with a running median over five 15 min steps. (The first version used all cells and drew a 24 km path for a 71 ha fire.) The SRTM elevation at each axis point is stored in the run metadata.</p>
+<h3>20.5 Map styles and lighting</h3>
+<p>The flat basemaps (dark, light, streets, night, terrain) get a hillshade layer from the terrain DEM (exaggeration 0.75 for dark styles, 0.45 for light ones), without which the dark map showed almost no relief; the satellite style already carries shading. Dark (the default), light, satellite, streets, terrain and night. All use terrain from the Mapbox terrain DEM with an adjustable exaggeration (0.5–4×, default 1.4) and depth haze (fog) matched to the style. (The sun-lit "3D lit" style based on Mapbox Standard was removed on 7 November 2026 at the owner's request.) A clock chip shows the simulated date, time (PKT) and a day/night symbol. Labels can be switched on; a wind layer animates streaks in the wind's direction (relative to the map bearing) at a speed proportional to the wind speed, using the wind of the current hour.</p>
+<h3>20.6 Timeline, chart, probe and export</h3>
+<p>When the 3D view is shorter than 640 px (the floating card on a typical screen) the scene starts in compact mode: the left panel is collapsed and the chart hidden (the Chart button toggles it) so that the timeline card does not cover the fire. The timeline card has play/pause, the elapsed time and clock, the burned area, peak spread rate, flame length and wind at the current time, a chart of burned area (line) and peak spread rate (bars) with event ticks, a hover tooltip and click-to-seek, a slider, and playback speeds 0.25–4× (1× is 30 simulated minutes per second). Clicking the map probes a cell: arrival time and clock, intensity, burn probability when available, and ground elevation from the terrain. Export gives a PNG of the current view or a WebM recording of a full replay.</p>
+<h3>20.7 The follow camera</h3>
+<p>The camera track is computed on the server. Every 4 min of simulated time the target is the mean position of the leading cells (top 20 % by distance from the ignition) of the cells that ignited in the surrounding 15 min. The camera centre moves 22 % of the way to the target each step. Bearing follows the direction of the camera's own motion, smoothed (8 % per step of the angular difference to the heading, then 6 % per step to the camera), so the view turns to look along the direction of spread. Zoom is set so that the visible width is about 2.6 times the extent of the recently ignited cells, with a floor of 1.8 km, limited to zoom 9.6–15.4 and smoothed (12 % per step). Because the same lead points drive the camera, excluding spot fires also stopped the camera chasing them. In the browser the view is offset with map padding (270 px at the bottom for the timeline card, 330 px on the left while the panel is open) so that the fire sits in the visible part of the scene. The keyframes are interpolated each frame and applied at a 58° pitch. Dragging, scrolling or touching the map switches following off; the button restores it. "Reset view" returns to the ignition.</p>
+<div class="note">The scene was rendered in a real (headless, software-GL) Chromium on 24 October and the screenshots reviewed by the author (Ch. 22), which led to the fixes listed in Ch. 24. Software rendering does not show real-GPU performance, and the smoke layer has not been reviewed in a screenshot since their last change.</div>
+
+<h3>20.6 Interface review, 28 October 2026</h3>
+<p><code>tools/ui_review.py</code> drives the page in headless Chromium at 1500 &times; 900 and 390 &times; 800 and audits overflow, unnamed controls, small targets and small text, opens every tier and the exposure and evacuation panels, and screenshots the 3D scene. Findings and fixes: no console errors; <b>on a phone the right-hand panel was pushed off screen</b> (page wider than the screen) &mdash; below 760 px the layout now stacks, with the map at 78 % of the screen height; two file inputs had no accessible name (labelled); five links styled as buttons were 19 px tall (now button-sized); 10 and 10.5 px text raised to 11 px. Left as is: the Mapbox attribution links (third-party). Not done: a review on real GPU hardware or a real phone; the headless software renderer did not render the close-zoom flame view, so true-scale flames are checked by the scene script tests and the formulas, not by a screenshot. The evacuation panel showed &ldquo;road database unavailable&rdquo; because the SimCity PostGIS was not running that day.</p>
+<h3>20.7 Map-first interface and its review, 7 November 2026</h3>
+<p>The page layout was rebuilt to match SAILAB's current interface (Ch. 19): full-screen map, floating toolbar, floating drawer, floating 3D card, welcome card and light theme. Only structure was changed; the controls, the fire accent and the panels are those of Ch. 16&ndash;17. <code>tools/ui_review.py</code> was extended to dismiss the welcome card, capture it, the light theme and the closed drawer, and was run twice at 1500 &times; 900 and 390 &times; 800 against a finished run, in headless Chromium with software GL.</p>
+<p><b>Found in the first pass and fixed:</b> the map's zoom buttons sat partly under the toolbar (moved below it); the hardware text in the toolbar had no overflow guard (it now truncates); the brand name was faint in the light theme (darker gradient); on a phone the top of the drawer was hidden under the toolbar, its close tab was clipped by the screen edge, and the map-tool buttons covered the drawing tools (the drawer now starts below the toolbar, the tab moves inside it, the tools wrap beside the drawing tools); and opening a run loaded the 3D page twice, the first request being aborted (<code>open3d</code> now ignores a reload of the same address). A wrapping rule for widths of 761&ndash;1100 px was added so the toolbar cannot overflow beside the drawer; <b>that width was not screenshot-checked</b>.</p>
+<p><b>Result of the second pass:</b> no console errors at either width; the drawer, the 3D card (Expand, Hide, Full Page), the basemap switch, the light theme and the closed drawer all work in the screenshots examined (desktop for the welcome card and light theme; desktop and phone for the open run and the drawer). The audit still lists three things that are not defects: the closed drawer counts as wide on a phone because it is parked off screen (the page itself does not scroll sideways); one button inside a collapsed section reads as unnamed because collapsed content has no rendered text; and the Mapbox logo and attribution links are smaller than 24 px and belong to Mapbox. The aborted satellite and street tile requests in the desktop log come from the audit switching basemap quickly. <b>Not verified:</b> rendering on a hardware-accelerated browser (software GL only), the place search against the live Mapbox geocoder (the <code>/places/search</code> route was called directly and returned Islamabad for &ldquo;isla&rdquo;), the queue chip with a job actually running, and the evacuation panel, which still reports the road database as unavailable.</p>
+
+<h3>20.8 Start page and Instant page check, 7 November 2026</h3>
+<p>The model of the start page was tested in Node (<code>tools/forestfire_test.mjs</code>): the idle fire stays at six nodes or fewer for two minutes and the seeds keep burning; the surge reaches 92&ndash;95 % of the trees in view in 4.8 s and only 17&ndash;20 % at 40 % of the time (so it spreads progressively); embers alone start spot fires. The scene was rendered at fixed moments (<code>tools/landing_shots.py</code>) and looked at after each round of changes; it took five rounds: the first 3D version had trees like faceted paper cones, huge flat branch cards, a camera so close that the foreground trunks hid the fire, a fire hidden behind undergrowth and lights that turned every tree flat orange; the camera was moved back to 46 m, a sightline cleared to the fire, the branch cards made smaller and denser, the lights lowered and the flames made upright and wind-sheared. Scripted clicks in headless Chromium confirmed that each button starts the animation and reaches its page with no console errors, that the arrival veil appears and goes, and that a share link goes straight to the application; the Instant page was loaded at a point and returned its areas and the spread rate with no errors. <b>Not verified:</b> frame rate and appearance in motion on a real GPU (only software GL, which is too slow to judge motion, was available), how heavy the scene is on integrated graphics (the adaptive resolution and the <code>?q=</code> levels are meant to cope but were not tried), and the Instant page's place search against the live geocoder. The result is a stylised real-time scene with physically motivated fire behaviour and blackbody flame colour; it is <b>not photorealistic</b>, and its fire model is not PAKFIRE's spread engine.</p>
+
+<h1 class="chapter" id="c21">21. API reference</h1>
+<table>
+<tr><th style="width:36%">Route</th><th>Purpose</th></tr>
+<tr><td><code>GET /</code></td><td>The start page (forest-fire scene; Ch. 19.1).</td></tr>
+<tr><td><code>GET /instant</code></td><td>PAKFIRE Instant page (Ch. 19.2).</td></tr>
+<tr><td><code>GET /app</code></td><td>The application page (Mapbox token inserted server side).</td></tr>
+<tr><td><code>GET /runs/&lt;id&gt;/mapbox3d</code></td><td>The 3D scene page of a run.</td></tr>
+<tr><td><code>POST /area/polygon</code>, <code>/area/upload</code></td><td>Area information (km², district, window) and file upload (points and polygons).</td></tr>
+<tr><td><code>GET /districts/search</code>, <code>/districts/&lt;i&gt;</code>, <code>/api/districts</code></td><td>District ranking by satellite detections, district geometry, choropleth GeoJSON.</td></tr>
+<tr><td><code>GET /fire-hotspots</code>, <code>/api/firms</code></td><td>Strongest/most recent detections; detections as GeoJSON for the map.</td></tr>
+<tr><td><code>POST /area/context</code>, <code>/area/weather-series</code>, <code>GET /api/weather</code></td><td>Weather and fuel context; hourly weather preview with implied fuel moisture; current weather.</td></tr>
+<tr><td><code>POST /area/instant-footprint</code></td><td>Tier 1.</td></tr>
+<tr><td><code>POST /run</code>, <code>/area/ensemble</code>, <code>/area/mitigation</code></td><td>Tier 2, 3, 4 jobs. Body: <code>geometry?, ignition [lon,lat], extra_ignitions, params {hours, start, half_km, cell_m, spotting, seed, ensemble, backend, wind{speed_ms, from_deg, temp_c, rh}}, interventions {breaks[], treatments[]}</code>.</td></tr>
+<tr><td><code>GET /runs/&lt;job&gt;/progress.json</code>, <code>POST /runs/&lt;job&gt;/cancel</code></td><td>Job state and cancellation.</td></tr>
+<tr><td><code>GET /runs</code>, <code>/runs/&lt;id&gt;/summary.json</code>, <code>/api/runs/&lt;id&gt;/meta.json</code></td><td>History, summary and full metadata.</td></tr>
+<tr><td><code>GET /api/runs/&lt;id&gt;/{arrival,intensity,prob}.bin</code></td><td>Rasters (gzip when accepted).</td></tr>
+<tr><td><code>GET /runs/&lt;id&gt;/overlay/&lt;layer&gt;.png</code>, <code>/api/layers</code></td><td>2D overlay PNG with <code>X-Coordinates</code> and <code>X-Legend</code> headers; colour ramps.</td></tr>
+<tr><td><code>GET /runs/&lt;id&gt;/report.pdf</code>, <code>/batch-report.pdf?ids=</code></td><td>PDF reports.</td></tr>
+<tr><td><code>POST /compare-runs</code>, <code>/runs/&lt;id&gt;/validate-observed</code></td><td>Run comparison; scoring against an observed perimeter.</td></tr>
+<tr><td><code>POST /monitor/watch</code>, <code>GET /monitor/list</code>, <code>POST /monitor/delete</code></td><td>Live monitoring.</td></tr>
+<tr><td><code>GET /runs/&lt;id&gt;/perimeters.geojson</code>, <code>DELETE /runs/&lt;id&gt;</code></td><td>Spread contours for GIS; delete a run.</td></tr>
+<tr><td><code>GET /runs/&lt;id&gt;/exposure.json</code>, <code>/data-status</code></td><td>People and facilities exposed to a run, with arrival times; dataset checklist.</td></tr>
+<tr><td><code>GET /places/search?q=</code></td><td>District names matching typed text, for the header search box (no satellite statistics, so it answers at once).</td></tr>
+<tr><td><code>GET /api/queue</code></td><td>Jobs that are queued or running, for the header queue chip; each can be cancelled with <code>POST /runs/&lt;job&gt;/cancel</code>.</td></tr>
+<tr><td><code>GET /api/hw</code>, <code>/api/status</code></td><td>Hardware line shown in the header; GPU/FIRMS status.</td></tr>
+</table>
+
+<h1 class="chapter" id="c22">22. Verification of the engine</h1>
+<p>Verification asks whether the code implements the equations; it says nothing about whether the equations predict real fires.</p>
+<table>
+<tr><th style="width:34%">Check</th><th>Result</th></tr>
+<tr><td>Rothermel / Albini / Scott &amp; Burgan rates</td><td>Inherited: the module matches pyretechnics in FIRELAB's tests (<code>tests/compare_pyretechnics.py</code>). Not re-run for this edition.</td></tr>
+<tr><td>GPU versus CPU arrival times, synthetic 401 × 401 grid with a barrier, random slope, two fuels, 7 m/s wind, 8 h, no spotting</td><td>3 199 cells burned by both, 0 cells burned by only one, largest arrival-time difference 0.0004 min. Measured 23 October, before the length-to-breadth correction, which was applied identically to both solvers.</td></tr>
+<tr><td>GPU versus CPU on real scenes (four sites, 24 h)</td><td>Identical burned areas (24.8, 79.5, 2 618.5 and 1 788.5 ha), measured before the correction.</td></tr>
+<tr><td>Physics behaviour tests (<code>tests/pk/test_pkfire.py</code>), run 24 October</td><td>11 tests pass: wetter fuel is slower and extinguishes; rain wets dead fuel and it dries again; fire runs downwind with the flanks beating the back; still air is exactly symmetric (arrival times equal on the four axes and on the diagonal to 7 digits); uphill is at least three times faster than downhill; a non-burnable barrier stops the fire; embers cross a 60 m break in a strong TL8 fire and never in a weak TU1 fire; the length-to-breadth ratio uses m/s; the crosswalk marks desert, water, snow and built land as non-burnable; GPU equals CPU on a 301 × 301 grid. Three tests failed on the first run and were corrected (Ch. 24).</td></tr>
+<tr><td>Routes against a synthetic run (24 October, later)</td><td>A synthetic run in the real file format (analytic ellipse, <code>tools/make_synth_run.py</code>) was served to every non-simulating route: summary, three overlay PNGs, run PDF (2 pages) and batch PDF, 3D page, raster download, compare (a run against itself gives zero difference), observed-perimeter scoring (IoU 0.63 against a test rectangle), weather preview, area information (Islamabad found), and monitor add/list/delete all returned 200 with sensible content. The synthetic run was deleted afterwards.</td></tr>
+<tr><td>Real runs by the owner</td><td>Six runs exist from the owner's use of the interface on 24 October (a single run, an ensemble, and a baseline/mitigated pair, all on the GPU backend); the server log shows no errors. These runs were not inspected by the author beyond their metadata.</td></tr>
+<tr><td>3D scene script (Node test)</td><td><code>tools/viewer_test.js &lt;run_id&gt;</code> (18 checks on a real run) loads <code>fire3d.js</code> with a stubbed map against a run and checks: data loading, sources added, all four display modes paint, arrival and intensity cover every burned cell at the end, the incremental painter equals a full repaint at 34 times and after a backward scrub, flame glow/sparks/tongues/smoke layers fill and empty correctly, the spread axis grows, the HUD text, the camera interpolation and the probe. All checks pass; checks that do not apply to a run (ensemble layer, flames on a fire weaker than 60 kW/m) are skipped. It cannot test rendering.</td></tr>
+<tr><td>Route tests (pytest)</td><td><code>tests/pk/test_routes.py</code>: 10 tests using Flask's test client and a synthetic run, covering the pages and path safety, overlay PNGs, summary, run and batch PDFs, comparison, observed-perimeter scoring (including a perimeter outside the window), exposure (arrival order), area information, weather preview, monitor add/delete, input validation, the danger class, the data checklist, the contours (time-ordered, growing in area) and run deletion (including a path-traversal attempt). All 10 pass (24 October). No simulation is run by these tests.</td></tr>
+<tr><td>Interventions (unit check)</td><td>On a synthetic 100 × 100 grid a 30 m-wide break line became exactly three cells wide (139 cells, 34.8 ha) and a treatment polygon reduced the continuity of 103 cells to 0.5.</td></tr>
+<tr><td>Interface routes (HTTP smoke test)</td><td>Passed 24 October (earlier): main page, 3D scene page, scripts and stylesheet, hardware line, layer ramps, run history, 2D overlay PNG, district ranking, hotspot list and district choropleth all returned 200. A run summary from an earlier file format returned 500 and those old runs were deleted. Simulation, ensemble, mitigation, instant footprint, PDF report, comparison, observed-perimeter scoring and monitoring have <b>not</b> been exercised since the rebuild.</td></tr>
+<tr><td>Browser rendering (headless Chromium 1091, software GL), 24 October</td><td>The main page and the 3D scene loaded in a real browser with no console errors other than a Mapbox warning about using one DEM source for terrain and hillshade. Run through the page: ignition set, a real run opened in the 3D pane, scrub and follow camera worked. Screenshots of a real 12 h grassland run (7,824 ha) and a Margalla forest run were reviewed: layout matches SAILAB; the dark map with hillshade, glowing front, charred scar, ignition flare, spread axis, clock chip and chart render as intended. Problems found by looking and fixed: the spread axis chased spot fires (24 km for a 71 ha fire); the dark map showed no relief; the timeline card covered the fire in the embedded pane; the smoke was a large opaque grey cloud; the extruded flames were blocks; the camera put the fire behind the card; the 2D map did not fly to the run.</td></tr>
+<tr><td>Map-first interface review, 7 November</td><td>Two passes of <code>tools/ui_review.py</code> at desktop and phone width: no console errors; layout defects found and fixed as listed in Ch. 20.7. The route tests (11) and the full test suite (41 tests, 62 s) pass after the change.</td></tr>
+</table>
+
+<h1 class="chapter" id="c23">23. Validation and accuracy record</h1>
+<div class="note"><b>Summary.</b> Calibrated against 2024–2025 satellite-observed fires, PAKFIRE no longer over-predicts burned area by 5–7 times (1.5 times on held-back 2026 fires, 2.5 on the development fires). Its agreement with satellite footprints on held-back fires is only slightly above an equal-area circle (IoU 0.326 against 0.313); against MODIS burned area, on the 16 held-back fires that MODIS maps, it is not above the circle (0.21 against 0.22). It has little skill in placing or shaping a fire; treat its outputs as scenarios, not forecasts.</div>
+<h3>23.1 Method</h3>
+<ul>
+<li><b>Events.</b> 413,061 NASA VIIRS S-NPP detections for Pakistan (1 January 2024 to 20 October 2026; the gap of late June to July 2026 is where the standard archive hands over to near-real-time) were linked in space and time (within 1.5 km and 2 days) into clusters. A cluster became an event if it had at least 12 detections on at least 8 distinct pixels, lasted 18 h or more, spread 1.5–40 km, lay at least 60 % on burnable land cover and at most 25 % on built land, and was not flagged as a static source. This gave 820 events (413 on crops, 269 rangeland, 137 trees); all forest and rangeland events and a random 120 of the crop events (largely stubble burning chained across fields) were used: <b>527 events, 448 development (2024–2025) and 79 held-back test (2026)</b>.</li>
+<li><b>Simulation.</b> Each event was simulated for its duration from all detections of its first overpass (up to 25 points, taken as simultaneous ignitions), with hourly Open-Meteo archive weather at the ignition, 48 h of moisture lead-in, ember spotting on, 60 m cells and a window sized to the event.</li>
+<li><b>Truths.</b> (1) The union of detected pixels (375 m squares): it underestimates the true scar, because detections exist only at overpasses (about two a day) and only for actively burning pixels, so every IoU against it is biased low. (2) MODIS MCD64A1 burned area (500 m, with burn day): pixels burned within the event window and within 1.5 km of a detection, for the events with at least 50 ha mapped (177 of 527; 161 development, 16 test). Some months are missing from the archive (August–September 2025; 2026 after August). Neither truth is a surveyed perimeter.</li>
+<li><b>Scores.</b> IoU of the simulated burned area with the truth (one pixel of tolerance), simulated/mapped area ratio, recall and precision against MODIS, the median error of the simulated burn day, and the share of events where the model beats <b>an equal-area circle centred on the ignition</b> (tests shape and direction, not size).</li>
+<li><b>Calibration.</b> Only the development events mapped by MODIS were used (161). Coordinate descent, two sweeps, over bounded settings: rate multipliers for grass and crops, shrub and grass-shrub, and forest; a wind multiplier (forecast and archive wind only); a dead-fuel-moisture multiplier. The final objective is the mean MODIS IoU minus 0.04 per factor of two of area error and 0.003 per hour of timing error, because maximising IoU alone rewarded over-prediction. The 2026 test events were not read during fitting. Final values: grass 0.45, shrub 0.45, forest 1.5, wind 0.6, moisture 0.5 (<code>pkfire/calibration.json</code>); the wind and moisture multipliers still sit near the low ends of their ranges, which says that scalar factors are compensating for a structural error.</li>
+</ul>
+<h3>23.2 Results</h3>
+<table>
+<tr><th>Set (events mapped by MODIS)</th><th>Model</th><th>MODIS IoU</th><th>Equal-area circle</th><th>Beats the circle</th><th>Sim/mapped area</th><th>Recall</th><th>Precision</th></tr>
+<tr><td>Development (161)</td><td>uncalibrated</td><td>0.208</td><td>0.227</td><td>30 %</td><td>5.2</td><td>0.86</td><td>0.30</td></tr>
+<tr><td>Development (161)</td><td>final calibration (fitted here)</td><td>0.329</td><td>0.317</td><td>53 %</td><td>2.5</td><td>0.61</td><td>0.54</td></tr>
+<tr><td><b>Test, held back (16)</b></td><td>uncalibrated</td><td>0.246</td><td>0.332</td><td>25 %</td><td>7.0</td><td>0.89</td><td>0.28</td></tr>
+<tr><td><b>Test, held back (16)</b></td><td>final calibration</td><td>0.210</td><td>0.221</td><td>69 %</td><td>1.5</td><td>0.48</td><td>0.66</td></tr>
+</table>
+<p>Against the detection footprints on the 79 held-back events, IoU is 0.196 uncalibrated and 0.326 with the final calibration (equal-area circle 0.313; the model beats the circle on 52 % of events); on the development events 0.311 against a circle of 0.293. The development rows are fitted and optimistic; the test rows are the honest ones, and 16 MODIS events (79 for the footprint score) are too few to separate small differences. The model now under-covers somewhat: recall falls to 0.48 on the test set, and area is still over-predicted on average, so it burns the wrong places as well as too much.</p>
+<h3>23.3 What each improvement did</h3>
+<p>Each change below was scored on the same 527 events; for the held-back footprint score (equal-area circle 0.25–0.31 depending on the set):</p>
+<table>
+<tr><th>Step</th><th>Held-back footprint IoU</th><th>Held-back area ratio (MODIS)</th><th>Verdict</th></tr>
+<tr><td>Uncalibrated physics</td><td>0.196</td><td>7.0</td><td>area 5–7 times too large</td></tr>
+<tr><td>Five bounded settings fitted</td><td>0.253</td><td>2.3</td><td>fixes size; equals the circle</td></tr>
+<tr><td>Albini spotting (Ch. 10.1)</td><td>0.253 (unchanged)</td><td>2.3</td><td>correct, but no event mix to show a gain</td></tr>
+<tr><td>Fuel map v2: class fractions and CGLS forest type (Ch. 6.1), refitted</td><td>0.305</td><td>1.9</td><td><b>the one change with a clear effect</b>: IoU +0.05, development IoU also up</td></tr>
+<tr><td>Objective that also penalises area and timing, wider bounds</td><td>0.326</td><td>1.5</td><td>reduces area bias; footprint IoU up, MODIS IoU slightly down</td></tr>
+<tr><td>Crown fire (Ch. 10.2)</td><td>0.326 (unchanged)</td><td>1.5</td><td>pine fires in the sample rarely reach the initiation intensity</td></tr>
+<tr><td>Roads as barriers (PostGIS roads, 0.12–0.5 spread factors by class)</td><td>no gain (+0.001 at the fitted weight)</td><td>1.5</td><td>kept at weight 0: too little effect to justify</td></tr>
+<tr><td>Terrain wind: Winstral upwind exposure proxy</td><td>no gain</td><td>1.5</td><td>fitted strength 0; code removed 26 October 2026</td></tr>
+<tr><td><b>Terrain wind: own mass-conserving model (Ch. 5.6)</b>, strength 1.0</td><td>0.327 (0.328 at strength 1.5); development 0.311 → 0.314</td><td>1.46 (MODIS)</td><td>small, consistent gain; shipped at the physical strength 1.0 (the fit moved monotonically to its upper limit 1.5, which would amplify beyond the model)</td></tr>
+<tr><td>Spread-rate decay with fire age (burn-out proxy)</td><td>worse at every strength</td><td>–</td><td>rejected</td></tr>
+<tr><td>Suppression proxy (spread cut near roads and settlements)</td><td>worse at every strength</td><td>–</td><td>rejected: the data show no sign of suppression near access</td></tr>
+<tr><td>Assimilating detections of the first 12 h (Ch. 17.6)</td><td>+0.003 (later-detection IoU 0.186 → 0.189 over all 490 events)</td><td>2.56 → 2.67 (MODIS)</td><td>small: helps detection capture (0.79 → 0.83) more than overlap</td></tr>
+</table>
+<h3>23.4 What this means</h3>
+<ul>
+<li><b>Size</b> is now roughly right on average (1.5–2.5 times over against MODIS, which itself misses small fires), but the spread is wide.</li>
+<li><b>Shape and direction</b> remain weak. The calibrated model beats the circle on about half the events and by a small margin: the likely causes are coarse model wind (11 km, no terrain adjustment that helped), unknown ignition timing (the first overpass is hours after ignition), ignition points that are really fire-front pixels, no field boundaries and burn-out for crop and range fires, and the fuel map. The two terrain-and-access physics additions that were tried (roads, terrain wind) did not help, and the two that mimic burn-out and suppression made things worse, which argues against suppression being a main driver of the observed footprints.</li>
+<li><b>Timing</b> was a median 5 hours early in the final run (the simulated fire reaches detected pixels before they were detected, partly because detections occur only at overpasses and the first one is after ignition).</li>
+<li><b>Forest</b> is the least certain part: forest events are the fewest in the sample; Ch. 23.2 reports them separately, but crown fire and spotting still could not be tested individually.</li>
+<li><b>Overfitting risk.</b> Every calibration decision used the development set; the held-back set was only scored, not used for any choice; it is nevertheless small, and a held-back region (not only year) has not been tried.</li>
+</ul>
+<h3>23.5 Using the calibration</h3>
+<p>The page's "Rates" setting defaults to the calibrated profile and can be switched to the uncalibrated physics. The result's warnings state which profile was used and the held-back numbers. The wind multiplier never scales a wind the user types in. Reproduce with <code>tools/run_validation.py prepare</code> and <code>score &lt;name&gt;</code>, <code>tools/calibrate.py</code>, <code>tools/compare.py</code> and <code>tools/assim_test.py</code> (data in <code>data/validation/</code>, about 1.3 GB of cached scenes and weather; scene and calibration code is shared with the application through <code>pkfire/adjust.py</code>, so the two cannot drift apart: a test confirmed that the refactored path reproduces the earlier results exactly on 12 events).</p>
+<h3>23.6 Earlier Margalla evaluation</h3>
+<p>The FIRELAB platform scored its engine on Margalla fires (<code>docs/validation_*.csv</code>, <code>docs/heldout_2024-2026.csv</code> in the FIRELAB legacy archive) and its own reference states that the spread model did not beat an equal-area circle there; its fuel crosswalk differs from PAKFIRE's. The result above agrees in spirit.</p>
+
+<h2>23.0 Long-history validation (2012&ndash;2026, added 26 October 2026)</h2>
+<p>The NASA VIIRS S-NPP yearly country archives for 2012&ndash;2025 and the MODIS MCD64A1 burned-area tiles were downloaded, giving 2,802 clustered events (1,464 scored after filtering, 10 scenes failed to build). Scenes use the land cover and NDVI of the event&rsquo;s own year. The model was calibrated by coordinate descent on 937 events from 2012&ndash;2023 and tested on 527 events from 2024&ndash;2026 that were never used in fitting.</p>
+<table>
+<tr><th>Held-back 2024&ndash;2026 (527 events)</th><th class="num">IoU median</th><th class="num">Equal-area circle</th><th class="num">Beats circle</th><th class="num">Area ratio</th><th class="num">MODIS IoU (circle)</th></tr>
+<tr><td>Uncalibrated</td><td class="num">0.236</td><td class="num">0.235</td><td class="num">36%</td><td class="num">6.4</td><td class="num">0.176 (0.189)</td></tr>
+<tr><td>Previous profile (fitted on 2024&ndash;2025)</td><td class="num">0.309</td><td class="num">0.298</td><td class="num">50%</td><td class="num">3.2</td><td class="num">0.261 (0.261)</td></tr>
+<tr><td><b>Shipped profile (fitted 2012&ndash;2023)</b></td><td class="num">0.302</td><td class="num">0.289</td><td class="num">54%</td><td class="num">1.9</td><td class="num">0.234 (0.230)</td></tr>
+</table>
+<p>Fitted multipliers: grass 0.30, shrub 0.45, forest 1.0, wind 0.6, moisture 0.4, suppression 0.2, roads and minor roads off, terrain-wind 1.0.</p>
+<div class="note"><b>Reading this honestly.</b> The shipped profile is the first one tested wholly out of sample, and its burned area is much closer to the satellite value (1.9&times; against 3.2&times;). Its overlap score is slightly lower than the previous profile (whose fit used 2024&ndash;2025 events, so that comparison favours it). Against the equal-area circle the margin stays small (+0.013 IoU against footprints, +0.004 against MODIS): the model still shows little shape or direction skill beyond a circle. Fires in crop land score worst (MODIS IoU 0.09), and timing is biased early by about 8 h.</div>
+<h2>23.2 Forest-fire validation (added 28 October 2026)</h2>
+<p><code>tools/forest_validation.py</code> regroups the 1,464 scored events (shipped calibration) and keeps those in which 40 % or more of the burnable cells within 3 km of the ignition are trees: <b>347 forest fires</b> (202 before 2024, 145 from 2024). Metrics are those of Ch. 23: IoU with the VIIRS footprint against the equal-area circle, area ratio (simulated / observed), median timing error of the detections, and, where MODIS maps 50 ha or more, the IoU with the MODIS burned area (number of events in brackets).</p>
+<table>
+<tr><th>Group</th><th class="num">n</th><th class="num">IoU</th><th class="num">Circle</th><th class="num">Beats circle</th><th class="num">Area ratio</th><th class="num">Timing (h)</th><th class="num">MODIS IoU (n)</th></tr>
+<tr><td>All forest fires</td><td class="num">347</td><td class="num">0.326</td><td class="num">0.314</td><td class="num">52%</td><td class="num">1.97</td><td class="num">-9.5</td><td class="num">0.237 (102)</td></tr>
+<tr><td>Development 2012–2023</td><td class="num">202</td><td class="num">0.334</td><td class="num">0.319</td><td class="num">52%</td><td class="num">2.11</td><td class="num">-8.9</td><td class="num">0.222 (62)</td></tr>
+<tr><td>Held-back 2024–2026</td><td class="num">145</td><td class="num">0.317</td><td class="num">0.307</td><td class="num">52%</td><td class="num">1.75</td><td class="num">-9.9</td><td class="num">0.269 (40)</td></tr>
+<tr><td>Needleleaf (≥ 60 % of trees)</td><td class="num">214</td><td class="num">0.354</td><td class="num">0.343</td><td class="num">55%</td><td class="num">2.25</td><td class="num">-9.6</td><td class="num">0.257 (56)</td></tr>
+<tr><td>Broadleaf or unknown</td><td class="num">133</td><td class="num">0.265</td><td class="num">0.26</td><td class="num">47%</td><td class="num">1.54</td><td class="num">-7.8</td><td class="num">0.19 (46)</td></tr>
+<tr><td>Below 1000 m</td><td class="num">133</td><td class="num">0.312</td><td class="num">0.283</td><td class="num">53%</td><td class="num">1.51</td><td class="num">-6.0</td><td class="num">0.227 (59)</td></tr>
+<tr><td>1000–2000 m</td><td class="num">159</td><td class="num">0.352</td><td class="num">0.344</td><td class="num">54%</td><td class="num">1.97</td><td class="num">-9.5</td><td class="num">0.285 (41)</td></tr>
+<tr><td>Above 2000 m</td><td class="num">55</td><td class="num">0.319</td><td class="num">0.308</td><td class="num">42%</td><td class="num">5.78</td><td class="num">-17.5</td><td class="num">0.002 (2)</td></tr>
+</table>
+<div class="note"><b>Reading it.</b> Forest fires score about as well as the whole sample (IoU 0.326 against a circle of 0.314; MODIS 0.237 against 0.232), so the same conclusion holds: a small margin over a circle, no strong shape or direction skill. Needleleaf forest (mainly pine) does better than broadleaf or mixed (0.354 against 0.265), and mid elevations (1000–2000 m, where most of Pakistan's fire-prone pine forest lies) best of all (0.352). <b>Above 2000 m the model over-predicts the burned area by about 6× and runs 17 h too early</b>, and only two of those fires are mapped by MODIS, so the high-altitude result is the least reliable; snow, cold nights and sparse fuel there are not captured. Crown fire and spotting could not be tested separately: pine fires in this sample rarely reach the Van Wagner initiation intensity. Documented fires that could be checked against reported areas (for example the 2022 Suleiman Range pine-nut forest fire and Margalla Hills fires) were not tested, because no perimeters were available.</div>
+<h2>23.1 Additional tools: time-lapse, batched ensemble, evacuation (added 2026-10-26)</h2>
+<p><b>Time-lapse video.</b> <code>/runs/&lt;id&gt;/timelapse.mp4</code> renders the saved run server-side (hillshade, age colours, glow, spread axis, spot fires, clock, wind arrow, scale bar) with ffmpeg; a 10 s video takes about 5 s.</p>
+<p><b>Minor roads as field boundaries.</b> Residential, service and track classes from PostGIS were tried as spread-rate barriers in cropland. Effect on the validation score: +0.001 IoU, i.e. nothing measurable, so it ships switched off (<code>road_minor</code> = 0 in the calibration).</p>
+<p><b>Batched GPU ensemble.</b> All ensemble members run in one kernel launch (blockIdx.y = member). Output is identical to the member-by-member run. Speed is not consistently better: Punjab 0.71 s vs 1.44 s, but Margalla 0.20 s vs 0.04 s and Balochistan 2.13 s vs 1.26 s, because the CPU Dijkstra is already fast on small grids.</p>
+<p><b>Past wildfire data on the server.</b> The Smart City folder holds only an Islamabad FIRMS extract (1,666 detections), so the country yearly VIIRS archives (2012&ndash;2025) were downloaded for the long-history validation.</p>
+<p><b>Evacuation and fire-service access</b> (<code>pkfire/evac.py</code>, <code>/runs/&lt;id&gt;/evacuation.json?lead=60</code>). The OSM road network of the window is read from the SimCity PostGIS (read-only) into a graph with free-flow speeds by class (motorway 80 km/h &hellip; living street 12 km/h, unpaved &times;0.6). Origins are the 30 most populated WorldPop 1 km cells burned or within 1.5 km of the burn, snapped to a road vertex within 2 km. Each leaves <i>lead</i> minutes before the fire reaches its cell and drives with a time-dependent Dijkstra: a road vertex is unusable if the modelled arrival time there is not later than the traveller&rsquo;s. A safe vertex is unburned and at least 3 km from the burn, or on the window edge. The latest departure that still escapes is found by bisection (7 steps), so the warning actually needed is reported; origins that cannot escape even leaving at t = 0 are flagged &ldquo;cut off&rdquo;. Access: drive time from each OSM fire station to the ignition and the burned area at that moment.</p>
+<p><b>Limits.</b> No congestion, panic, vehicle limits or one-way logic, so times are lower bounds; OSM fire stations are sparse (91 features nationally; none inside the test window), so access results need the official list (<code>FIRE_STATIONS</code>); the analysis inherits the fire model&rsquo;s accuracy (Ch. 23). Not for operational use.</p>
+<h2>23.4 Terrain moisture and stability channelling on the 2024–2026 test (28 October 2026)</h2>
+<p>With both options at strength 1.0 on top of the shipped profile (<code>tmoist</code> = 1, <code>chan</code> = 1), all 1,464 events were scored again:</p>
+<table>
+<tr><th>Held-back 2024–2026 (527 events)</th><th class="num">IoU median</th><th class="num">Equal-area circle</th><th class="num">Beats circle</th><th class="num">Area ratio</th><th class="num">MODIS IoU (circle)</th></tr>
+<tr><td>Shipped profile (both off)</td><td class="num">0.302</td><td class="num">0.289</td><td class="num">54.3%</td><td class="num">1.92</td><td class="num">0.234 (0.230)</td></tr>
+<tr><td>Both on</td><td class="num">0.291</td><td class="num">0.286</td><td class="num">53.7%</td><td class="num">1.85</td><td class="num">0.230 (0.226)</td></tr>
+</table>
+<p><b>Decision.</b> Both stay available (profile keys <code>tmoist</code> and <code>chan</code>, strength 0&ndash;1.5) but are <b>off</b> in the shipped profile, by the same rule used for roads and burn-out: no measured gain. The loss (0.011 IoU) is small and within what 375&ndash;500 m satellite truth can resolve, which is why the physics is kept in the code. The terrain moisture step also costs about 1&ndash;2 s per run.</p>
+<h2>23.5 Measured canopy height for crown fire (31 October 2026)</h2>
+<p>The same code was scored twice on all 1,464 events (937 development, 527 held back), once with <code>canopy</code> = 1 and once with <code>canopy</code> = 0, under the shipped profile, so that only the canopy differs:</p>
+<table>
+<tr><th>Mean IoU against the VIIRS footprint</th><th class="num">Without canopy</th><th class="num">With canopy</th></tr>
+<tr><td>All 1,464 events</td><td class="num">0.3241</td><td class="num">0.3241</td></tr>
+<tr><td>Held back 2024&ndash;2026 (527)</td><td class="num">0.3153</td><td class="num">0.3153</td></tr>
+<tr><td>Development 2012&ndash;2023 (937)</td><td class="num">0.3291</td><td class="num">0.3290</td></tr>
+<tr><td>Held-back MODIS IoU (187 mapped events)</td><td class="num">0.2645</td><td class="num">0.2645</td></tr>
+</table>
+<p>Only <b>41 of the 1,464 events changed</b> at all; of those 15 improved and 26 got slightly worse (mean change &minus;0.0004 IoU). The likely reason is that most events burn grass, crops and rangeland, which carry no crown fire in this model; the 41 were not broken down by fuel. <b>Decision:</b> by the rule used for roads, burn-out, terrain moisture and channelling (an option ships on only with a measured gain), <code>canopy</code> is <b>off</b>. The raster, the loader and the per-cell kernel input stay in the code for work with better crown-fuel data. The result is recorded in <code>pkfire/calibration.json</code> under <code>results.canopy_crown_test</code>.</p>
+
+<h1 class="chapter" id="c24">24. Chronicle of bugs found and fixed</h1>
+<ol>
+<li><b>Port clash.</b> The first server start collided with another user's application on port 8010 and answered with that application's page. PAKFIRE moved to port 8020.</li>
+<li><b>Isolated interpreter.</b> Running the server with <code>python -I</code> blocked the project's own imports (isolated mode ignores the script directory). Removed; the app now runs as <code>python -m pkfire.app</code>.</li>
+<li><b>Old vegetation composite.</b> The NDVI chooser took the composite closest in day of year regardless of year and picked 2006. It now picks the newest composite within 16 days of the day of year.</li>
+<li><b>Deserts burned.</b> In the first national test, sparse rangeland and bare ground burned 4 000–6 000 ha in the Thar and Sindh. Fuel-continuity thresholds were added (Ch. 6): NDVI under 0.10 does not burn, bare ground needs NDVI of at least 0.20.</li>
+<li><b>Weather service timeouts.</b> Open-Meteo timed out from the server for several minutes during development. A 6 s connect timeout and the MET Norway fallback were added (Ch. 13); the fallback cannot supply history, which is reported in the run metadata.</li>
+<li><b>Invented coefficient.</b> A draft of the rain-wetting code multiplied the 1 h class by 3 without a source. It was removed before the first run so that the wetting term matches the documented WRF-SFIRE form.</li>
+<li><b>Canvas layer not refreshing.</b> The map's canvas source does not re-read a changing canvas unless it is playing; the viewer now starts the source for each repaint and stops it shortly after.</li>
+<li><b>Fire ellipse too elongated.</b> The length-to-breadth formula took the effective wind in mph while Anderson's coefficients are per m/s; the exponent was about 2.2 times too large, giving very elongated fires. FIRELAB's review notes (9 October) describe the same bug in its own code. Found on 24 October while reading <code>pkfire/vendor/rothermel.py</code> against the PAKFIRE kernels, and fixed in both solvers. All numbers produced before this fix are superseded.</li>
+<li><b>Spread axis chased spot fires.</b> Seen in the first real screenshot: the head-of-fire path used every burned cell, so a spot fire landing kilometres away dragged the path (and the camera) across the map. Now only the connected main fire is used and the path is smoothed (Ch. 20.4).</li>
+<li><b>Extruded flames looked like blocks.</b> Replaced by flame sprites (Ch. 20.3); the first replacement drew a new gradient per sprite per frame and crashed the headless browser, so the final version stamps one pre-rendered bitmap.</li>
+<li><b>Smoke a grey slab.</b> The first smoke heat map covered the terrain with an opaque cloud; its radius, intensity and opacity were reduced. (The version before that was invisible.)</li>
+<li><b>Timeline card hid the fire.</b> In the embedded pane the chart and card covered most of the scene; compact mode and map padding fixed it.</li>
+<li><b>Test harness bug.</b> The browser smoke test waited for <code>window.S</code>, but the scene's state object is a top-level <code>const</code> and is not a window property; the test now checks <code>typeof S</code>.</li>
+<li><b>Calibration chased over-prediction.</b> The first objective (mean IoU only) rewarded burning too much area; the corrected objective also penalises area and timing error, which changed the fitted rates and reduced the held-back area ratio from 2.3 to 1.5.</li>
+<li><b>Scoring chain ordered wrongly.</b> A batch chain that scored a calibration before its file had been copied would have silently scored the uncalibrated model; it was stopped and restarted in the right order, and the comparison tool prints the set names so such a mismatch shows.</li>
+<li><b>Timing score included the seeds.</b> The first-overpass detections that seed the simulation were included in the timing error, which made it zero by construction for them; they are now excluded.</li>
+<li><b>Duplicate downloader.</b> Two copies of the satellite downloader ran together after an edit, one with an invalid 10-day request; the stale one was stopped by process id.</li>
+<li><b>Environment constraints.</b> The pystac libraries could not be installed on the external drive (no chmod) or by upgrading the shared SAILAB environment (not touched); they live in <code>~/fire_pylib</code>, used through <code>PYTHONPATH</code>.</li>
+<li><b>Variable name clash in the wind solver.</b> The conjugate-gradient step size and the solver's weighting parameter were both called <code>alpha</code>, so the velocities were rebuilt with the wrong weight and the leftover divergence was 10<sup>4</sup> times too large; found because the divergence check failed after a harmless-looking edit.</li>
+<li><b>Calibration applied to typed weather.</b> A calibrated run on manual weather burned 20 times the uncalibrated area (25,000 against 1,200 ha in Kaghan) because the moisture multiplier, fitted with the wind multiplier on archive weather, was applied without it; both are now skipped for typed weather.</li>
+<li><b>Tests that no longer matched the corrected physics.</b> The first full run of the physics tests failed three: the still-air test used a fuel too slow to reach its probe cells in the run time (a test bug; the arrival times were in fact exactly symmetric); the rain test asked for a larger wetting than the documented WRF-SFIRE rate gives (4 h of 3 mm/h raises 1 h moisture only from 3.2 % to 5.1 %, which is slow for fine fuels and worth comparing with observations); and the spotting test passed before the ellipse correction but now fails because the TL8 fire peaks at 767 kW/m, below the 800 kW/m spotting threshold. The tests now use a stronger fire and also check that the break holds without embers and that a weak TU1 fire (never above about 500 kW/m, even at 25 m/s) never spots. This shows that spot fires essentially never occur in the model's low-elevation forest fuel.</li>
+<li><b>Draw properties lost in styling.</b> Mapbox Draw exposes a feature property to its style as <code>user_&lt;name&gt;</code>; the first version of the dashboard stored the role as <code>user_kind</code>, which would have been styled as <code>user_user_kind</code> and left every drawn area orange. The role is stored as <code>kind</code>, and the role of a feature drawn with a built-in toolbar button is now inferred from its geometry instead of from the last button clicked.</li>
+<li><b>Fuel break hopped.</b> Designing the breaks showed that a one-cell line can be crossed by the 16-neighbour solver's knight moves (two cells in one direction). Breaks are applied at least three cells wide (Ch. 16.4); the physics tests had used three-cell barriers for the same reason.</li>
+<li><b>Ignition inside a fuel break.</b> A break or treatment drawn over the ignition would have made the ignition cell non-burnable and the fire silently not spread. The run now drops ignitions that fall on removed fuel and refuses with a message if none remain.</li>
+<li><b>Old runs broke the summary.</b> Runs saved before the rebuild lack the newer metadata fields and made the summary route fail (HTTP 500). They were deleted; the application does not migrate old runs.</li>
+<li><b>Hidden overwrite.</b> Updating the project folder replaced <code>web/index.html</code> and the earlier tests; PAKFIRE's page moved to <code>web/pk/</code> and its tests to <code>tests/pk/</code>, and the old root-level files were left in place only until the rebuild was complete.</li>
+</ol>
+
+<h1 class="chapter" id="c25">25. Considered and declined</h1>
+<table>
+<tr><th style="width:30%">Idea</th><th>Decision</th></tr>
+<tr><td>Thermal governor that pauses jobs when the server is hot</td><td>Declined at the owner's instruction (23 October 2026); none is implemented.</td></tr>
+<tr><td>Cellular automaton instead of minimum travel time</td><td>Declined: a grid CA has strong direction bias; the 16-neighbour travel-time search is exact for the discretised problem and equally parallelisable.</td></tr>
+<tr><td>Re-implementing Rothermel for PAKFIRE</td><td>Declined: the verified FIRELAB module is reused to keep one source of truth.</td></tr>
+<tr><td>Crown fire</td><td>Built (Ch. 10.2) with assumed canopy values, because canopy base height, bulk density and foliar moisture do not exist for Pakistan; not validated. A variant using the measured Meta/WRI canopy height (Ch. 10.3) changed 41 of 1,464 events and no score, and is off.</td></tr>
+<tr><td>WindNinja for terrain wind</td><td>Not usable: only the Windows build (a 480 MB install, a 186 MB installer and its zip) was on the server, so all three were deleted and the method rebuilt from scratch for the GPU (Ch. 5.6). FIRELAB's <code>windninja_library.py</code> (now in the legacy archive) expects that executable and no longer runs.</td></tr>
+<tr><td>FABDEM terrain</td><td>Declined: non-commercial licence (CC BY-NC-SA 4.0).</td></tr>
+<tr><td>Pre-clipped national grids</td><td>Declined: windowed reads from the national rasters are quick enough (2–4 s) and avoid a multi-terabyte product.</td></tr>
+</table>
+
+<h1 class="chapter" id="c26">26. Known limitations</h1>
+<ul>
+<li><b>Validated only against satellite proxies.</b> The truths are VIIRS hotspot footprints (low-biased) and MODIS burned area (500 m, misses small fires); no field-surveyed perimeters or incident times were available, and the crop-stubble and rangeland events dominate the sample (Ch. 23).</li>
+<li><b>Calibrated against satellite fires but with no shape or direction skill over a circle on held-back events</b> (Ch. 23): burned-area size is roughly right (2–3× over), position and shape are not reliable. Do not use for operational decisions.</li>
+<li><b>Fuel crosswalk is a judgement.</b> It maps land cover to fuel models with NDVI thresholds; no Pakistani fuel inventory was used. Forest below 1000 m (TU1) spreads very slowly; forest above 1000 m is treated as long-needle litter regardless of species.</li>
+<li><b>Terrain wind is a diagnostic model.</b> The mass-conserving field (Ch. 5.6) captures speed-up over ridges and deflection around hills, not thermal slope and valley winds, stability, or lee separation; its α parameter was tuned to linear theory on an ideal hill; it uses one wind direction per run; the weather wind is otherwise uniform over the window. Canopy sheltering is a fixed factor per fuel.</li>
+<li><b>Live moisture is one number per window</b> derived from mean NDVI, not a per-cell measurement.</li>
+<li><b>Dead moisture has no terrain or shading effect</b> and the 100 h class is only partly conditioned by 48 h of history.</li>
+<li><b>Spotting is a heuristic</b> and absent in grass and crops; settlements are not fuel but can be crossed by embers only in forest fuels.</li>
+<li><b>Settlements:</b> built-up area comes from a 10 m land-cover class that misses informal housing.</li>
+<li><b>No suppression, roads or firebreaks</b> other than non-fuel land cover.</li>
+<li><b>Window edge:</b> a fire that reaches the edge of the window is truncated; the viewer says so.</li>
+<li><b>Coverage:</b> NDVI composites end on 14 April 2026, so the seasonal match for later dates uses the previous year's composite.</li>
+<li><b>Weather corrections apply to model weather only.</b> The wind (0.6) and moisture (0.5) multipliers were fitted together on archive weather, so they are not applied when the user types in the weather; rate multipliers and the terrain wind are. A run on typed weather therefore differs from a run on model weather more than the calibration alone suggests.</li>
+<li><b>Calibrated rates compensate for structure.</b> The wind (0.6) and moisture (0.5) multipliers sit near the low ends of their search ranges, which indicates unmodelled processes rather than true values; changing the weather source or resolution would need a refit.</li>
+<li><b>Crown fire uses assumed canopy values</b> (CBH 3 m, CBD 0.10 kg/m³, FMC 100 %) and is not validated; it can switch on at 20 m/s wind and produce 200 m/min spread. Canopy <i>height</i> is now available nationally (Ch. 10.3) but base height and bulk density are still derived from it by assumed ratios, and the option is off.</li>
+<li><b>Spotting parameters</b> (ember rate, 0.35 distance fraction) are assumptions; with the sampled events no accuracy effect of spotting could be shown.</li>
+<li><b>Forest spread looks too slow.</b> A 12 h run in Margalla forest with 10 m/s wind, 12 % humidity and 38 °C burned only 57 ha (peak 21 m/min), far less than real fires there, which reach hundreds of hectares. This follows from the fuel crosswalk (TU1 below 1000 m has a no-wind rate of 0.08 m/min, Ch. 4.3) and is the first thing validation should test.</li>
+<li><b>Ensemble widths</b> are assumed, not fitted.</li>
+<li><b>GPU is not faster for a single run</b> (Ch. 9.4).</li>
+<li><b>Interface partly reviewed.</b> The main page and the 3D scene were reviewed in screenshots on 24 October (Ch. 22), but the smoke layer, the 2D overlays and the instant footprint, the monitor's automatic scenarios and the PDF report of a real (not synthetic) run have not been exercised. The single run, ensemble and mitigation jobs were used by the owner without server errors.</li>
+<li><b>Flames are drawn from the physical length and tilt formulas but are not a flame simulation</b> (no flame depth, radiation or plume dynamics); the optional size multiplier and the smoke are visual cues.</li>
+<li><b>Satellite detections</b> are 375 m thermal anomalies at overpass times and include flares, kilns and small burns; the monitor does not screen them.</li>
+<li><b>Mitigation effect sizes</b> (continuity factors, break widths) are user assumptions, not measured treatment performance; breaks are applied at least three cells wide.</li>
+<li><b>One job at a time:</b> monitor-triggered scenarios and user runs share a queue, and cancellation acts between stages, not during the solve.</li>
+</ul>
+
+<h1 class="chapter" id="c27">27. Operations and testing</h1>
+<h3>27.1 Running</h3>
+<div class="formula">cd "/mnt/external-ssd/DGX SHARED/Iliyan/Fire Simulation Model"
+~/flood/venv/bin/python -m pkfire.app          # http://&lt;host&gt;:8020/   (FIRE_PORT to change)
+~/flood/venv/bin/python -m pytest tests/pk -q  # PAKFIRE tests</div>
+<p>The Python environment is the SAILAB virtual environment (<code>~/flood/venv</code>: NumPy, Numba, CuPy 14, rasterio, GeoPandas, Flask). Secrets stay in <code>.secrets/</code> (<code>mapbox_token</code>, <code>firms_map_key</code>) and are inserted server side; they are not committed. Output goes to <code>data/runs/</code>, weather cache to <code>data/raw/weather/</code>.</p>
+<h3>27.2 Resources</h3>
+<p>The scene is a few tens of megabytes of arrays (a 2400 × 2400 grid has 5.8 million cells); a run writes 5–13 MB. The GPU is used for the solve only. There is no throttling of any kind. Large raster jobs on the external data drive should use few parallel readers: on 31 October ten parallel readers of the canopy tiles dropped the shared drive to about 1 MB/s for a while, and the job finished with three.</p>
+<h3>27.3 Tests</h3>
+<p><code>tests/pk/test_routes.py</code> covers the routes (Ch. 22). <code>tests/pk/test_pkfire.py</code> covers the physics behaviours and the GPU/CPU equality (Ch. 22). <code>tools/viewer_test.js</code> (Node, stubbed map; <code>node tools/viewer_test.js &lt;run_id&gt;</code>) tests the 3D scene script; <code>tools/make_synth_run.py</code> writes a synthetic run in the real file format for testing routes and the viewer without simulating; <code>tools/smoke.py</code> is a headless-browser test written for the new page (loads it, sets an ignition, opens a run's 3D scene, scrubs, screenshots and lists console errors); it has <b>not been run</b> because it needs a Playwright browser build matching the installed package (or <code>CHROME=</code> pointing to one) and is a heavy job deferred on the owner's instruction. The Margalla tests under <code>tests/</code> belong to FIRELAB.</p>
+
+<h1 class="chapter" id="c28">28. Roadmap</h1>
+<ol>
+<li>Interface review: done 28 October 2026 (<code>tools/ui_review.py</code>; Ch. 20.6). Remaining: a review on real GPU hardware and a real phone.</li>
+<li>Improve shape skill beyond what Ch. 23 achieved: terrain wind with thermal slope and valley winds (the Ch. 5.6 model is mechanical only), for example a downscaled reanalysis such as ERA5-Land at 9 km blended with local observations, canopy base height and bulk density (canopy height is now available, Ch. 10.3, but the derived crown fuels gave no gain), per-cell live moisture, field boundaries for crop fires, and surveyed perimeters and ignition times to replace satellite proxies; re-validate with more MODIS-mapped test events (only 16 held back) and a held-back region.</li>
+<li>Batched GPU ensemble (members as an extra array dimension) so that the GPU wins where it should.</li>
+<li>Real canopy base height and bulk density (crown fire uses assumed values; the Meta/WRI canopy height map, Ch. 10.3, is in the system but only gives height), local wind observations or a high-resolution weather model (WRF-SFIRE, run for case studies and fed to PAKFIRE as the wind), real fire perimeters, and an official fire-station list.</li>
+<li>Per-cell live moisture from a satellite index and national terrain-adjusted wind.</li>
+<li>Post-fire link to SAILAB and LANDLAB: burned area as a runoff and debris-flow input.</li>
+<li>Evacuation and access: route over <code>pk.roads</code> from the nearest fire station to the fire and from settlements to safety, using the arrival raster as a time-varying blockage; needs an official station list for meaningful response times.</li>
+<li>Drone/field hot-spot layers, firefighting resources and suppression, as in the reference video, once data exist.</li>
+</ol>
+
+<h1 class="chapter" id="c29">29. References</h1>
+<ul>
+<li>Albini, F.A. (1976). Computer-based models of wildland fire behavior: a user's manual. USDA Forest Service.</li>
+<li>Anderson, H.E. (1969). Heat transfer and fire spread. USDA Forest Service Research Paper INT-69.</li>
+<li>Anderson, H.E. (1982). Aids to determining fuel models for estimating fire behavior. INT-122.</li>
+<li>Anderson, H.E. (1983). Predicting wind-driven wildland fire size and shape. INT-305.</li>
+<li>Andrews, P.L. (2012). Modeling wind adjustment factor and midflame wind speed for Rothermel's surface fire spread model. RMRS-GTR-266.</li>
+<li>Byram, G.M. (1959). Combustion of forest fuels. In Forest Fire: Control and Use.</li>
+<li>Finney, M.A. (2002). Fire growth using minimum travel time methods. Canadian Journal of Forest Research 32, 1420–1424.</li>
+<li>Richards, G.D. (1990). An elliptical growth model of forest fire fronts and its numerical solution. International Journal for Numerical Methods in Engineering 30, 1163–1179.</li>
+<li>Rothermel, R.C. (1972). A mathematical model for predicting fire spread in wildland fuels. USDA Forest Service Research Paper INT-115.</li>
+<li>Scott, J.H., Burgan, R.E. (2005). Standard fire behavior fuel models. RMRS-GTR-153.</li>
+<li>Simard, A.J. (1968). The moisture content of forest fuels. Canadian Forestry Branch Information Report FF-X-14.</li>
+<li>Van Wagner, C.E. (1977). Conditions for the start and spread of crown fire. Canadian Journal of Forest Research 7, 23–34 (used in the engine, Ch. 10.2).</li>
+<li>WRF-SFIRE fuel-moisture model, <code>module_fr_fire_phys.F</code> (<code>advance_moisture</code>), as adopted in FIRELAB's <code>docs/background/accuracy_improvements.md</code>.</li>
+<li>Karra, K. et al. (2021). Global land use / land cover with Sentinel-2 and deep learning (ESRI 10 m land cover). IGARSS.</li>
+<li>Tolan, J. et al. (2024). Very high resolution canopy height maps from RGB imagery using self-supervised vision transformer and convolutional decoder trained on aerial lidar. Remote Sensing of Environment 300, 113888 (method paper of the Meta canopy height map used in Ch. 10.3; the map is distributed through the WRI Land &amp; Carbon Lab data explorer).</li>
+<li>Farr, T.G. et al. (2007). The Shuttle Radar Topography Mission. Reviews of Geophysics 45.</li>
+<li>Schroeder, W. et al. (2014). The new VIIRS 375 m active fire detection data product. Remote Sensing of Environment 143, 85–96.</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,3 @@
+informal_settlements_2025.gpkg: polygons present in 2025 (status 0 = unchanged since 2010, 2 = new in 2025) for Karachi and Lahore,
+from VHR-GSIS (Zenodo record 18606153, https://zenodo.org/records/18606153, CC BY 4.0, InformalSettlementsMappingShp.zip), reprojected to EPSG:4326 and simplified.
+Pakistan has no other open informal-settlement map found (World Bank/ESA EO4SD-Urban Karachi 2017 layer is a coarser alternative).

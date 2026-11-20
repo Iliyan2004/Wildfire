@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PAKFIRE Instant</title>
+<meta name="description" content="Pick a place in Pakistan and a weather scenario; see where a wildfire would spread, on the map, in about a second.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23000'/%3E%3Cpath d='M16 3c1 5 6 7 6 14a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 2 3 4 1-3 1-6 1-11z' fill='%23ff6a2b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100,400;100,600;100,800&family=Archivo+Narrow:wght@500;600&display=swap">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet">
+<style>
+  :root {
+    --ink: #f4ece6; --muted: #b9a79a; --ember: #ff6a2b; --ember-2: #f0451b; --ember-deep: #a33c14; --bg: #0a0705;
+    --glass: rgba(18, 11, 8, .84); --line: rgba(255, 106, 43, .24); --warn: #f5a742;
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif; --text: "Archivo Narrow", "Arial Narrow", Arial, sans-serif;
+  }
+  :root[data-theme="light"] {
+    --ink: #2a1a12; --muted: #6e5a4d; --bg: #f3ece6; --glass: rgba(255, 252, 249, .9); --line: rgba(163, 60, 20, .28); --ember: #d4440f; --ember-2: #b93a0b;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; overflow: hidden; }
+  #map { position: fixed; inset: 0; }
+  .glass { background: var(--glass); -webkit-backdrop-filter: blur(12px) saturate(1.3); backdrop-filter: blur(12px) saturate(1.3); border: 1px solid var(--line); box-shadow: 0 10px 36px rgba(0, 0, 0, .5); }
+  #bar { position: fixed; z-index: 10; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 14px; }
+  .brand { font-family: var(--display); font-weight: 800; font-stretch: 110%; letter-spacing: .12em; text-decoration: none; color: var(--ink); padding: 0 6px; }
+  .pill { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: #1a0803; background: var(--ember); border-radius: 999px; padding: 3px 10px; font-weight: 600; }
+  .searchbox { position: relative; flex: 1; min-width: 120px; max-width: 460px; }
+  input[type=text], select { width: 100%; background: rgba(10, 5, 3, .55); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font: inherit; }
+  :root[data-theme="light"] input[type=text], :root[data-theme="light"] select { background: #fff; }
+  input[type=range] { width: 100%; accent-color: var(--ember); }
+  :focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; font: inherit; letter-spacing: .04em; cursor: pointer; text-decoration: none; }
+  .btn:hover { border-color: var(--ember); color: var(--ember); }
+  .btn.on { background: var(--ember); color: #1a0803; border-color: var(--ember); }
+  .btn.primary { background: linear-gradient(135deg, var(--ember), var(--ember-2)); color: #1a0803; border: 0; font-family: var(--display); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: 11px 18px; justify-content: center; }
+  .spacer { margin-left: auto; display: flex; gap: 8px; }
+  .hits { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0; background: var(--glass); border: 1px solid var(--line); border-radius: 12px; max-height: 300px; overflow-y: auto; display: none; }
+  .hits.open { display: block; }
+  .hits button { display: block; width: 100%; text-align: left; background: none; border: 0; color: var(--ink); padding: 8px 12px; font: inherit; cursor: pointer; }
+  .hits button small { display: block; color: var(--muted); }
+  .hits button:hover, .hits button:focus-visible { background: rgba(255, 106, 43, .14); outline: none; }
+  #welcome { position: fixed; z-index: 30; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(6, 3, 2, .6); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
+  #welcome .card { position: relative; width: min(860px, 100%); display: grid; grid-template-columns: 1fr 1fr; border-radius: 22px; overflow: hidden; }
+  #welcome .left { padding: 30px; background: linear-gradient(160deg, #4a1a09 0%, #2a0f06 60%, #140805 100%); color: #f4ece6; }
+  #welcome .left h1 { margin: 0 0 18px; font-family: var(--display); font-weight: 900; font-stretch: 110%; letter-spacing: .08em; font-size: 2rem; }
+  #welcome .left li { list-style: none; margin: 0 0 14px; line-height: 1.4; color: rgba(244, 236, 230, .88); }
+  #welcome .left li b { display: block; color: #fff; font-size: 1.05rem; }
+  #welcome ul { padding: 0; margin: 0; }
+  #welcome .right { padding: 30px; background: #fbf5f0; color: #2a1a12; }
+  #welcome .right h2 { margin: 0 0 16px; font-family: var(--display); font-weight: 800; font-size: 1.7rem; line-height: 1.15; }
+  #welcome .right h2 em { font-style: normal; color: #d4440f; }
+  #welcome label { display: block; font-weight: 600; margin: 10px 0 6px; }
+  #welcome input[type=text] { background: #fff; color: #2a1a12; border: 1px solid #dcc6b8; }
+  #welcome .hits { background: #fff; border-color: #dcc6b8; } #welcome .hits button { color: #2a1a12; } #welcome .hits button small { color: #7a665a; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { background: transparent; color: var(--ink); border: 1.5px solid var(--line); border-radius: 10px; padding: 7px 11px; font: inherit; font-weight: 600; cursor: pointer; }
+  .chip.on { background: var(--ember); color: #1a0803; border-color: var(--ember); }
+  #welcome .chip { background: #fff; color: #2a1a12; border-color: #dcc6b8; } #welcome .chip.on { background: #d4440f; color: #fff; border-color: #d4440f; }
+  #welcome .go { width: 100%; margin-top: 16px; } #welcome .hint { font-size: .85rem; color: #7a665a; margin: 10px 0 0; }
+  #welcome .close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 10px; border: 1px solid #dcc6b8; background: #fff; color: #2a1a12; font-size: 18px; cursor: pointer; }
+  #panel { position: fixed; z-index: 9; right: 10px; top: 70px; width: 330px; max-height: calc(100vh - 90px); overflow-y: auto; border-radius: 18px; padding: 16px 18px; }
+  #panel h3 { margin: 0 0 2px; font-family: var(--display); font-weight: 800; letter-spacing: .04em; font-size: 1.05rem; }
+  #panel .sub { color: var(--muted); font-size: .85rem; margin-bottom: 12px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; margin: 12px 0 4px; } .row label { color: var(--muted); } .row b { font-variant-numeric: tabular-nums; }
+  .stats { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .stat { display: flex; justify-content: space-between; padding: 5px 0; font-size: .95rem; } .stat span { color: var(--muted); } .stat strong { font-variant-numeric: tabular-nums; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+  #sNote, #sBasis { font-size: .8rem; color: var(--muted); line-height: 1.45; margin: 8px 0 0; }
+  #sErr { color: #ff7b6b; font-size: .9rem; margin-top: 8px; }
+  #busy { position: fixed; z-index: 12; left: 50%; top: 70px; transform: translateX(-50%); padding: 7px 16px; border-radius: 999px; display: none; font-size: .9rem; }
+  #busy.on { display: block; }
+  #legend { position: fixed; z-index: 8; left: 10px; bottom: 24px; padding: 10px 14px; border-radius: 14px; font-size: .85rem; }
+  #legend div { margin: 3px 0; }
+  .dir { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; transition: transform .2s; }
+  .ign { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, #fff3c4 0%, #ff8a2b 45%, rgba(255, 106, 43, 0) 72%); box-shadow: 0 0 18px 6px rgba(255, 106, 43, .55); animation: ignp 1.4s ease-in-out infinite; }
+  @keyframes ignp { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+  @media (max-width: 760px) { #welcome .card { grid-template-columns: 1fr; } #welcome .left { display: none; } #panel { left: 10px; right: 10px; top: auto; bottom: 10px; width: auto; max-height: 52vh; } #legend { display: none; } #bar .pill { display: none; } }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="bar" class="glass">
+  <a class="brand" href="/" title="Back to the PAKFIRE start page">PAKFIRE</a><span class="pill">Instant</span>
+  <div class="searchbox"><input type="text" id="barSearch" placeholder="Search a district or place in Pakistan" autocomplete="off" aria-label="Search a district or place"><div class="hits" id="barHits"></div></div>
+  <div class="spacer">
+    <button class="btn" id="satBtn" title="Satellite imagery">Satellite</button>
+    <button class="btn" id="threeD" title="Tilt the map and show terrain relief">3D</button>
+    <button class="btn" id="themeToggle" title="Switch between dark and light mode" aria-label="Switch between dark and light mode">&#9680;</button>
+    <a class="btn" id="fullLink" href="/app" title="The full physical fire model">Full model &rarr;</a>
+  </div>
+</div>
+<div id="busy" class="glass">Simulating...</div>
+
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="wtitle">
+  <div class="card glass">
+    <button class="close" id="wclose" aria-label="Close and explore the map">&times;</button>
+    <div class="left"><h1>PAKFIRE<br>Instant</h1><ul>
+      <li><b>About a second</b>A real fire-spread simulation of a 24 km window, contoured at 1, 3 and 6 hours.</li>
+      <li><b>Your weather</b>Pick a scenario or set the wind, direction and humidity yourself.</li>
+      <li><b>Anywhere in Pakistan</b>Click the map to place the fire; move it and the answer updates.</li></ul></div>
+    <div class="right"><h2 id="wtitle">See where a fire<br>would <em>spread</em></h2>
+      <label for="wSearch">Enter your location</label>
+      <div class="searchbox" style="max-width:none"><input type="text" id="wSearch" placeholder="Search a district or place, e.g. Murree" autocomplete="off"><div class="hits" id="wHits"></div></div>
+      <label>Choose a scenario</label>
+      <div class="chips" id="wChips"></div>
+      <button class="btn primary go" id="wGo">Show fire spread</button>
+      <p class="hint">Or close this card and click anywhere on the map.</p></div>
+  </div>
+</div>
+
+<div id="panel" class="glass">
+  <h3 id="pTitle">Your fire</h3><div class="sub" id="pSub">Click the map to place the ignition.</div>
+  <div class="chips" id="pChips"></div>
+  <div class="row"><label for="ws">Wind speed</label><b><span id="wsV">8</span> m/s</b></div>
+  <input type="range" id="ws" min="0" max="25" step="0.5" value="8" aria-label="Wind speed in metres per second">
+  <div class="row"><label for="wd">Wind from</label><b><svg class="dir" id="dirIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V5M6 11l6-6 6 6"/></svg> <span id="wdV">270</span>&deg;</b></div>
+  <input type="range" id="wd" min="0" max="359" step="5" value="270" aria-label="Wind direction in degrees">
+  <div class="row"><label for="rh">Humidity</label><b><span id="rhV">25</span> %</b></div>
+  <input type="range" id="rh" min="5" max="90" step="1" value="25" aria-label="Relative humidity in percent">
+  <div class="row"><label for="hrs">Duration</label><select id="hrs" style="width:auto"><option value="3">3 hours</option><option value="6" selected>6 hours</option><option value="12">12 hours</option></select></div>
+  <div class="stats" id="stats"><div class="stat"><span>Burned area</span><strong>&ndash;</strong></div></div>
+  <div id="sErr"></div>
+  <p id="sNote"></p>
+  <a class="btn primary" id="fullLink2" href="/app" style="margin-top:12px;display:flex">Run the full model here</a>
+</div>
+<div id="legend" class="glass"><b>Fire front after</b><div><span class="sw" style="background:#ffd24a"></span>1 hour</div><div><span class="sw" style="background:#ff6a2b"></span>3 hours</div><div><span class="sw" style="background:#e0431c"></span>6-12 hours</div></div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<script>
+mapboxgl.accessToken = "__MAPBOX_TOKEN__";
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 0) => x == null || isNaN(x) ? "-" : Number(x).toLocaleString(undefined, { maximumFractionDigits: d });
+const SCEN = {
+  calm:    { label: "Calm",         ws: 2,  rh: 45, temp: 28 },
+  breezy:  { label: "Breezy",       ws: 6,  rh: 30, temp: 32 },
+  strong:  { label: "Strong wind",  ws: 12, rh: 18, temp: 36 },
+  extreme: { label: "Extreme, dry", ws: 18, rh: 10, temp: 40 },
+};
+let scen = "breezy", ign = null, seq = 0, timer = null, marker = null;
+
+// ---- theme, basemap, map
+(function () { let t = "dark"; try { t = localStorage.getItem("pakfireTheme") || "dark"; } catch (e) {} document.documentElement.setAttribute("data-theme", t); })();
+$("themeToggle").onclick = () => { const t = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light"; document.documentElement.setAttribute("data-theme", t); try { localStorage.setItem("pakfireTheme", t); } catch (e) {} };
+const map = new mapboxgl.Map({ container: "map", style: "mapbox://styles/mapbox/dark-v11", center: [72.5, 31.5], zoom: 5.2, projection: "globe", preserveDrawingBuffer: true });
+map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+map.on("style.load", () => {
+  map.setFog({ color: "rgb(10,16,22)", "high-color": "rgb(20,30,45)", "space-color": "rgb(4,6,10)", "star-intensity": .4 });
+  if (!map.getSource("sat")) { map.addSource("sat", { type: "raster", tileSize: 512, tiles: [`https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/512/{z}/{x}/{y}?access_token=${mapboxgl.accessToken}`] }); map.addLayer({ id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } }); }
+});
+let sat = false;
+$("satBtn").onclick = () => { sat = !sat; map.setLayoutProperty("sat", "visibility", sat ? "visible" : "none"); $("satBtn").classList.toggle("on", sat); };
+let tilt = false;
+$("threeD").onclick = () => { tilt = !tilt; $("threeD").classList.toggle("on", tilt); map.easeTo({ pitch: tilt ? 62 : 0, duration: 700 });
+  if (tilt && !map.getSource("dem")) { map.addSource("dem", { type: "raster-dem", url: "mapbox://mapbox.mapbox-terrain-dem-v1", tileSize: 512, maxzoom: 14 }); }
+  map.setTerrain(tilt ? { source: "dem", exaggeration: 1.4 } : null); };
+
+// ---- scenarios and controls
+function chips(el, onPick) {
+  el.innerHTML = Object.entries(SCEN).map(([k, s]) => `<button class="chip${k === scen ? " on" : ""}" data-s="${k}">${s.label}</button>`).join("") + `<button class="chip" data-s="live" title="Use the current weather forecast for the place">Live weather</button>`;
+  el.onclick = e => { const b = e.target.closest(".chip"); if (b) onPick(b.dataset.s); };
+}
+function pick(k) {
+  scen = k;
+  document.querySelectorAll("#wChips .chip, #pChips .chip").forEach(b => b.classList.toggle("on", b.dataset.s === k));
+  if (SCEN[k]) { $("ws").value = SCEN[k].ws; $("rh").value = SCEN[k].rh; sync(); }
+  schedule();
+}
+chips($("wChips"), pick); chips($("pChips"), pick);
+function sync() {
+  $("wsV").textContent = $("ws").value; $("wdV").textContent = $("wd").value; $("rhV").textContent = $("rh").value;
+  $("dirIcon").style.transform = `rotate(${(+$("wd").value + 180) % 360}deg)`;           // the arrow shows where the wind blows to
+}
+["ws", "wd", "rh"].forEach(id => $(id).addEventListener("input", () => { sync(); if (!["live"].includes(scen)) { scen = "custom"; document.querySelectorAll("#pChips .chip").forEach(b => b.classList.remove("on")); } schedule(); }));
+$("hrs").onchange = schedule;
+sync();
+
+// ---- the simulation
+function schedule() { clearTimeout(timer); timer = setTimeout(compute, 350); }
+async function compute() {
+  if (!ign) return;
+  const my = ++seq; $("busy").classList.add("on"); $("sErr").textContent = "";
+  const body = { lat: ign[1], lon: ign[0], hours: +$("hrs").value };
+  if (scen !== "live") body.wind = { speed_ms: +$("ws").value, from_deg: +$("wd").value, temp_c: (SCEN[scen] || SCEN.breezy).temp, rh: +$("rh").value };
+  let j, ok = false;
+  try { const r = await fetch("/area/instant-footprint", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); ok = r.ok; j = await r.json(); }
+  catch (e) { j = { error: "The server did not answer." }; }
+  if (my !== seq) return;
+  $("busy").classList.remove("on");
+  if (!ok) { $("sErr").textContent = j.error || "Could not simulate this place."; return; }
+  draw(j);
+}
+function draw(j) {
+  ["inst-fill", "inst-line"].forEach(l => map.getLayer(l) && map.removeLayer(l)); map.getSource("inst") && map.removeSource("inst");
+  const feats = j.features.slice().sort((a, b) => b.properties.t_h - a.properties.t_h);
+  map.addSource("inst", { type: "geojson", data: { type: "FeatureCollection", features: feats } });
+  map.addLayer({ id: "inst-fill", type: "fill", source: "inst", paint: { "fill-color": ["interpolate", ["linear"], ["get", "t_h"], 1, "#ffb43b", 3, "#ff6a2b", 12, "#c8321c"], "fill-opacity": .24 } });
+  map.addLayer({ id: "inst-line", type: "line", source: "inst", paint: { "line-color": ["interpolate", ["linear"], ["get", "t_h"], 1, "#ffd24a", 3, "#ff6a2b", 12, "#e0431c"], "line-width": 2.4 } });
+  const w = j.weather;
+  $("stats").innerHTML = j.features.map(f => `<div class="stat"><span>After ${f.properties.t_h} h</span><strong>${fmt(f.properties.area_ha)} ha</strong></div>`).join("") +
+    `<div class="stat"><span>Head spread at ignition</span><strong>${fmt(j.head_ros_m_min, 1)} m/min</strong></div>` +
+    `<div class="stat"><span>Weather used</span><strong>${w.wind} m/s from ${w.wdir}&deg;</strong></div>` +
+    `<div class="stat"><span>Air / humidity / 1 h fuel</span><strong>${w.temp} &deg;C / ${w.rh}% / ${w.dead1h}%</strong></div>`;
+  $("sNote").textContent = j.note;
+  $("pSub").textContent = `${ign[1].toFixed(4)}°N ${ign[0].toFixed(4)}°E`;
+  const b = new mapboxgl.LngLatBounds(); feats.forEach(f => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).forEach(p => p[0].forEach(c => b.extend(c))));
+  if (!b.isEmpty()) map.fitBounds(b, { padding: { top: 100, bottom: 80, left: 60, right: 380 }, maxZoom: 13, duration: 900 });
+}
+function setIgnition(lon, lat, fly) {
+  ign = [lon, lat];
+  if (!marker) { const el = document.createElement("div"); el.className = "ign"; marker = new mapboxgl.Marker({ element: el }).setLngLat(ign).addTo(map); } else marker.setLngLat(ign);
+  const h = `#ign=${lon.toFixed(5)},${lat.toFixed(5)}&h=${$("hrs").value}`; history.replaceState(null, "", h);
+  $("fullLink").href = $("fullLink2").href = "/app" + h;
+  $("pTitle").textContent = "Your fire";
+  if (fly) map.flyTo({ center: ign, zoom: 11, duration: 1200 });
+  schedule();
+}
+map.on("click", e => { closeWelcome(); setIgnition(e.lngLat.lng, e.lngLat.lat, false); });
+map.on("load", () => { const m = location.hash.match(/ign=([\d.]+),([\d.]+)/); if (m) { closeWelcome(); setIgnition(+m[1], +m[2], true); } });
+
+// ---- search (districts from the server, places from Mapbox)
+function search(input, hits, onSel) {
+  let deb = null;
+  input.addEventListener("input", () => {
+    clearTimeout(deb); const q = input.value.trim(); if (q.length < 2) { hits.classList.remove("open"); return; }
+    deb = setTimeout(async () => {
+      const [pl, di] = await Promise.all([
+        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?access_token=${encodeURIComponent(mapboxgl.accessToken)}&limit=4&bbox=60.87,23.63,77.84,37.13`).then(r => r.json()).catch(() => ({ features: [] })),
+        fetch(`/places/search?q=${encodeURIComponent(q)}`).then(r => r.json()).catch(() => ({ results: [] }))]);
+      const rows = (di.results || []).map(d => ({ name: d.name, sub: d.province + " (district)", idx: d.idx })).concat((pl.features || []).map(f => ({ name: f.text, sub: f.place_name, c: f.center })));
+      hits.innerHTML = rows.map((r, i) => `<button data-i="${i}">${r.name}<small>${r.sub}</small></button>`).join(""); hits.classList.toggle("open", rows.length > 0); hits._rows = rows;
+    }, 280);
+  });
+  hits.addEventListener("mousedown", async e => {
+    const b = e.target.closest("button"); if (!b) return; const r = hits._rows[+b.dataset.i]; hits.classList.remove("open"); input.value = r.name;
+    if (r.idx != null) { const g = (await (await fetch("/districts/" + r.idx)).json()).geometry; const ring = g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0];
+      const c = ring.reduce((a, p) => [a[0] + p[0] / ring.length, a[1] + p[1] / ring.length], [0, 0]); onSel(c[0], c[1]); } else onSel(r.c[0], r.c[1]);
+  });
+  document.addEventListener("click", e => { if (!e.target.closest(".searchbox")) hits.classList.remove("open"); });
+}
+search($("barSearch"), $("barHits"), (lo, la) => setIgnition(lo, la, true));
+let pendingPlace = null;
+search($("wSearch"), $("wHits"), (lo, la) => { pendingPlace = [lo, la]; });
+
+// ---- welcome card
+function closeWelcome() { $("welcome").style.display = "none"; }
+$("wclose").onclick = closeWelcome;
+$("wGo").onclick = () => { closeWelcome(); if (pendingPlace) setIgnition(pendingPlace[0], pendingPlace[1], true); else map.flyTo({ center: [73.06, 33.745], zoom: 9, duration: 1200 }); };
+</script>
+</body>
+</html>

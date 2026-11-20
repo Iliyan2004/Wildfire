@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PAKFIRE 3D</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/viewer/fire3d.css">
+</head>
+<body>
+<div id="map"></div>
+<canvas id="flameCanvas"></canvas>
+<canvas id="windCanvas"></canvas>
+<button id="fsBtn" title="Full screen">&#9974;</button>
+<div id="panel" class="glass">
+  <div class="ph">
+    <div class="t"><h1 id="title">Fire spread</h1><div class="sub" id="panelSub"></div></div>
+    <button class="iconbtn" id="resetBtn" title="Reset view">&#8634;</button>
+    <button class="iconbtn" id="collapseBtn" title="Collapse panel">&#8963;</button>
+  </div>
+  <div class="body">
+    <div id="modeSection">
+      <div class="sec" style="margin-top:0">What to show</div>
+      <div class="cards">
+        <button class="card c-fire active" data-mode="fire"><span>Fire over time</span></button>
+        <button class="card c-arr" data-mode="arrival"><span>Time of arrival</span></button>
+        <button class="card c-int" data-mode="intensity"><span>Fire intensity</span></button>
+        <button class="card c-prob" data-mode="prob" id="cardProb"><span>Burn probability</span></button>
+      </div>
+      <div class="legendbar" id="legendBar"></div>
+      <div class="legendlbl" id="legendLbl"></div>
+      <div class="legendnote" id="legendNote"></div>
+    </div>
+    <div class="sec">Map style</div>
+    <div class="tiles">
+      <button class="tile t-dark active" data-style="dark"><span>Dark</span></button>
+      <button class="tile t-light" data-style="light"><span>Light</span></button>
+      <button class="tile t-satellite" data-style="satellite"><span>Satellite</span></button>
+      <button class="tile t-streets" data-style="streets"><span>Streets</span></button>
+      <button class="tile t-terrain" data-style="terrain"><span>Terrain</span></button>
+      <button class="tile t-night" data-style="night"><span>Night</span></button>
+    </div>
+    <div class="sec">On the map</div>
+    <div class="pills">
+      <button class="pill on" id="pillTerrain">Terrain <span id="exagVal">1.4</span>&times;</button>
+      <button class="pill" id="pillLabels">Labels</button>
+      <button class="pill on" id="pillPath">Spread path</button>
+      <button class="pill on" id="pillSpots">Spot fires</button>
+      <button class="pill on" id="pillGlow">Flame glow</button>
+      <button class="pill on" id="pillCols">Flames</button>
+      <button class="pill" id="pillSmoke">Smoke</button>
+      <button class="pill" id="pillWind">Wind</button>
+    </div>
+    <details class="fine" id="fineBox">
+      <summary><span>Fine-tune fire and terrain</span><span id="fineSummary" style="color:var(--ink-2);font-weight:500"></span></summary>
+      <div class="in">
+        <div class="row">Terrain<input type="range" id="exagSlider" min="0.5" max="4" step="0.1" value="1.4"><output id="exagOut"></output></div>
+        <div class="row">Opacity<input type="range" id="opSlider" min="30" max="100" step="5" value="100"><output id="opOut"></output></div>
+        <div class="row">Flame size (1× = true scale)<input type="range" id="fhSlider" min="1" max="20" step="1" value="1"><output id="fhOut"></output></div>
+        <div class="row">Wind streaks<input type="range" id="partSlider" min="100" max="1500" step="50" value="500"><output id="partOut"></output></div>
+      </div>
+    </details>
+    <details class="fine" id="aboutBox">
+      <summary><span>Legend &amp; method</span></summary>
+      <div class="about" id="aboutText"></div>
+    </details>
+    <div class="hint">Right-drag (or Ctrl+drag) to rotate &amp; tilt &middot; scroll to zoom &middot; <b style="color:var(--ink)">click the map</b> to probe arrival time and intensity. Dragging the map stops the camera following the fire.</div>
+  </div>
+</div>
+<div id="clockChip" class="glass"><span id="chipIcon">&#9728;</span><span id="chipTime">-</span></div>
+<div id="probe" class="glass">
+  <div class="hd"><span class="d" id="probeDepth">-</span><span class="u" id="probeWhen"></span><button class="iconbtn" id="probeClose">&#10005;</button></div>
+  <div class="grid"><div><div class="k">Arrival</div><div class="v" id="probeArr">-</div></div>
+  <div><div class="k">Intensity</div><div class="v" id="probeInt">-</div></div>
+  <div><div class="k">Ground</div><div class="v" id="probeGround">-</div></div></div>
+  <div class="cap" id="probeNote"></div>
+</div>
+<div class="glass" id="timelineBar" style="display:none">
+  <div class="tl-top">
+    <button id="playPauseBtn" title="Play/pause">&#10074;&#10074;</button>
+    <div><div class="big" id="timeBig">0:00</div><div class="mut" id="timeSub">since ignition</div></div>
+    <div class="stat"><div class="mut" style="margin:0 0 3px">Burned area</div><div class="v" id="stArea">-</div></div>
+    <div class="stat"><div class="mut" style="margin:0 0 3px">Peak spread</div><div class="v" id="stRos">-</div></div>
+    <div class="stat"><div class="mut" style="margin:0 0 3px">Flame length</div><div class="v" id="stFl">-</div></div>
+    <div class="stat"><div class="mut" style="margin:0 0 3px">Wind</div><div class="v" id="stWind">-</div></div>
+    <div class="sp"></div>
+    <button class="tbtn on" id="chartBtn">&#128200; Chart</button>
+    <button class="tbtn on" id="followBtn">&#9992; Follow fire</button>
+    <div style="position:relative"><button class="tbtn" id="exportToggle">&#9635; Export &#9662;</button>
+      <div id="exportMenu"><button id="exportBtn">Image (PNG)</button><button id="exportVideoBtn3d">Video (WebM)</button></div></div>
+  </div>
+  <div id="chartWrap"><canvas id="chart"></canvas><div id="chartTip"></div></div>
+  <div class="tl-bot"><span id="timeLabel" style="font-variant-numeric:tabular-nums;min-width:80px"></span>
+    <input type="range" id="timeSlider" min="0" max="1000" value="0" step="1" aria-label="Timeline position">
+    <span>Playback</span>
+    <select id="speedSelect"><option value="0.25">0.25&times;</option><option value="0.5">0.5&times;</option><option value="1" selected>1&times;</option><option value="2">2&times;</option><option value="4">4&times;</option></select></div>
+</div>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<script>window.MAPBOX_TOKEN = "__MAPBOX_TOKEN__"; window.RUN_ID = "__RUN_ID__";</script>
+<script src="/static/viewer/fire3d.js"></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+{
+ "name": "PAKFIRE long-history fit 2026-10-26 (937 events 2012-2023)",
+ "params": {
+  "grass": 0.3,
+  "shrub": 0.45,
+  "forest": 1.0,
+  "wind": 0.6,
+  "moist": 0.4,
+  "road": 0.0,
+  "road_minor": 0.0,
+  "wfield": 1.0,
+  "decay_h": 0.0,
+  "suppress": 0.2,
+  "tmoist": 0.0,
+  "chan": 0.0
+ },
+ "fitted_on": "937 fire events 2012-2023 (VIIRS footprints plus MODIS MCD64A1); coordinate descent, objective IoU - 0.04*|log2 area ratio| - 0.003*|timing h|",
+ "held_back": "527 events 2024-2026, never used for fitting",
+ "results": {
+  "dev_modis_iou": {
+   "uncalibrated": 0.208,
+   "calibrated": 0.328,
+   "circle": 0.313
+  },
+  "dev_area_ratio": {
+   "uncalibrated": 5.2,
+   "calibrated": 2.53
+  },
+  "test_modis_iou": {
+   "uncalibrated": 0.246,
+   "calibrated": 0.223,
+   "circle": 0.239
+  },
+  "test_area_ratio": {
+   "uncalibrated": 7.0,
+   "calibrated": 1.46
+  },
+  "test_firms_iou": {
+   "uncalibrated": 0.196,
+   "calibrated": 0.327,
+   "circle": 0.314
+  },
+  "long_history": {
+   "test_iou_median": 0.302,
+   "test_circle_median": 0.289,
+   "test_beats_circle": 0.543,
+   "test_area_ratio": 1.92,
+   "test_modis_iou": 0.234,
+   "test_modis_circle": 0.23,
+   "uncalibrated_test_iou": 0.236,
+   "previous_profile_test_iou": 0.309,
+   "previous_profile_test_area_ratio": 3.18,
+   "previous_profile_test_modis_iou": 0.261
+  },
+  "ensemble_widths": {
+   "method": "tools/ensemble_widths.py (50 MODIS-mapped events per split, 16 members): Brier score of the burn probability, 10-90 % area coverage, area PIT",
+   "chosen": "twice the original widths plus a log-normal spread-rate error of 0.9 (best Brier on development events, edge of the grid tested)",
+   "original_widths_test": {
+    "brier": 0.1045,
+    "coverage": 0.2,
+    "area_pit": 0.43
+   },
+   "chosen_test": {
+    "brier": 0.0691,
+    "coverage": 0.64,
+    "area_pit": 0.53
+   },
+   "chosen_dev": {
+    "brier": 0.0586,
+    "coverage": 0.54,
+    "area_pit": 0.32
+   },
+   "target_coverage": 0.8
+  },
+  "terrain_options_test": {
+   "note": "tmoist=1 and chan=1 scored on the 527 held-back events",
+   "iou": 0.291,
+   "iou_shipped": 0.302,
+   "decision": "off"
+  },
+  "canopy_crown_test": {
+   "note": "per-cell crown base height and bulk density from Meta/WRI canopy height (canopy=1) vs same code with canopy=0, all 1464 events",
+   "events_changed": 41,
+   "test_iou_ctrl": 0.3153,
+   "test_iou_canopy": 0.3153,
+   "dev_iou_ctrl": 0.3291,
+   "dev_iou_canopy": 0.329,
+   "decision": "off"
+  }
+ },
+ "note": "Fixes the large over-prediction of burned area; shows no shape or direction skill over an equal-area circle. Wind multiplier applies to forecast/archive wind only, never to wind the user sets.",
+ "history": [
+  {
+   "step": "v1 fuel map (nearest 10 m sample, elevation forest split)",
+   "test_firms_iou": 0.253,
+   "circle": 0.251
+  },
+  {
+   "step": "v2 fuel map (10 m class fractions, CGLS forest type), recalibrated",
+   "test_firms_iou": 0.305,
+   "circle": 0.288
+  },
+  {
+   "step": "v2 fuel map + objective that also penalises area and timing bias, wider bounds",
+   "test_firms_iou": 0.326,
+   "circle": 0.313,
+   "test_area_ratio": 1.46
+  },
+  {
+   "step": "own mass-conserving terrain wind added (wfield 1.0), roads off",
+   "test_firms_iou": 0.327,
+   "circle": 0.314,
+   "test_area_ratio": 1.46
+  },
+  {
+   "name": "PAKFIRE dev-fit 2026-10-26d (terrain wind)",
+   "params": {
+    "grass": 0.45,
+    "shrub": 0.45,
+    "forest": 1.5,
+    "wind": 0.6,
+    "moist": 0.5,
+    "road": 0.0,
+    "wfield": 1.0,
+    "decay_h": 0.0,
+    "suppress": 0.0
+   },
+   "note": "replaced 2026-10-26 by the 2012-2023 fit"
+  }
+ ],
+ "ensemble_widths": {
+  "wind": 0.4,
+  "wdir": 24.0,
+  "moist": 0.3,
+  "ndvi": 0.06,
+  "rate": 0.9
+ }
+}

@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PAKFIRE Architecture Document</title>
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 20mm 18mm;
+  @bottom-right { content: "PAKFIRE Architecture Document \2022  Page " counter(page); font: 8.5pt "DejaVu Sans", sans-serif; color: #7a625b; }
+}
+@page cover { margin: 0; @bottom-right { content: none; } }
+:root { --teal: #a8340f; --teal-2: #e2561c; --ink: #2a1b17; --muted: #6b5650; --rule: #e3d3cc; --tint: #fbf0ea; --amber: #8a5a00; --amber-bg: #fff6e3; }
+html { font-family: "DejaVu Sans", "Liberation Sans", sans-serif; font-size: 9.6pt; line-height: 1.5; color: var(--ink); }
+body { margin: 0; }
+.cover { page: cover; height: 297mm; box-sizing: border-box; padding: 62mm 24mm 24mm; background: linear-gradient(160deg, #4a1608 0%, #a8340f 55%, #e2561c 100%); color: #fff; }
+.cover .eyebrow { letter-spacing: 0.32em; font-size: 9pt; text-transform: uppercase; opacity: 0.85; }
+.cover h1 { font-size: 46pt; margin: 18mm 0 4mm; letter-spacing: 0.04em; font-weight: bold; }
+.cover .expand { font-size: 13pt; max-width: 140mm; opacity: 0.95; }
+.cover .lede { font-size: 12pt; margin-top: 10mm; max-width: 140mm; }
+.cover .scope { margin-top: 26mm; font-size: 10pt; max-width: 150mm; line-height: 1.6; opacity: 0.92; }
+.cover .date { margin-top: 10mm; font-size: 10pt; opacity: 0.85; }
+h1.chapter { page-break-before: always; font-size: 19pt; color: var(--teal); margin: 0 0 4mm; border-bottom: 2px solid var(--teal); padding-bottom: 2mm; }
+h2 { font-size: 11.5pt; color: var(--teal); margin: 6mm 0 2mm; padding-left: 3mm; border-left: 3px solid var(--teal-2); page-break-after: avoid; }
+h3 { font-size: 10pt; margin: 4mm 0 1.5mm; color: var(--ink); page-break-after: avoid; }
+p { margin: 0 0 2.4mm; text-align: left; }
+ul, ol { margin: 0 0 2.6mm; padding-left: 6mm; }
+li { margin-bottom: 1.2mm; }
+code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.4pt; background: var(--tint); padding: 0 1mm; border-radius: 1mm; }
+.formula { font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; background: var(--tint); border-left: 3px solid var(--teal-2); padding: 2.5mm 4mm; margin: 2mm 0 3mm; white-space: pre-wrap; page-break-inside: avoid; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 8.6pt; page-break-inside: auto; }
+th { text-align: left; background: var(--teal); color: #fff; font-weight: bold; padding: 1.6mm 2mm; font-size: 8.2pt; text-transform: uppercase; letter-spacing: 0.03em; }
+td { padding: 1.5mm 2mm; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:nth-child(even) td { background: #fcf6f2; }
+tr { page-break-inside: avoid; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--amber-bg); border-left: 3px solid #d39a2a; padding: 2.5mm 4mm; margin: 2mm 0 4mm; color: #3d2c00; page-break-inside: avoid; }
+.new { display: inline-block; font-size: 7pt; font-weight: bold; color: #fff; background: var(--teal-2); padding: 0.3mm 1.6mm; border-radius: 1mm; vertical-align: 1pt; margin-left: 1.5mm; letter-spacing: 0.04em; }
+.toc { page-break-before: always; }
+.toc h1 { font-size: 19pt; color: var(--teal); border-bottom: 2px solid var(--teal); padding-bottom: 2mm; margin: 0 0 4mm; }
+.toc .part { font-weight: bold; color: var(--teal); margin: 3.5mm 0 1mm; }
+.toc .item { margin: 0 0 0.8mm 5mm; }
+.toc .item a { color: var(--ink); text-decoration: none; }
+.toc .item a::after { content: leader('.') target-counter(attr(href), page); color: var(--muted); }
+.changes td:first-child { white-space: nowrap; font-weight: bold; color: var(--teal); }
+.bug h3 { color: var(--teal); }
+.refs li { font-size: 8.6pt; }
+.badge { display:inline-block; font-size:7pt; font-weight:bold; color:#fff; background:var(--teal-2); padding:0.3mm 1.6mm; border-radius:1mm; vertical-align:1pt; margin-left:1.5mm; letter-spacing:.04em; text-transform:uppercase; }
+.badge.no { background:#a32a1f; } .badge.rm { background:#8a5a00; }
+.f { font-family:"DejaVu Sans Mono",monospace; font-size:9pt; background:var(--tint); border-left:3px solid var(--teal-2); padding:2.5mm 4mm; margin:2mm 0 3mm; white-space:pre-wrap; page-break-inside:avoid; display:block; }
+.svgbox { margin: 3mm 0 5mm; text-align: center; page-break-inside: avoid; }
+.svgbox svg { max-width: 100%; height: auto; }
+.path { font-family: "DejaVu Sans Mono", monospace; font-size: 7.8pt; word-break: break-all; }
+td.mono, th.mono { font-family: "DejaVu Sans Mono", monospace; font-size: 7.8pt; }
+</style>
+</head>
+<body>
+<section class="cover">
+  <div class="eyebrow">Architecture &amp; Code Walkthrough</div>
+  <h1>PAKFIRE ARCH</h1>
+  <div class="expand">Pakistan Wildfire Spread Simulation, Exposure &amp; Response Analytics</div>
+  <div class="lede">How everything works in code: modules, input and output paths, data formats, process order, libraries and services</div>
+  <div class="scope">Companion to the PAKFIRE Technical Reference (physics and validation). Written in the SAILAB documentation format for engineers who need to run, extend or audit the system.</div>
+  <div class="date">First edition, 30 October 2026; revised 7 November 2026 for the canopy-height work, the map-first interface and two new routes. Describes the code in pkfire/, tools/, web/pk/ and tests/pk/ as it stands on that date.</div>
+</section>
+<section class="toc">
+  <h1>Contents</h1>
+  <div class="part">Part I — Overview</div>
+  <div class="item"><a href="#c1">1. Purpose and design principles</a></div>
+  <div class="item"><a href="#c2">2. System architecture</a></div>
+  <div class="part">Part II — Structure</div>
+  <div class="item"><a href="#c3">3. Repository layout and file inventory</a></div>
+  <div class="part">Part III — Libraries and data</div>
+  <div class="item"><a href="#c4">4. Libraries and services, start to end</a></div>
+  <div class="item"><a href="#c5">5. Inputs: every dataset and where it is read</a></div>
+  <div class="item"><a href="#c6">6. Outputs and caches: every file the code writes</a></div>
+  <div class="part">Part IV — How it runs</div>
+  <div class="item"><a href="#c7">7. Process walk-through of one run</a></div>
+  <div class="item"><a href="#c8">8. Module internals</a></div>
+  <div class="item"><a href="#c9">9. API reference</a></div>
+  <div class="item"><a href="#c10">10. Front end</a></div>
+  <div class="item"><a href="#c11">11. Validation, calibration and offline tools</a></div>
+  <div class="item"><a href="#c12">12. Configuration, secrets and operation</a></div>
+</section>
+<h1 class="chapter" id="c1">1. Purpose and design principles</h1>
+
+<p>PAKFIRE is a wildfire spread simulator for the whole of Pakistan, built as a sister of SAILAB (flood) and LANDLAB (landslide). A user places an ignition on a map, the server builds a local grid from national datasets, fetches hourly weather, solves the earliest arrival time of fire at every cell, and returns animated results that a 3D viewer plays while its camera follows the fire. This document describes how that is put together: every process and module, every input and output path, the data formats, the libraries and external services, and the order in which the code runs. The physics and the validation record are in the separate <i>PAKFIRE Technical Reference</i>.</p>
+<h2>1.1 Principles that shape the code</h2>
+<ul>
+<li><b>One engine, three call sites.</b> The same solver code (<code>pkfire/solver.py</code> over <code>kernel_gpu.py</code> and <code>kernel_cpu.py</code>) is used by the live application, by the instant footprint tier and by the validation, so a number seen in the interface and a number in the validation come from the same arithmetic. The adjustments applied before the solve live in one module (<code>pkfire/adjust.py</code>) for the same reason.</li>
+<li><b>GPU first, then RAM, then CPU.</b> <code>solver.simulate</code> tries the CUDA kernel (CuPy) and, if the GPU is missing or fails, runs the numba CPU kernel with the data in RAM. The reason for a fallback is recorded in the run metadata (<code>gpu_error</code>).</li>
+<li><b>State lives in files, not in a database.</b> A run is a directory <code>data/runs/&lt;run_id&gt;/</code> of flat binary rasters and JSON; everything the viewer, the exposure analysis, the report and the time-lapse need is derived from it. Only the road network is read from a database (PostGIS, read-only).</li>
+<li><b>One simulation at a time.</b> A global lock (<code>RUN_LOCK</code> in <code>app.py</code>) serialises runs so that a shared GPU server stays calm; jobs queue and report progress.</li>
+<li><b>Honest failure.</b> A step that cannot run (no weather, no road database, no GPU) reports what failed in the response instead of inventing a value; transient failures are not cached.</li>
+</ul>
+
+<h1 class="chapter" id="c2">2. System architecture</h1>
+
+<p>Three layers: a static single-page interface plus an iframe 3D viewer in the browser; one Flask process that owns the job queue, the run pipeline and all derived products; and the engine modules and datasets underneath. There is no message broker, no separate worker process and no database of runs.</p>
+<div class="svgbox">
+<svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="DejaVu Sans, sans-serif" font-size="11">
+ <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#6b5650"/></marker></defs>
+ <rect x="10" y="10" width="740" height="62" rx="6" fill="#fbf0ea" stroke="#a8340f"/>
+ <text x="22" y="30" font-weight="bold" fill="#a8340f">BROWSER</text>
+ <text x="22" y="48">web/pk/app.html (Mapbox GL 3.6 + Draw 1.4.3, panels, tiers)</text>
+ <text x="22" y="63">iframe: web/pk/viewer/fire3d.html + fire3d.js + fire3d.css (3D scene, canvases)</text>
+ <rect x="10" y="100" width="740" height="92" rx="6" fill="#fff" stroke="#a8340f"/>
+ <text x="22" y="120" font-weight="bold" fill="#a8340f">FLASK SERVER  pkfire/app.py  (port 8020, threaded)</text>
+ <text x="22" y="138">routes (43)  ·  job queue JOBS + RUN_LOCK  ·  monitor thread (FIRMS watches)  ·  static files from web/pk</text>
+ <text x="22" y="156">report.py (WeasyPrint PDF) · timelapse.py (ffmpeg MP4) · overlay.py (PNG, GeoJSON) · exposure.py · evac.py · instant.py · geo.py</text>
+ <text x="22" y="174">compare-runs · validate-observed · batch report · data-status · hardware status</text>
+ <rect x="10" y="222" width="360" height="132" rx="6" fill="#fff" stroke="#a8340f"/>
+ <text x="22" y="242" font-weight="bold" fill="#a8340f">RUN PIPELINE  pkfire/run.py :: run()</text>
+ <text x="22" y="260">terrain.build_scene  → grid, DEM, land cover, NDVI, fuels</text>
+ <text x="22" y="276">weather.hourly       → Open-Meteo / MET Norway</text>
+ <text x="22" y="292">adjust.apply         → calibration, wind field, moisture</text>
+ <text x="22" y="308">run._tables          → hourly spread-rate tables (fuels.py)</text>
+ <text x="22" y="324">solver.simulate      → kernel_gpu.py | kernel_cpu.py</text>
+ <text x="22" y="340">ensemble, assimilation, stats, export → data/runs/&lt;id&gt;/</text>
+ <rect x="390" y="222" width="360" height="132" rx="6" fill="#fff" stroke="#a8340f"/>
+ <text x="402" y="242" font-weight="bold" fill="#a8340f">ENGINE PARTS</text>
+ <text x="402" y="260">pkfire/vendor/rothermel.py  (Rothermel/Albini, FIRELAB)</text>
+ <text x="402" y="276">fuels.py moisture.py microclimate.py windfield.py</text>
+ <text x="402" y="292">kernel_cpu.py (numba Dijkstra, 16 neighbours)</text>
+ <text x="402" y="308">kernel_gpu.py (CUDA band relaxation, CuPy RawKernel)</text>
+ <text x="402" y="324">roads.py (PostGIS barrier) · burned.py · validate.py</text>
+ <text x="402" y="340">calibration.json (shipped profile, ensemble widths)</text>
+ <rect x="10" y="384" width="360" height="76" rx="6" fill="#eef" stroke="#555"/>
+ <text x="22" y="404" font-weight="bold">SHARED DRIVE (read-only inputs)</text>
+ <text x="22" y="421">SRTM DEM · ESRI land cover 2017-2025 · MODIS NDVI 1 km</text>
+ <text x="22" y="437">WorldPop · PBS census · districts · hospitals · schools · grid</text>
+ <text x="22" y="453">CGLS-LC100 · MODIS burned area · NASA FIRMS archives</text>
+ <rect x="390" y="384" width="360" height="76" rx="6" fill="#efe" stroke="#555"/>
+ <text x="402" y="404" font-weight="bold">EXTERNAL SERVICES</text>
+ <text x="402" y="421">Open-Meteo (forecast + archive) · MET Norway fallback</text>
+ <text x="402" y="437">NASA FIRMS API (VIIRS) · Mapbox (tiles, DEM, styles)</text>
+ <text x="402" y="453">SimCity PostGIS pk.roads (port 5455, read-only role)</text>
+ <path d="M380,72 L380,100" stroke="#6b5650" marker-end="url(#a)"/><path d="M380,192 L380,222" stroke="#6b5650" marker-end="url(#a)"/>
+ <path d="M190,354 L190,384" stroke="#6b5650" marker-end="url(#a)"/><path d="M570,354 L570,384" stroke="#6b5650" marker-end="url(#a)"/>
+ <path d="M370,288 L390,288" stroke="#6b5650" marker-end="url(#a)"/>
+</svg></div>
+<h2>2.1 Processes</h2>
+<table><tr><th style="width:18%">Process</th><th style="width:24%">Started by</th><th style="width:40%">What it does</th><th style="width:18%">Port / location</th></tr>
+<tr><td class="">Flask app</td><td class="mono"><code>~/flood/venv/bin/python -m pkfire.app</code></td><td class="">Serves pages, API and files; runs simulations in daemon threads; holds JOBS in memory</td><td class="">0.0.0.0:8020 (env FIRE_PORT)</td></tr>
+<tr><td class="">Job worker thread</td><td class="mono"><code>app._start_job</code></td><td class="">One thread per job; takes RUN_LOCK, calls run.run / ensemble / mitigation, writes progress to the JOBS dict</td><td class="">in-process</td></tr>
+<tr><td class="">Monitor thread</td><td class="mono"><code>app._watch_loop</code></td><td class="">Polls NASA FIRMS for each saved watch area and launches a 24 h scenario when detections appear; state in data/monitor.json</td><td class="">in-process</td></tr>
+<tr><td class="">GPU context</td><td class="mono"><code>kernel_gpu._module</code></td><td class="">Compiles the CUDA source once (cupy.RawModule) on first use</td><td class="">CUDA device 0</td></tr>
+<tr><td class="">PostGIS client</td><td class="mono"><code>roads.py, evac.py</code></td><td class="">Short read-only psycopg2 connections to the SimCity database</td><td class="">localhost:5455 db simcity</td></tr>
+<tr><td class="">ffmpeg</td><td class="mono"><code>timelapse.render</code></td><td class="">Encodes the time-lapse MP4 (binary from imageio-ffmpeg)</td><td class="">child process</td></tr>
+<tr><td class="">Headless Chromium</td><td class="mono"><code>tools/smoke.py, tools/ui_review.py</code></td><td class="">Browser tests only (Playwright 1.60 under /opt/miniconda3/bin/python)</td><td class="">not part of the server</td></tr>
+</table>
+<h2>2.2 Python environments</h2>
+<table><tr><th style="width:22%">Environment</th><th style="width:30%">Path</th><th style="width:48%">Used for</th></tr>
+<tr><td class="">SAILAB venv (do not modify)</td><td class="mono"><code>~/flood/venv  (Python 3.12.3)</code></td><td class="">The application, the validation and every tool except the browser tests</td></tr>
+<tr><td class="">Helper libraries</td><td class="mono"><code>~/fire_pylib (on PYTHONPATH)</code></td><td class="">pystac 1.13.0, pystac_client 0.9.1, planetary_computer 1.0.0 and their dependencies, used only to download MODIS burned-area tiles</td></tr>
+<tr><td class="">Miniconda</td><td class="mono"><code>/opt/miniconda3/bin/python</code></td><td class="">Playwright 1.60.0 for tools/smoke.py and tools/ui_review.py; browser build ~/.cache/ms-playwright/chromium-1091</td></tr>
+</table>
+
+<h1 class="chapter" id="c3">3. Repository layout and file inventory</h1>
+
+<p>Root: <code>/mnt/external-ssd/DGX SHARED/Iliyan/Fire Simulation Model</code> (a git repository; the external drive does not allow chmod, so files are copied with <code>cat &gt;</code> rather than <code>cp</code>).</p>
+<h2>3.1 The engine and server package <code>pkfire/</code></h2>
+<table><tr><th style="width:24%">File</th><th style="width:8%">Lines</th><th style="width:68%">Role</th></tr>
+<tr><td class="mono">pkfire/app.py</td><td class="">777</td><td class="">Flask application: pages, 43 routes, job queue, monitor thread, hardware status, compare, scoring against observed perimeters</td></tr>
+<tr><td class="mono">pkfire/run.py</td><td class="">491</td><td class="">The run pipeline <code>run()</code>; weather tables, ensemble inputs, interventions, camera track, exports</td></tr>
+<tr><td class="mono">pkfire/terrain.py</td><td class="">231</td><td class="">Grid and scene: UTM grid, DEM, ESRI land cover (year-aware), CGLS forest type, MODIS NDVI, canopy height (optional crown-fire input), slope/aspect, fuel crosswalk</td></tr>
+<tr><td class="mono">pkfire/weather.py</td><td class="">104</td><td class="">Hourly weather: Open-Meteo forecast/archive with disk cache, MET Norway fallback, manual weather</td></tr>
+<tr><td class="mono">pkfire/fuels.py</td><td class="">118</td><td class="">Fuel-model tables per hour (spread rate, reaction intensity, wind and slope coefficients, spotting and crown parameters; per-cell crown fuel from canopy height)</td></tr>
+<tr><td class="mono">pkfire/moisture.py</td><td class="">39</td><td class="">Hourly dead fuel moisture (Simard equilibrium, 1/10/100 h lags, rain wetting) and Schroeder ember ignition probability</td></tr>
+<tr><td class="mono">pkfire/microclimate.py</td><td class="">186</td><td class="">Terrain and canopy effects on dead moisture (option <code>tmoist</code>) and the stability index for channelling (<code>chan</code>)</td></tr>
+<tr><td class="mono">pkfire/windfield.py</td><td class="">249</td><td class="">Mass-conserving terrain wind on the GPU (CuPy, fused kernel) with NumPy fallback</td></tr>
+<tr><td class="mono">pkfire/adjust.py</td><td class="">114</td><td class="">Applies the calibration profile and run-time adjustments to a scene; wind-field cache; road barrier extras; optional per-cell crown fuel from canopy height (key canopy)</td></tr>
+<tr><td class="mono">pkfire/solver.py</td><td class="">49</td><td class="">Backend choice: GPU then CPU, single run and batched ensemble</td></tr>
+<tr><td class="mono">pkfire/kernel_gpu.py</td><td class="">349</td><td class="">CUDA source (relax, finalize, cellp, max_spot_m) and the Python wrapper, single and batched</td></tr>
+<tr><td class="mono">pkfire/kernel_cpu.py</td><td class="">256</td><td class="">numba minimum-travel-time (Dijkstra with indexed heap, 16 neighbours), rate cell function, Albini spotting</td></tr>
+<tr><td class="mono">pkfire/roads.py</td><td class="">74</td><td class="">Road corridors as spread barriers from PostGIS pk.roads</td></tr>
+<tr><td class="mono">pkfire/burned.py</td><td class="">55</td><td class="">MODIS MCD64A1 burn-day mosaic used as validation truth</td></tr>
+<tr><td class="mono">pkfire/validate.py</td><td class="">332</td><td class="">Event building from VIIRS, preparation (scene + weather cache), simulation, scoring, summaries, ensemble simulation</td></tr>
+<tr><td class="mono">pkfire/overlay.py</td><td class="">121</td><td class="">2D overlays (PNG), static map image, GeoJSON isochrones from a saved run</td></tr>
+<tr><td class="mono">pkfire/exposure.py</td><td class="">176</td><td class="">People (WorldPop scaled to PBS census), housing, informal settlements, hospitals, schools, grid, power lines</td></tr>
+<tr><td class="mono">pkfire/evac.py</td><td class="">271</td><td class="">Evacuation and fire-service access over the OSM road graph (time-dependent Dijkstra)</td></tr>
+<tr><td class="mono">pkfire/instant.py</td><td class="">74</td><td class="">Tier 1 instant footprint: a small real simulation contoured at 1, 3 and 6 h</td></tr>
+<tr><td class="mono">pkfire/geo.py</td><td class="">106</td><td class="">Districts, FIRMS detections, district statistics, secrets (FIRMS key, Mapbox token)</td></tr>
+<tr><td class="mono">pkfire/report.py</td><td class="">105</td><td class="">PDF run report and batch report (WeasyPrint)</td></tr>
+<tr><td class="mono">pkfire/timelapse.py</td><td class="">131</td><td class="">Server-side MP4 of a run (hillshade background, age colours, glow, wind arrow, scale bar)</td></tr>
+<tr><td class="mono">pkfire/vendor/rothermel.py, spotting.py</td><td class="">–</td><td class="">Rothermel/Albini surface fire and Albini spotting, vendored from FIRELAB (NumPy only)</td></tr>
+<tr><td class="mono">pkfire/calibration.json</td><td class="">–</td><td class="">Shipped calibration profile, ensemble widths, history and results</td></tr>
+</table>
+<h2>3.2 Tools <code>tools/</code></h2>
+<table><tr><th style="width:28%">File</th><th style="width:72%">Role</th></tr>
+<tr><td class="mono">tools/run_validation.py</td><td class="">prepare / score: builds the cached scenes and scores a calibration over the selected events (VAL_SET=v2 for 2012-2026)</td></tr>
+<tr><td class="mono">tools/calibrate.py</td><td class="">coordinate-descent calibration on development events (env START, BASE, KEYS, CAL_MAX, SWEEPS)</td></tr>
+<tr><td class="mono">tools/wind_precompute.py</td><td class="">computes and caches terrain-wind fields for every validation scene (env CHANS adds stability variants)</td></tr>
+<tr><td class="mono">tools/ensemble_widths.py</td><td class="">chooses ensemble perturbation widths (Brier, coverage, PIT); <code>stage2</code> adds the spread-rate error</td></tr>
+<tr><td class="mono">tools/forest_validation.py</td><td class="">regroups scored events into forest fires by type and elevation</td></tr>
+<tr><td class="mono">tools/compare.py, assim_test.py</td><td class="">compares two result files; tests assimilation of detections</td></tr>
+<tr><td class="mono">tools/firms_archive.py, firms_yearly.py</td><td class="">download NASA FIRMS VIIRS archives (5-day API chunks, yearly country files)</td></tr>
+<tr><td class="mono">tools/landing_shots.py</td><td class="">screenshots of the start page at fixed moments of its animation (software GL), using the page's debug parameters</td></tr>
+<tr><td class="mono">tools/forestfire_test.mjs</td><td class="">Node test of landing/forestfire.js: the idle fire stays small, the surge spreads progressively, embers start spot fires</td></tr>
+<tr><td class="mono">tools/build_canopy.py</td><td class="">reduces the Meta/WRI 1 m canopy height tiles to data/national/canopy_height_pakistan.tif (30 m; band 1 mean, band 2 90th percentile height; resumable, cache in data/cache/canopy_tiles); use 2-3 workers on the external drive</td></tr>
+<tr><td class="mono">tools/download_meta_chm.py</td><td class="">downloads the Meta/WRI canopy height tiles that cover Pakistan from the public AWS bucket into data/external/meta_chm (resumable; the tiles were deleted after the raster was built)</td></tr>
+<tr><td class="mono">tools/build_pbs.py</td><td class="">builds data/external/pbs_districts.json from the PBS census tables</td></tr>
+<tr><td class="mono">tools/make_synth_run.py</td><td class="">writes a synthetic run directory for tests and smoke checks</td></tr>
+<tr><td class="mono">tools/smoke.py, ui_review.py, viewer_test.js</td><td class="">browser smoke test, interface audit (Playwright; also captures the welcome card, light theme and drawer states), Node test of fire3d.js with a stubbed map</td></tr>
+<tr><td class="mono">tools/pipeline_v2.sh</td><td class="">the long-history validation pipeline (events, prepare, wind, base score, calibrate, final score)</td></tr>
+</table>
+<h2>3.3 Interface <code>web/pk/</code></h2>
+<table><tr><th style="width:34%">File</th><th style="width:8%">Lines</th><th style="width:58%">Role</th></tr>
+<tr><td class="mono">web/pk/landing.html</td><td class="">154</td><td class="">Start page: markup, styles, the two buttons (PAKFIRE Instant, PAKFIRE Physics) and the click handling; loads landing/scene.js as a module (import map for three.js); CSS fallback without WebGL</td></tr>
+<tr><td class="mono">web/pk/landing/scene.js</td><td class="">618</td><td class="">three.js scene of the start page: instanced conifers (needle-textured branch cards), ferns, sky, ten fire lights, flame tongues coloured as blackbodies, smoke, sparks, bloom and tone mapping; the 4.8 s click animation; debug parameters t, rise, flash, scale, frames, q</td></tr>
+<tr><td class="mono">web/pk/landing/forestfire.js</td><td class="">182</td><td class="">Tree-to-tree fire model of the start page (heat transfer, crown fire threshold, ember spotting); pure JavaScript, also run in Node</td></tr>
+<tr><td class="mono">web/pk/instant.html</td><td class="">253</td><td class="">PAKFIRE Instant page: click-to-place fire, weather scenarios and sliders, footprint from /area/instant-footprint, legend, welcome card</td></tr>
+<tr><td class="mono">web/pk/vendor/three/</td><td class="">–</td><td class="">three.js r160 (build, EffectComposer, RenderPass, ShaderPass, UnrealBloomPass and their shaders), MIT licence, served locally</td></tr>
+<tr><td class="mono">web/pk/agn-logo.png</td><td class="">–</td><td class="">logo shown in the start page header (copied from SAILAB)</td></tr>
+<tr><td class="mono">web/pk/app.html</td><td class="">533</td><td class="">The page: map, tiers, discovery, run panels, exposure and evacuation, history, scripts inline</td></tr>
+<tr><td class="mono">web/pk/viewer/fire3d.html</td><td class="">105</td><td class="">The 3D scene page loaded in the iframe (<code>/runs/&lt;id&gt;/mapbox3d</code>)</td></tr>
+<tr><td class="mono">web/pk/viewer/fire3d.js</td><td class="">461</td><td class="">Scene logic: loads the run, paints the age raster, glow, flame sprites, sparks, smoke, spread axis, camera follow, probe, WebM export</td></tr>
+<tr><td class="mono">web/pk/viewer/fire3d.css</td><td class="">120</td><td class="">Scene styles (SAILAB design system, accent #FF6A2B)</td></tr>
+</table>
+<h2>3.4 Vendored physics modules <code>pkfire/vendor/</code></h2>
+<p>Two modules written for FIRELAB (the Margalla platform that PAKFIRE grew from) are kept inside the package: <code>pkfire/vendor/rothermel.py</code> (Rothermel 1972 with Albini 1976 size classes and the Anderson and Scott &amp; Burgan fuel models, imported by <code>fuels.py</code>) and <code>pkfire/vendor/spotting.py</code> (Albini 1983 coefficients and the Schroeder ignition probability, used by a test as the reference for the kernels). They need only NumPy. Everything else of the old FIRELAB platform (its other scripts, web pages, tests, documents, reference video and Tessera embeddings) was moved on 7 November 2026 to the folder <code>Fire Simulation Model - FIRELAB legacy (archived 2026-11-07)</code> next to this one and is not used by PAKFIRE.</p>
+<h2>3.4b Repository layout</h2>
+<div class="f">Fire Simulation Model/
+  README.md  LICENSES.md  requirements.txt  .gitignore
+  pkfire/            the engine and the Flask application (+ vendor/: rothermel.py, spotting.py; calibration.json)
+  web/pk/            pages (landing.html, instant.html, app.html), landing/ (scene.js, forestfire.js), viewer/ (3D fire scene), vendor/three, agn-logo.png
+  tools/             downloads, validation, calibration, the landing-page test and screenshots, interface review
+  tests/pk/          pytest suite (physics, routes)
+  docs/              PAKFIRE_Technical_Reference, PAKFIRE_ARCH_Document (.html and .pdf), figures/, background/accuracy_improvements.md
+  data/
+    external/        FIRMS archives, fire stations, PBS census, informal settlements
+    national/        canopy height, forest type, MODIS burned area
+    raw/weather/     cached weather replies
+    cache/windfield/ cached terrain wind fields
+    runs/            saved runs (what the application's history lists)
+    validation/      events, scored results, calibrations, caches (cache/, wind/), earlier_527_event_set/
+    monitor.json     watches of the live monitor
+  logs/              runtime logs (app.log)
+  .secrets/          mapbox_token, firms_map_key</div>
+<h2>3.5 Tests, docs, data</h2>
+<table><tr><th style="width:36%">Path</th><th style="width:64%">Content</th></tr>
+<tr><td class="mono">tests/pk/test_pkfire.py (397 lines)</td><td class="">physics, GPU-vs-CPU equality, batched ensemble equality, wind field, crown fire, Albini against the vendored reference, microclimate, stability alpha, ensemble widths, PBS lookup</td></tr>
+<tr><td class="mono">tests/pk/test_routes.py (121 lines)</td><td class="">Flask routes against a synthetic run (<code>RID = 00000000-000000-pytest</code>): summary, overlays, exposure, evacuation, area, monitor, compare, scoring</td></tr>
+<tr><td class="mono">docs/PAKFIRE_Technical_Reference.html / .pdf</td><td class="">the physics, formulas, validation record and bug chronicle (WeasyPrint, SAILAB format)</td></tr>
+<tr><td class="mono">docs/PAKFIRE_ARCH_Document.html / .pdf</td><td class="">this document</td></tr>
+<tr><td class="mono">data/</td><td class="">runtime and cached data (Chapter 5 and 6); data/validation is about 12 GB</td></tr>
+<tr><td class="mono">logs/</td><td class="">stdout of the app and of every background job (<code>app.log</code>, <code>v2_*.log</code> …)</td></tr>
+</table>
+
+<h1 class="chapter" id="c4">4. Libraries and services, start to end</h1>
+
+<h2>4.1 Python libraries (SAILAB venv)</h2>
+<table><tr><th style="width:26%">Library</th><th style="width:14%">Version</th><th style="width:60%">Used for</th></tr>
+<tr><td class="mono">Python</td><td class="">3.12.3</td><td class="">everything</td></tr>
+<tr><td class="mono">numpy</td><td class="">2.3.5</td><td class="">arrays everywhere; kernels' inputs; binary export</td></tr>
+<tr><td class="mono">scipy</td><td class="">1.18.1</td><td class="">ndimage (distance transforms, labelling, filters), sparse and csgraph Dijkstra, cKDTree (adjust, run, exposure, evac, microclimate)</td></tr>
+<tr><td class="mono">numba</td><td class="">0.67.0</td><td class="">CPU solver (@njit) in kernel_cpu.py</td></tr>
+<tr><td class="mono">cupy (cupy-cuda13x)</td><td class="">14.2.0</td><td class="">GPU arrays, RawModule/RawKernel for the fire solver (kernel_gpu.py) and the wind field (windfield.py)</td></tr>
+<tr><td class="mono">rasterio</td><td class="">1.5.1</td><td class="">reading and reprojecting rasters (DEM, land cover, NDVI, WorldPop, MODIS), rasterize, windows</td></tr>
+<tr><td class="mono">pyproj</td><td class="">3.7.2</td><td class="">UTM transforms (terrain, run, validate, microclimate)</td></tr>
+<tr><td class="mono">shapely</td><td class="">2.1.2</td><td class="">geometry for areas, perimeters, rasterisation (app, geo, exposure, overlay, instant)</td></tr>
+<tr><td class="mono">geopandas</td><td class="">1.1.4</td><td class="">districts, facilities, informal settlements, PBS build (geo, exposure, app)</td></tr>
+<tr><td class="mono">pandas</td><td class="">3.0.5</td><td class="">FIRMS tables, validation events and result tables (geo, validate, tools)</td></tr>
+<tr><td class="mono">pyarrow</td><td class="">25.0.1</td><td class="">reads data/external/firms_pak_2024_2026.parquet</td></tr>
+<tr><td class="mono">Flask</td><td class="">3.1.3</td><td class="">web server and API (app.py)</td></tr>
+<tr><td class="mono">requests</td><td class="">2.34.2</td><td class="">Open-Meteo, MET Norway, NASA FIRMS (weather, geo, firms tools)</td></tr>
+<tr><td class="mono">psycopg2-binary</td><td class="">2.9.13</td><td class="">PostGIS reads (roads, evac)</td></tr>
+<tr><td class="mono">weasyprint</td><td class="">70.0</td><td class="">PDF reports (report.py) and the documents in docs/</td></tr>
+<tr><td class="mono">pillow</td><td class="">12.3.0</td><td class="">PNG overlays and time-lapse frames (overlay, timelapse)</td></tr>
+<tr><td class="mono">imageio-ffmpeg</td><td class="">0.6.0</td><td class="">bundled ffmpeg binary for the time-lapse MP4</td></tr>
+<tr><td class="mono">scikit-image</td><td class="">0.26.0</td><td class="">contours for isochrones and instant footprint (overlay, instant)</td></tr>
+<tr><td class="mono">scikit-learn</td><td class="">1.9.0</td><td class="">only in FIRELAB scripts (not on the PAKFIRE run path)</td></tr>
+<tr><td class="mono">networkx</td><td class="">3.6.1</td><td class="">present in the venv; not used on the run path</td></tr>
+<tr><td class="mono">pytest</td><td class="">9.1.1</td><td class="">tests/pk</td></tr>
+<tr><td class="mono">three.js</td><td class="">0.160.0 (vendored in web/pk/vendor/three)</td><td class="">landing/scene.js (WebGL scene and post-processing)</td></tr>
+<tr><td class="mono">playwright (miniconda)</td><td class="">1.60.0</td><td class="">tools/smoke.py, tools/ui_review.py</td></tr>
+<tr><td class="mono">pystac_client / pystac / planetary_computer</td><td class="">0.9.1 / 1.13.0 / 1.0.0</td><td class="">MODIS burned-area download (outside the app)</td></tr>
+</table>
+<p><code>requirements.txt</code> at the repository root lists the PAKFIRE dependencies (rewritten on 7 November 2026; the table above has the versions in use). CUDA: the CuPy wheel is built for CUDA 13; the kernel source is compiled at runtime (NVRTC) for the installed GPU (NVIDIA GB10).</p>
+<h2>4.2 Browser libraries and fonts</h2>
+<table><tr><th style="width:26%">Component</th><th style="width:38%">Version / source</th><th style="width:36%">Where</th></tr>
+<tr><td class="">Mapbox GL JS</td><td class="">3.6.0, api.mapbox.com</td><td class="">app.html and fire3d.html (map, terrain, styles)</td></tr>
+<tr><td class="">Mapbox GL Draw</td><td class="">1.4.3, unpkg.com</td><td class="">app.html (ignition point, area polygon, fuel breaks)</td></tr>
+<tr><td class="">Mapbox styles and DEM</td><td class="">dark-v11 default; mapbox-terrain-dem-v1</td><td class="">tiles and terrain; token injected server-side</td></tr>
+<tr><td class="">Fonts</td><td class="">Barlow Condensed, Public Sans, IBM Plex Mono (Google Fonts)</td><td class="">SAILAB design system</td></tr>
+<tr><td class="">No front-end framework</td><td class="">plain JavaScript, canvas 2D</td><td class="">all UI code is inline or in fire3d.js</td></tr>
+</table>
+<h2>4.3 External services</h2>
+<table><tr><th style="width:22%">Service</th><th style="width:36%">URL</th><th style="width:18%">Used by</th><th style="width:24%">Failure behaviour</th></tr>
+<tr><td class="">Open-Meteo forecast / archive</td><td class="">api.open-meteo.com/v1/forecast, archive-api.open-meteo.com/v1/archive</td><td class="">weather.py</td><td class="">falls back to MET Norway; replies cached in data/raw/weather</td></tr>
+<tr><td class="">MET Norway locationforecast</td><td class="">api.met.no/weatherapi/locationforecast/2.0/compact</td><td class="">weather.py (fallback)</td><td class="">run fails with a clear message if both fail</td></tr>
+<tr><td class="">NASA FIRMS (VIIRS S-NPP NRT)</td><td class="">firms.modaps.eosdis.nasa.gov/api/area/csv/&lt;key&gt;/VIIRS_SNPP_NRT/60.8,23.5,77.9,37.2/&lt;days&gt;</td><td class="">geo.firms, app /api/firms, monitor</td><td class="">empty list and an error string</td></tr>
+<tr><td class="">Mapbox</td><td class="">api.mapbox.com</td><td class="">both pages</td><td class="">map does not draw; simulation unaffected</td></tr>
+<tr><td class="">SimCity PostGIS</td><td class="">localhost:5455/simcity (role from Smart City/.env, SIMCITY_DB_URL_RO)</td><td class="">roads.py, evac.py</td><td class="">roads ignored (road factor off) and evacuation answers 'road database unavailable'</td></tr>
+</table>
+
+<h1 class="chapter" id="c5">5. Inputs: every dataset and where it is read</h1>
+
+<p><code>SHARE</code> = <code>/mnt/external-ssd/DGX SHARED</code> (env <code>FIRE_SHARE</code>). Paths below are relative to it unless they start with the repository root.</p>
+<table><tr><th style="width:20%">Dataset</th><th style="width:34%">Path</th><th style="width:10%">Format</th><th style="width:20%">Read by</th><th style="width:16%">Override</th></tr>
+<tr><td class="">Elevation (SRTM 1 arc-second, ~30 m)</td><td class="mono">3. Raster Data/DEM_SRTM/pakDEM/Pak_srtm.tif</td><td class="">GeoTIFF</td><td class="">terrain.load_dem</td><td class="">FIRE_DEM</td></tr>
+<tr><td class="">ESRI 10 m land cover, one file per year 2017-2025</td><td class="mono">2. ESRI_LandCover Data/lc&lt;YYYY&gt;/lc&lt;YYYY&gt;Pakistan.tif</td><td class="">GeoTIFF, 10 classes</td><td class="">terrain.lulc_path / load_lulc</td><td class="">FIRE_LULC (2025 default)</td></tr>
+<tr><td class="">MODIS NDVI 1 km composites</td><td class="mono">3. Raster Data/MODIS_NDVI_1km/pakistan_ndvi_1km_&lt;YYYY-MM-DD&gt;.tif</td><td class="">GeoTIFF, 16-day</td><td class="">terrain.pick_ndvi_file / load_ndvi</td><td class="">FIRE_NDVI</td></tr>
+<tr><td class="">Copernicus CGLS-LC100 forest type (2019)</td><td class="mono">data/national/cgls_lc100_pakistan.tif (repository)</td><td class="">GeoTIFF</td><td class="">terrain.load_foresttype</td><td class="">FIRE_CGLS</td></tr>
+<tr><td class="">Meta/WRI canopy height (reduced to 30 m)</td><td class="mono">data/national/canopy_height_pakistan.tif (built by tools/build_canopy.py from s3://dataforgood-fb-data/forests/v1/alsgedi_global_v6_float)</td><td class="">GeoTIFF, 2 bands uint8 (mean and 90th-percentile height, m)</td><td class="">terrain.load_canopy / canopy_for_scene</td><td class="">FIRE_CANOPY</td></tr>
+<tr><td class="">District boundaries (164)</td><td class="mono">4. Vector Data/Pakistan Boundary/Pakistan, Tehsil and District Boundaries/District_Boundary.shp</td><td class="">Shapefile</td><td class="">geo.districts, geo.district_at</td><td class="">FIRE_DISTRICTS</td></tr>
+<tr><td class="">WorldPop 2020 UN-adjusted, 1 km</td><td class="mono">Iliyan/WorldPop/pak_ppp_2020_1km_UNadj.tif</td><td class="">GeoTIFF</td><td class="">exposure._population, evac</td><td class="">–</td></tr>
+<tr><td class="">PBS 2023 census district tables</td><td class="mono">PBS DATA district/csvs/*.csv → data/external/pbs_districts.json (tools/build_pbs.py)</td><td class="">CSV → JSON</td><td class="">exposure.pbs_district</td><td class="">–</td></tr>
+<tr><td class="">Informal settlements 2025 (Karachi, Lahore)</td><td class="mono">data/external/informal/informal_settlements_2025.gpkg</td><td class="">GeoPackage</td><td class="">exposure._informal</td><td class="">–</td></tr>
+<tr><td class="">Hospitals, schools, grid stations, transmission lines</td><td class="mono">4. Vector Data/{{Hospital/Hospitals.shp, Schools/Schools.shp, Electricity Transmission Line/Grid_stations.shp, …/Electricity_transmission_line.shp}}</td><td class="">Shapefiles</td><td class="">exposure.compute (LAYERS)</td><td class="">–</td></tr>
+<tr><td class="">Road network (1.1 M OSM roads)</td><td class="mono">PostGIS pk.roads, localhost:5455/simcity</td><td class="">PostGIS</td><td class="">roads.road_factor, evac.load_graph</td><td class="">FIRE_ROADS_DB</td></tr>
+<tr><td class="">Fire stations (91, OSM)</td><td class="mono">data/external/fire_stations.geojson</td><td class="">GeoJSON</td><td class="">evac.analyse (access)</td><td class="">FIRE_STATIONS</td></tr>
+<tr><td class="">NASA FIRMS VIIRS 2024-2026</td><td class="mono">data/external/firms_pak_2024_2026.parquet (+ data/external/firms/*.csv 5-day chunks)</td><td class="">Parquet, CSV</td><td class="">validate.load_detections</td><td class="">–</td></tr>
+<tr><td class="">NASA FIRMS VIIRS yearly 2012-2025</td><td class="mono">data/external/firms_yearly/viirs-snpp_&lt;YYYY&gt;_Pakistan.csv</td><td class="">CSV</td><td class="">validate.load_detections(full=True)</td><td class="">–</td></tr>
+<tr><td class="">MODIS MCD64A1 burned area</td><td class="mono">data/national/modis_burned/&lt;tile&gt;/&lt;YYYY-MM&gt;.tif → data/validation/mcd_burn_days_2000.tif</td><td class="">GeoTIFF</td><td class="">burned.build, burned_days_on</td><td class="">–</td></tr>
+<tr><td class="">Secrets</td><td class="mono">&lt;repo&gt;/.secrets/firms_map_key and mapbox_token (or env FIRMS_MAP_KEY, MAPBOX_TOKEN)</td><td class="">text</td><td class="">geo._secret</td><td class="">env</td></tr>
+</table>
+<h2>5.1 What is derived from the inputs for every run</h2>
+<table><tr><th style="width:24%">Layer</th><th style="width:28%">Resolution</th><th style="width:48%">How</th></tr>
+<tr><td class="">Grid</td><td class="">user cell size (default 50 m), at most 2400 × 2400</td><td class="">UTM zone from the longitude (zones 41-43) centred on the ignition; <code>terrain.make_grid</code></td></tr>
+<tr><td class="">DEM, slope, upslope azimuth</td><td class="">grid</td><td class="">SRTM resampled bilinear; slope as tan, aspect by <code>terrain.terrain</code></td></tr>
+<tr><td class="">Land cover</td><td class="">10 m read at 3× oversampling, class fractions per cell</td><td class="">mode class plus burnable fraction (<code>load_lulc</code>)</td></tr>
+<tr><td class="">NDVI</td><td class="">1 km nearest in time, bilinear</td><td class="">drives live moisture and curing</td></tr>
+<tr><td class="">Forest type</td><td class="">100 m</td><td class="">1 needleleaf, 2 broadleaf, 0 other (<code>load_foresttype</code>)</td></tr>
+<tr><td class="">Fuel row and continuity</td><td class="">grid</td><td class=""><code>terrain.fuel_from_lulc</code> crosswalk to Anderson / Scott &amp; Burgan rows; continuity multiplies the spread rate</td></tr>
+<tr><td class="">Terrain wind ratio and rotation</td><td class="">240 m solver grid, resampled</td><td class=""><code>windfield.solve</code>, cached on disk (Chapter 6)</td></tr>
+</table>
+
+<h1 class="chapter" id="c6">6. Outputs and caches: every file the code writes</h1>
+
+<h2>6.1 A run directory <code>data/runs/&lt;run_id&gt;/</code></h2>
+<p>The run id is <code>YYYYMMDD-HHMMSS-xxxx</code> (UTC time and four hex characters). All rasters share one north-up EPSG:4326 export grid of at most 2400 pixels a side whose size and bounds are in <code>meta.json</code>.</p>
+<table><tr><th style="width:18%">File</th><th style="width:18%">Written by</th><th style="width:16%">Format</th><th style="width:48%">Content</th></tr>
+<tr><td class="mono">arrival.bin</td><td class="">run.run (_warp)</td><td class="">uint16 little-endian, h × w</td><td class="">earliest arrival time in 1/8 minute (T_SCALE = 8); 65535 = never burned; 120 h limit because 136 h overflows</td></tr>
+<tr><td class="mono">intensity.bin</td><td class="">run.run</td><td class="">uint8</td><td class="">fireline intensity ÷ 40 kW/m, clipped to 255 (maximum shown 10,200 kW/m)</td></tr>
+<tr><td class="mono">hillshade.bin</td><td class="">run.run</td><td class="">uint8</td><td class="">hillshade 1-255, read by the time-lapse background</td></tr>
+<tr><td class="mono">prob.bin</td><td class="">run.run (ensemble only)</td><td class="">uint8</td><td class="">burn probability in percent</td></tr>
+<tr><td class="mono">meta.json</td><td class="">run.run</td><td class="">JSON</td><td class="">id, bounds, size, t_scale, never, hours, start, ignitions, spot fires, camera track, spread axis, events, weather arrays, calibration name, ensemble summary, interventions, warnings, params, stats (burned_ha, ROS and flame series, land cover and fuel areas, crown fire ha, backend, timings)</td></tr>
+<tr><td class="mono">exposure.json</td><td class="">exposure.cached</td><td class="">JSON</td><td class="">people (WorldPop and census-scaled), housing, informal settlements, hospitals, schools, grid, power lines; cached</td></tr>
+<tr><td class="mono">evacuation_&lt;lead&gt;.json</td><td class="">evac.cached</td><td class="">JSON</td><td class="">evacuation origins, routes, cut-off flags, fire-station access; not cached when it contains an error</td></tr>
+<tr><td class="mono">(on demand, not stored)</td><td class="">overlay.render, timelapse.render, report.run_pdf</td><td class="">PNG, MP4, PDF</td><td class="">overlays, time-lapse and PDF are produced per request</td></tr>
+</table>
+<h2>6.2 Caches</h2>
+<table><tr><th style="width:34%">Path</th><th style="width:22%">Written by</th><th style="width:44%">Content</th></tr>
+<tr><td class="mono">data/raw/weather/&lt;md5&gt;.json</td><td class="">weather._fetch</td><td class="">one JSON per (source, location, date range) so repeat runs and validation are offline</td></tr>
+<tr><td class="mono">data/cache/canopy_tiles/&lt;tile&gt;.npz</td><td class="">build_canopy.reduce_tile</td><td class="">per-tile 32 x 32 block reduction (mean, p90) with its transform; makes the mosaic restartable (4.4 GB)</td></tr>
+<tr><td class="mono">data/cache/windfield/&lt;hash&gt;_&lt;dir&gt;[_a&lt;alpha&gt;].npz</td><td class="">adjust.terrain_wind</td><td class="">terrain wind ratio and rotation per scene hash and wind direction (22.5° steps); _a&lt;alpha&gt; marks a stability variant</td></tr>
+<tr><td class="mono">data/monitor.json</td><td class="">app._save_watches</td><td class="">saved watch areas of the FIRMS monitor</td></tr>
+<tr><td class="mono">data/validation/cache/&lt;event&gt;.pkl</td><td class="">validate.prepare</td><td class="">prepared scene and weather of one validation event</td></tr>
+<tr><td class="mono">data/validation/wind/&lt;event&gt;_&lt;dir&gt;[_a&lt;alpha&gt;].npz</td><td class="">adjust.terrain_wind (validation)</td><td class="">terrain wind fields per event</td></tr>
+</table>
+<h2>6.3 Validation and calibration outputs <code>data/validation/</code></h2>
+<table><tr><th style="width:34%">File</th><th style="width:66%">Content</th></tr>
+<tr><td class="mono">events.json / events_v2.json</td><td class="">clustered VIIRS fire events (2024-2026 / 2012-2026) with detections, ignitions, split dev/test</td></tr>
+<tr><td class="mono">results_&lt;name&gt;.json</td><td class="">per-event scores of one calibration (IoU with footprint and MODIS, area ratio, timing, circle baselines)</td></tr>
+<tr><td class="mono">calib_&lt;name&gt;.json</td><td class="">parameter set that was scored or produced by calibrate.py</td></tr>
+<tr><td class="mono">mcd_burn_days_2000.tif</td><td class="">MODIS burn-day mosaic with epoch 2000-01-01</td></tr>
+<tr><td class="mono">ensemble_widths.json, ensemble_widths2.json</td><td class="">ensemble width search results</td></tr>
+<tr><td class="mono">forest_validation.json</td><td class="">forest-fire groups</td></tr>
+<tr><td class="mono">prepare_failures.json</td><td class="">events whose scene could not be built (10 of 1464)</td></tr>
+</table>
+<h2>6.4 Other outputs</h2>
+<ul>
+<li><code>docs/PAKFIRE_Technical_Reference.pdf</code>, <code>docs/PAKFIRE_ARCH_Document.pdf</code>: documents rendered by WeasyPrint from the HTML sources next to them.</li>
+<li><code>logs/*.log</code>: stdout of the app and of background jobs.</li>
+<li>Per request: report PDFs, batch PDF, time-lapse MP4, PNG overlays, GeoJSON isochrones and perimeters.</li>
+</ul>
+
+<h1 class="chapter" id="c7">7. Process walk-through of one run</h1>
+
+<table><tr><th style="width:4%">#</th><th style="width:44%">Step</th><th style="width:32%">Code</th><th style="width:20%">Files touched</th></tr>
+<tr><td class="">1</td><td class="">Browser POST <code>/run</code> with ignition, parameters (hours, half_km, cell_m, spotting, seed, backend, start, wind, ensemble, calibration, assimilate, breaks, treatments)</td><td class="">app.py: <code>run_route</code> → <code>_launch</code> → <code>_start_job</code></td><td class="">JOBS[jid] (memory)</td></tr>
+<tr><td class="">2</td><td class="">A daemon thread takes <code>RUN_LOCK</code> (one run at a time) and calls <code>run.run(...)</code>; progress callbacks update JOBS; the browser polls <code>/runs/&lt;jid&gt;/progress.json</code></td><td class="">app.py: <code>worker</code></td><td class="">JOBS</td></tr>
+<tr><td class="">3</td><td class="">Validate inputs (Pakistan box, hours 1-120, cell size so that no side exceeds 2400 cells)</td><td class="">run.py: <code>run</code> (first lines)</td><td class="">–</td></tr>
+<tr><td class="">4</td><td class="">Build the scene: grid, DEM, land cover (year of the start date), NDVI, forest type, slope, fuel rows and continuity</td><td class="">terrain.py: <code>build_scene</code> (<code>make_grid</code>, <code>load_dem</code>, <code>load_lulc</code>, <code>load_foresttype</code>, <code>load_ndvi</code>, <code>terrain</code>, <code>fuel_from_lulc</code>)</td><td class="">reads the datasets of Chapter 5</td></tr>
+<tr><td class="">5</td><td class="">Snap the ignition to the nearest burnable cell within 600 m; add extra ignitions and assimilated satellite detections (seeded at the time seen)</td><td class="">run.py: <code>_snap</code></td><td class="">–</td></tr>
+<tr><td class="">6</td><td class="">Apply interventions: fuel breaks (lines ≥ 3 cells wide) and treatments (remove / factor)</td><td class="">run.py: <code>_apply_interventions</code></td><td class="">–</td></tr>
+<tr><td class="">7</td><td class="">Fetch hourly weather for 48 h lead-in + the run (Open-Meteo, MET Norway fallback) or build constant manual weather</td><td class="">run.py: <code>_weather</code> → weather.py: <code>hourly</code> / <code>manual</code></td><td class="">data/raw/weather</td></tr>
+<tr><td class="">8</td><td class="">Apply the calibration profile: per-group rate multipliers, wind and moisture multipliers (not for typed weather), roads, suppression, terrain wind ratio and rotation, optional terrain moisture and stability channelling</td><td class="">adjust.py: <code>apply</code> (<code>terrain_wind</code>, <code>chan_alpha</code>, <code>prepare_scene_extras</code>) → windfield.py, microclimate.py, roads.py</td><td class="">data/cache/windfield</td></tr>
+<tr><td class="">9</td><td class="">Hourly dead and live moisture and the spread-rate tables per fuel and hour; ember ignition probability</td><td class="">run.py: <code>_tables</code> → moisture.py, fuels.py: <code>build_tables</code> → pkfire/vendor/rothermel.py</td><td class="">–</td></tr>
+<tr><td class="">10</td><td class="">Solve the arrival time of fire: GPU first, CPU fallback</td><td class="">solver.py: <code>simulate</code> → kernel_gpu.py: <code>simulate</code> | kernel_cpu.py: <code>simulate</code> (<code>run_mtt</code>)</td><td class="">GPU memory / RAM</td></tr>
+<tr><td class="">11</td><td class="">Optional ensemble: perturbed members solved as one batched GPU launch</td><td class="">run.py: <code>ensemble_inputs</code> → solver.py: <code>simulate_batch</code> → kernel_gpu.py: <code>simulate_batch</code></td><td class="">–</td></tr>
+<tr><td class="">12</td><td class="">Statistics (burned area, series, land cover, fuel, crown fire, built-up near the burn), events, spread axis, camera track</td><td class="">run.py: <code>_lead_points</code>, <code>_camera</code></td><td class="">–</td></tr>
+<tr><td class="">13</td><td class="">Export: warp to the EPSG:4326 grid and write the binary rasters and meta.json</td><td class="">run.py: <code>_export_grid</code>, <code>_warp</code></td><td class="">data/runs/&lt;id&gt;/</td></tr>
+<tr><td class="">14</td><td class="">The page reads the result: <code>/runs/&lt;id&gt;/summary.json</code>, overlays, then opens the iframe <code>/runs/&lt;id&gt;/mapbox3d</code> which loads <code>/api/runs/&lt;id&gt;/meta.json</code> and the <code>.bin</code> files</td><td class="">app.py: <code>run_summary</code>, <code>mapbox3d</code>, <code>api_bin</code>; web/pk/viewer/fire3d.js</td><td class="">–</td></tr>
+<tr><td class="">15</td><td class="">On request: exposure, evacuation, report PDF, time-lapse, compare, scoring against an observed perimeter</td><td class="">exposure.py, evac.py, report.py, timelapse.py, app.py</td><td class="">run directory</td></tr>
+</table>
+<h2>7.1 Time and units</h2>
+<ul>
+<li>Simulation time is minutes from the start; weather arrays begin 48 h before the start (the lead-in, <code>LEAD_IN_H</code>), so hour h of the run is index 48 + h and kernels receive <code>hour0 = 48</code>.</li>
+<li>Rothermel works in imperial units internally (lb, ft, min, BTU); <code>fuels.build_tables</code> converts spread rates to m/min and the kernels convert wind to ft/min.</li>
+<li>Dates are naive UTC throughout; the interface converts to Pakistan time (PKT) for display.</li>
+</ul>
+<h2>7.2 The other tiers</h2>
+<table><tr><th style="width:22%">Tier / feature</th><th style="width:30%">Endpoint</th><th style="width:48%">Code path</th></tr>
+<tr><td class="">Tier 1 instant footprint</td><td class="">POST /area/instant-footprint</td><td class="">instant.footprint: a ±12 km window, CPU solver, contoured at 1, 3 and 6 h; no job queue</td></tr>
+<tr><td class="">Tier 2 spread run</td><td class="">POST /run</td><td class="">steps above</td></tr>
+<tr><td class="">Tier 3 ensemble</td><td class="">POST /area/ensemble</td><td class="">the same run with <code>ensemble</code> members (default 24) and prob.bin</td></tr>
+<tr><td class="">Tier 4 mitigation</td><td class="">POST /area/mitigation</td><td class="">baseline run, then the mitigated run with identical weather and seed; reports the difference</td></tr>
+<tr><td class="">Discovery</td><td class="">/districts/*, /fire-hotspots, /api/firms</td><td class="">geo.py over NASA FIRMS and the district polygons</td></tr>
+<tr><td class="">Monitoring</td><td class="">/monitor/watch, /monitor/list, /monitor/delete</td><td class="">app._watch_loop thread; state in data/monitor.json</td></tr>
+</table>
+
+<h1 class="chapter" id="c8">8. Module internals</h1>
+
+<h2>8.1 terrain.py</h2>
+<p><code>build_scene(lat, lon, half_km, cell_m, date)</code> returns a dict: <code>crs, transform, ny, nx, dx, dem, lc, fb, ftype, ndvi, ndvi_file, slope, upaz, fuel, cont</code>. Each raster is read into the grid by <code>_read_to_grid</code> (rasterio warp, bilinear or nearest). <code>lulc_path(year)</code> picks the ESRI file of the year (clamped to 2017-2025); <code>pick_ndvi_file</code> takes the composite nearest in time when the date is within the record and otherwise the newest within 16 days of the day of year. <code>load_canopy</code> / <code>canopy_for_scene</code> read the national canopy raster (mean and 90th-percentile height) on demand, only when the canopy option is on. <code>fuel_from_lulc</code> maps the ESRI classes, NDVI, elevation and forest type to rows of the fuel table and computes the continuity factor (burnable fraction, desert and sparse-vegetation thresholds).</p>
+<h2>8.2 weather.py, moisture.py, fuels.py</h2>
+<ul>
+<li><code>weather.hourly(lat, lon, start, hours)</code> → dict with <code>temp, rh, wind (m/s), wdir, precip, source</code>; fetches in chunks, caches every reply in data/raw/weather, falls back to MET Norway (6 s connect timeout), and when no weather history exists for the lead-in the first hour is held and the run records that in <code>conditioning</code>.</li>
+<li><code>moisture.dead_moisture(temp, rh, rain)</code> → (3, n) fractions for 1, 10 and 100 h fuels by Simard equilibrium moisture with exponential time lags and WRF-SFIRE-style rain wetting; <code>ignition_probability</code> is Schroeder (1969).</li>
+<li><code>fuels.crown_cells(grid, tables, fuel_rows)</code> gives the kernels the crown initiation intensity and bulk density per cell (from the grid when measured canopy is present, otherwise the per-fuel defaults); <code>fuels.canopy_crown</code> derives them from canopy height (CBH = 0.35 × p90 height, CBD = 0.15 × mean/p90, pine fuels only; assumed relations, Technical Reference Ch. 10.3). <code>fuels.build_tables(m_dead, m_herb, m_wood)</code> evaluates <code>pkfire/vendor/rothermel.py</code> for every fuel model and hour and returns the kernel tables: <code>r0, ir</code> (hour × row), and per-row <code>B, C, E, ratio, slope_k, waf, tau, spot, sigma, spot_a, spot_b, crown_i0, crown_cbd</code>. <code>run._tables</code> adds <code>spot_ign</code> and <code>emc_pct</code>.</li>
+</ul>
+<h2>8.3 adjust.py, windfield.py, microclimate.py, roads.py</h2>
+<ul>
+<li><code>adjust.apply(scene, w, params, hours, lead, user_wind, start)</code> returns <code>cont, wmod, wrot, w, moist, decay_min</code>. Keys of the profile are grass, shrub, forest, wind, moist, road, road_minor, tmoist, chan, canopy, wfield, decay_h, suppress (Technical Reference Ch. 5.5); with <code>canopy</code> &gt; 0 it also returns <code>crown_ci0, crown_cbd</code> per cell (<code>fuels.canopy_crown</code> from <code>terrain.canopy_for_scene</code>).</li>
+<li><code>windfield.solve</code> solves ∇²φ = −∇·u₀ with Jacobi-preconditioned conjugate gradients on a 240 m × 40 m Cartesian grid; the operator is a fused CUDA kernel (<code>apply_A</code>), the rest are CuPy elementwise kernels, with a NumPy fallback; returns speed ratio and rotation.</li>
+<li><code>microclimate.moisture_delta / rate_multiplier / channel_strength</code>: solar position, horizon angles, fuel temperature, equilibrium moisture difference and its conversion to a rate multiplier; stability index for channelling.</li>
+<li><code>roads.road_factor(scene)</code> reads the highway classes of the window from PostGIS, rasterises them and returns major and minor barrier factors and an <code>ok</code> flag.</li>
+</ul>
+<h2>8.4 The solvers</h2>
+<table><tr><th style="width:14%"></th><th style="width:43%">kernel_cpu.py (numba)</th><th style="width:43%">kernel_gpu.py (CUDA via CuPy)</th></tr>
+<tr><td class="">Algorithm</td><td class="">Finney minimum travel time: Dijkstra with an indexed binary heap, 16 neighbours, per-edge travel time from the Richards ellipse</td><td class="">exact parallel band relaxation: <code>relax</code> kernel over hour bands inside bounding-box regions until no cell changes, then <code>finalize</code> (intensity, spotting)</td></tr>
+<tr><td class="">Rate at a cell</td><td class=""><code>_cell</code>: r0 (hour, row) × continuity × burn-out; wind × WAF × terrain ratio; slope and wind vector; ellipse length-to-breadth; Byram intensity; Van Wagner / Cruz crown fire (initiation intensity and bulk density read per cell, <code>cI0[i]</code>, <code>cCBD[i]</code>)</td><td class=""><code>cellp</code>: the same arithmetic in CUDA; struct <code>P</code> of device pointers (fuel, slope, upaz, cont, wmod, wrot, tdec, tables)</td></tr>
+<tr><td class="">Spotting</td><td class=""><code>max_spot_m</code> (Albini 1983) per finalised cell; log-normal landing with Schroeder test; deterministic seed</td><td class=""><code>max_spot_m</code> and a hash RNG (<code>hsh</code>, <code>u01</code>) in <code>finalize</code></td></tr>
+<tr><td class="">Single / batch</td><td class=""><code>simulate</code></td><td class=""><code>simulate</code> and <code>simulate_batch</code> (blockIdx.y = ensemble member; <code>_derive_batch</code> prepares per-member tables)</td></tr>
+<tr><td class="">Output</td><td class="">arrival (min), head spread rate, intensity, spot list</td><td class="">same, as CuPy arrays copied back</td></tr>
+</table>
+<p><code>solver.simulate</code> calls the GPU first when <code>kernel_gpu.available()</code>, catches any failure, records it as <code>gpu_error</code> and re-runs on the CPU. In single runs the CPU solver is as fast as or faster than the GPU for the grid sizes used; the GPU wins for large grids and batched ensembles.</p>
+<h2>8.5 Exposure, evacuation, overlays, reports</h2>
+<ul>
+<li><code>exposure.compute(run_id)</code>: people from WorldPop spread to the export grid, scaled by the PBS census factor of the ignition district (<code>pbs_district</code>, factor kept only in 0.7-1.5), housing and firewood shares, informal settlement area (<code>_informal</code>), and per-facility arrival or distance for hospitals, schools, grid stations and power lines.</li>
+<li><code>evac.analyse(run_id, lead_min)</code>: loads the OSM road graph of the window (<code>load_graph</code>), picks the most populated 1 km cells near the burn, runs a time-dependent Dijkstra (<code>_escape</code>) with road loss from the arrival raster, bisects the latest departure, and computes drive time from fire stations to the ignition.</li>
+<li><code>overlay.render(run_id, layer)</code> makes the PNG layers (arrival, intensity, probability) with colour ramps; <code>isochrones</code> makes hourly GeoJSON contours; <code>static_map_png</code> a map image for reports.</li>
+<li><code>report.run_pdf / batch_pdf</code> build HTML (inline SVG charts) and render with WeasyPrint; <code>timelapse.render</code> draws frames with Pillow and encodes with ffmpeg.</li>
+</ul>
+
+<h1 class="chapter" id="c9">9. API reference</h1>
+
+<table><tr><th style="width:10%">Method</th><th style="width:40%">Route</th><th style="width:10%">Returns</th><th style="width:40%">Purpose</th></tr>
+<tr><td class="">GET</td><td class="mono">/</td><td class="">page</td><td class="">landing.html (start page)</td></tr>
+<tr><td class="">GET</td><td class="mono">/instant</td><td class="">page</td><td class="">instant.html (PAKFIRE Instant) with the Mapbox token substituted</td></tr>
+<tr><td class="">GET</td><td class="mono">/app</td><td class="">page</td><td class="">app.html with the Mapbox token substituted</td></tr>
+<tr><td class="">GET</td><td class="mono">/runs/&lt;rid&gt;/mapbox3d</td><td class="">page</td><td class="">fire3d.html with token and run id substituted</td></tr>
+<tr><td class="">GET</td><td class="mono">/places/search?q=</td><td class="">JSON</td><td class="">district names matching typed text (header search box; no FIRMS statistics)</td></tr>
+<tr><td class="">GET</td><td class="mono">/api/queue</td><td class="">JSON</td><td class="">queued and running jobs (header queue chip; cancel with POST /runs/&lt;job&gt;/cancel)</td></tr>
+<tr><td class="">GET</td><td class="mono">/api/hw, /api/status, /api/layers, /data-status</td><td class="">JSON</td><td class="">hardware text, health, layer list, which datasets exist and their size</td></tr>
+<tr><td class="">POST</td><td class="mono">/area/polygon, /area/upload</td><td class="">JSON</td><td class="">describe a drawn or uploaded area (district, window, simulation possible)</td></tr>
+<tr><td class="">GET</td><td class="mono">/districts/search, /districts/&lt;i&gt;, /api/districts</td><td class="">JSON</td><td class="">district ranking by detections and district geometry</td></tr>
+<tr><td class="">GET</td><td class="mono">/fire-hotspots, /api/firms, /api/weather</td><td class="">JSON</td><td class="">strongest recent detections, FIRMS detections, hourly weather at a point</td></tr>
+<tr><td class="">POST</td><td class="mono">/area/context, /area/weather-series</td><td class="">JSON</td><td class="">fire-weather danger class and moisture at a point; weather series</td></tr>
+<tr><td class="">POST</td><td class="mono">/area/instant-footprint</td><td class="">JSON</td><td class="">Tier 1 contours</td></tr>
+<tr><td class="">POST</td><td class="mono">/run, /area/ensemble, /area/mitigation</td><td class="">job id</td><td class="">start a job (Tiers 2, 3, 4)</td></tr>
+<tr><td class="">GET / POST</td><td class="mono">/runs/&lt;jid&gt;/progress.json, /runs/&lt;jid&gt;/cancel</td><td class="">JSON</td><td class="">poll or cancel a job</td></tr>
+<tr><td class="">GET</td><td class="mono">/runs</td><td class="">JSON</td><td class="">history of runs (reads each meta.json)</td></tr>
+<tr><td class="">GET</td><td class="mono">/runs/&lt;rid&gt;/summary.json, /api/runs/&lt;rid&gt;/meta.json</td><td class="">JSON</td><td class="">summary and full metadata</td></tr>
+<tr><td class="">GET</td><td class="mono">/api/runs/&lt;rid&gt;/&lt;name&gt;.bin</td><td class="">binary</td><td class="">arrival, intensity and prob rasters (hillshade.bin is read only by the time-lapse on the server)</td></tr>
+<tr><td class="">GET</td><td class="mono">/runs/&lt;rid&gt;/overlay/&lt;layer&gt;.png</td><td class="">PNG</td><td class="">2D overlay with X-Coordinates and X-Legend headers</td></tr>
+<tr><td class="">GET</td><td class="mono">/runs/&lt;rid&gt;/exposure.json, /runs/&lt;rid&gt;/evacuation.json?lead=60</td><td class="">JSON</td><td class="">exposure and evacuation analyses</td></tr>
+<tr><td class="">GET</td><td class="mono">/runs/&lt;rid&gt;/perimeters.geojson</td><td class="">GeoJSON</td><td class="">hourly isochrones</td></tr>
+<tr><td class="">GET</td><td class="mono">/runs/&lt;rid&gt;/timelapse.mp4, /runs/&lt;rid&gt;/report.pdf, /batch-report.pdf</td><td class="">MP4 / PDF</td><td class="">time-lapse, report, batch report</td></tr>
+<tr><td class="">POST</td><td class="mono">/compare-runs, /runs/&lt;rid&gt;/validate-observed</td><td class="">JSON</td><td class="">compare two runs; score a run against an uploaded observed perimeter</td></tr>
+<tr><td class="">DELETE</td><td class="mono">/runs/&lt;rid&gt;</td><td class="">JSON</td><td class="">remove a run directory</td></tr>
+<tr><td class="">POST / GET</td><td class="mono">/monitor/watch, /monitor/list, /monitor/delete</td><td class="">JSON</td><td class="">FIRMS watches</td></tr>
+</table>
+<p>All error responses are JSON <code>{"error": "..."}</code> with an HTTP status code (<code>app.jerr</code>). The progress stages and their fractions are <code>queued 0.02, terrain 0.12, weather 0.3, spread 0.5, ensemble 0.72, export 0.9, done 1.0</code>.</p>
+
+<h1 class="chapter" id="c10">10. Front end</h1>
+
+<h2>10.1 Page <code>app.html</code></h2>
+<p>The start page <code>landing.html</code> (served at <code>/</code>) shows a three.js forest in which a small fire spreads tree to tree when one of its two buttons is pressed (<code>landing/scene.js</code>, <code>landing/forestfire.js</code>); the animation ends by navigating to <code>/instant</code> (PAKFIRE Instant, <code>instant.html</code>) or <code>/app</code>, where an arrival veil fades in (flag <code>pakfireEnter</code> in <code>sessionStorage</code>). The application page <code>app.html</code> is a single page in the map-first layout of SAILAB's current interface: the Mapbox map fills the screen; a floating toolbar carries the brand, the place search (districts from <code>/places/search</code>, places from the Mapbox geocoder limited to Pakistan), the basemap switch (dark-v11 by default; satellite and streets are raster layers beneath the run layers), the job-queue chip (<code>/api/queue</code>), the light/dark toggle (<code>localStorage</code> key <code>pakfireTheme</code>) and the hardware text from <code>/api/hw</code>; a rounded floating drawer on the right holds the four tiers and panels and can be hidden; the animated 3D scene is a floating card (an iframe of <code>/runs/&lt;id&gt;/mapbox3d</code>) that can be expanded, hidden or opened as a full page; a welcome card opens each browser session. Mapbox GL Draw supplies the ignition, area, fuel-break and treatment tools. The scripts are inline: <code>post()</code> and <code>pollJob()</code> wrap the API; <code>showTier(n)</code> switches tiers; <code>showResult</code> renders a run (statistics, details, exposure and evacuation panels, re-run); <code>openRun(id)</code> opens the 3D card and overlays; <code>setViewMode</code>, <code>toggleDrawer</code>, <code>toggleTheme</code>, <code>setMapLayer</code> and the <code>geo*</code> functions run the interface. The URL hash stores the ignition and the main weather settings so that a view can be shared. On a phone (760 px and narrower) the toolbar wraps and the drawer starts closed and opens over the map.</p>
+<h2>10.2 3D scene <code>fire3d.js</code></h2>
+<table><tr><th style="width:18%">Part</th><th style="width:82%">What it does</th></tr>
+<tr><td class="">Loading</td><td class="">fetches <code>/api/runs/&lt;id&gt;/meta.json</code> and the .bin rasters, builds an age look-up colour table and a time-sorted cell order (<code>R.ord</code>), arrival (<code>R.A</code>), intensity (<code>R.I</code>)</td></tr>
+<tr><td class="">Age raster</td><td class="">canvas source painted for the current time: colour = time since the front passed; also the arrival and intensity modes and burn probability</td></tr>
+<tr><td class="">Front effects</td><td class="">glow heat-map and sparks (Mapbox layers) from cells ignited in the last 8 min; smoke points downwind; spread axis polyline with arrows; spot fires</td></tr>
+<tr><td class="">Flames</td><td class="">canvas 2D sprites with physical geometry: Byram length, tilt tan θ = U/w, intermittency, Heskestad flicker; at close zoom each cell is a row of flame tongues; size slider (1× true scale)</td></tr>
+<tr><td class="">Camera</td><td class="">follow mode interpolates the server camera track (<code>meta.camera</code>); stops when the user drags the map</td></tr>
+<tr><td class="">Styles and light</td><td class="">dark, light, satellite, streets, terrain and night (the Mapbox Standard sun-lit style was removed on 7 November 2026); the clock chip shows day or night from the simulated time</td></tr>
+<tr><td class="">Extras</td><td class="">probe (click a cell for arrival and intensity), wind streaks, chart, WebM export of the canvas (captureStream)</td></tr>
+</table>
+<h2>10.3 Contract between page and iframe</h2>
+<p>The iframe URL carries only the run id. Everything it needs is fetched from <code>/api/runs/&lt;id&gt;/…</code>. The parent calls <code>open3d(id)</code>; no other messages cross the boundary.</p>
+
+<h1 class="chapter" id="c11">11. Validation, calibration and offline tools</h1>
+
+<p>The validation re-uses the engine exactly. Order of operations of the long-history pipeline (<code>tools/pipeline_v2.sh</code>, with <code>VAL_SET=v2</code>):</p>
+<table><tr><th style="width:12%">Step</th><th style="width:38%">Command</th><th style="width:26%">Reads</th><th style="width:24%">Writes</th></tr>
+<tr><td class="">1 events</td><td class=""><code>validate.build_events(full=True, force=True)</code></td><td class="">firms_yearly/*.csv, firms_pak_2024_2026.parquet</td><td class="">data/validation/events_v2.json</td></tr>
+<tr><td class="">2 prepare</td><td class=""><code>tools/run_validation.py prepare 4</code></td><td class="">datasets of Chapter 5, weather</td><td class="">data/validation/cache/&lt;event&gt;.pkl, data/raw/weather</td></tr>
+<tr><td class="">3 wind</td><td class=""><code>tools/wind_precompute.py</code></td><td class="">cache/*.pkl</td><td class="">data/validation/wind/*.npz</td></tr>
+<tr><td class="">4 baseline</td><td class=""><code>tools/run_validation.py score v2base</code></td><td class="">cache, calib_v2base.json</td><td class="">results_v2base.json</td></tr>
+<tr><td class="">5 calibrate</td><td class=""><code>tools/calibrate.py v2cal 8</code> (BASE, CAL_MAX, SWEEPS, KEYS)</td><td class="">cache, wind, results_v2base.json</td><td class="">calib_v2cal.json</td></tr>
+<tr><td class="">6 score</td><td class=""><code>tools/run_validation.py score v2cal</code></td><td class="">calib_v2cal.json</td><td class="">results_v2cal.json</td></tr>
+<tr><td class="">7 install</td><td class="">copy the parameters into <code>pkfire/calibration.json</code> (manual)</td><td class="">–</td><td class="">pkfire/calibration.json</td></tr>
+</table>
+<p>Scoring (<code>validate.score</code>): IoU of the simulated burn with the VIIRS detection footprints (with a one-pixel tolerance) and with MODIS MCD64A1 burned area, against an equal-area circle at the ignition and an oracle circle; area ratio; timing error; detection capture. Development events are those before 2024-01-01, test events from 2024. Extra tools: <code>ensemble_widths.py</code> (spread–skill), <code>forest_validation.py</code>, <code>compare.py</code>, <code>assim_test.py</code>.</p>
+<h2>11.1 Tests and browser checks</h2>
+<table><tr><th style="width:44%">Command</th><th style="width:56%">What it checks</th></tr>
+<tr><td class=""><code>~/flood/venv/bin/python -m pytest tests/pk -q</code></td><td class="">41 tests: physics, solver equality, wind field, microclimate, canopy crown fuel, ensemble, routes (about 1 min on an idle machine)</td></tr>
+<tr><td class=""><code>node tools/viewer_test.js &lt;run_id&gt;</code></td><td class="">fire3d.js against a stub map and a real run</td></tr>
+<tr><td class=""><code>CHROME=… /opt/miniconda3/bin/python tools/ui_review.py &lt;run_id&gt; &lt;out_dir&gt;</code></td><td class="">interface audit in headless Chromium at desktop and phone width</td></tr>
+<tr><td class=""><code>tools/smoke.py &lt;run_id&gt;</code></td><td class="">page loads, ignition set, run opened, console errors</td></tr>
+</table>
+
+<h1 class="chapter" id="c12">12. Configuration, secrets and operation</h1>
+
+<table><tr><th style="width:38%">Variable</th><th style="width:26%">Default</th><th style="width:36%">Effect</th></tr>
+<tr><td class="mono">FIRE_PORT</td><td class="">8020</td><td class="">server port</td></tr>
+<tr><td class="mono">FIRE_SHARE</td><td class="">/mnt/external-ssd/DGX SHARED</td><td class="">root of the shared datasets</td></tr>
+<tr><td class="mono">FIRE_DEM, FIRE_LULC, FIRE_NDVI, FIRE_CGLS, FIRE_CANOPY, FIRE_DISTRICTS</td><td class="">see Chapter 5</td><td class="">dataset overrides</td></tr>
+<tr><td class="mono">FIRE_ROADS_DB</td><td class="">SIMCITY_DB_URL_RO read from Smart City/.env</td><td class="">PostGIS connection URL</td></tr>
+<tr><td class="mono">FIRE_STATIONS</td><td class="">data/external/fire_stations.geojson</td><td class="">fire-station list for the access analysis</td></tr>
+<tr><td class="mono">FIRMS_MAP_KEY, MAPBOX_TOKEN</td><td class="">files in &lt;repo&gt;/.secrets</td><td class="">NASA FIRMS key and Mapbox token</td></tr>
+<tr><td class="mono">VAL_SET, FORCE, START, BASE, KEYS, CAL_MAX, SWEEPS, CHANS, LAMBDA_AREA, LAMBDA_TIME</td><td class="">–</td><td class="">validation and calibration tools</td></tr>
+<tr><td class="mono">CHROME, BASE, ONLY</td><td class="">–</td><td class="">browser tools</td></tr>
+</table>
+<h2>12.1 Starting and stopping</h2>
+<ul>
+<li>Start: <code>cd "/mnt/external-ssd/DGX SHARED/Iliyan/Fire Simulation Model"; setsid nohup ~/flood/venv/bin/python -m pkfire.app &gt; logs/app.log 2&gt;&amp;1 &amp;</code> (it must be started with <code>-m</code>; <code>python -I</code> blocks local imports).</li>
+<li>Stop: find the PID with an anchored pattern, <code>pgrep -f "^/home/aliyan/flood/venv/bin/python -m pkfire.app"</code>, and kill it (an unanchored <code>pkill -f</code> can kill its own shell).</li>
+<li>Long jobs (validation, calibration, wind precompute) are started detached with <code>setsid nohup</code> and write to <code>logs/</code>; foreground commands are limited to 120 s in the tool environment.</li>
+<li>Access from a laptop: <code>ssh -L 8020:localhost:8020 aliyan@192.168.18.129</code>, then http://localhost:8020/.</li>
+</ul>
+<h2>12.2 Shared-server rules</h2>
+<p>GPU temperature is not guarded by the code (the guard was removed on request); runs are serialised by <code>RUN_LOCK</code>. The shared server has reset under sustained GPU load in the past, so long calibrations should be run with checkpoints (the calibration writes <code>calib_&lt;name&gt;.json</code> after every parameter).</p>
+<h2>12.3 Known operational gaps</h2>
+<ul>
+<li>The SimCity PostGIS (port 5455) is a separate project's service; when it is down roads are ignored and the evacuation panel reports 'road database unavailable'.</li>
+<li>JOBS is in memory: a server restart forgets running and finished jobs (finished runs remain on disk).</li>
+<li>Weather depends on the Open-Meteo and MET Norway services being reachable for runs that are not cached.</li>
+</ul>
+
+</body>
+</html>

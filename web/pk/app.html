@@ -1,0 +1,533 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PAKFIRE · Wildfire Modelling</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet">
+<link href="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--page:#070B0F;--page-2:#0A1015;--surface:#101820;--surface-2:#182028;--surface-3:#1E2932;--ink:#EAF3F6;--ink-2:#9FB8C2;--muted:#5C7680;--line:#233039;--line-soft:#1A252D;
+--accent:#FF6A2B;--accent-2:#F0451B;--accent-dim:#A33C14;--accent-soft:#2E150B;--violet:#8C7CF0;--amber:#F5A742;--danger:#F0575A;--success:#3ED598;
+--glow-accent:0 0 0 1px rgba(255,106,43,.25),0 0 24px rgba(255,106,43,.18);--glow-accent-strong:0 0 0 1px rgba(255,106,43,.5),0 0 32px rgba(255,106,43,.35),0 0 4px rgba(255,106,43,.6);
+--ease:cubic-bezier(.2,.8,.25,1);--radius:12px;--radius-sm:8px}
+*{box-sizing:border-box}::selection{background:var(--accent);color:#1a0803}
+html,body{margin:0;height:100%;font-family:"Public Sans",system-ui,sans-serif;color:var(--ink);background:radial-gradient(1100px 620px at 14% -8%,rgba(255,106,43,.10),transparent 60%),radial-gradient(900px 700px at 108% 8%,rgba(140,124,240,.08),transparent 55%),linear-gradient(180deg,var(--page-2),var(--page) 70%);background-attachment:fixed;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:99px;border:2px solid var(--page)}*{scrollbar-width:thin;scrollbar-color:var(--surface-3) transparent}
+.app{display:flex;flex-direction:column;height:100vh;position:relative}
+header{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;background:linear-gradient(180deg,rgba(16,24,32,.92),rgba(16,24,32,.8));backdrop-filter:blur(14px);border-bottom:1px solid var(--line);position:relative;z-index:20}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--violet),transparent);background-size:200% 100%;opacity:.55;animation:sheen 9s linear infinite}
+@keyframes sheen{0%{background-position:0 0}100%{background-position:200% 0}}
+.brand{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:23px;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:9px}
+.brand::before{content:'';width:9px;height:9px;border-radius:99px;background:var(--accent);box-shadow:0 0 0 3px rgba(255,106,43,.15),0 0 14px rgba(255,106,43,.85);animation:pd 2.6s ease-in-out infinite}
+@keyframes pd{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.72)}}
+.brand span{background:linear-gradient(120deg,var(--accent),#F7D49A 45%,var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.main{display:flex;flex:1;overflow:hidden;position:relative;z-index:1}
+.left-col{display:flex;flex-direction:column;flex:1;min-width:320px}
+#mapWrap{position:relative;flex:1;display:flex;min-height:120px}#map{flex:1}
+.view3d-wrap{position:relative;flex:1;display:flex;flex-direction:column;min-height:120px}
+.view3d-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--line);align-items:center}
+.view3d-tabs span{flex:1;padding:8px 10px;color:var(--ink-2);font-size:12.5px}
+.v3d-btn{padding:8px 12px;color:var(--accent);font-size:12px;text-decoration:none}
+iframe.frame3d{width:100%;flex:1;border:1px solid var(--line);border-top:none;background:#0B1417;display:block}
+.empty3d{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:20px;border:1px solid var(--line);border-top:none}
+.right-col{width:420px;min-width:300px;max-width:70vw;background:linear-gradient(180deg,var(--surface),var(--page-2) 96%);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column}
+.panel-section{padding:17px 19px;border-bottom:1px solid var(--line-soft);display:flex;flex-direction:column;gap:11px}
+.panel-section h3{font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;font-size:14.5px;margin:0 0 2px;letter-spacing:.045em;display:flex;align-items:center;gap:8px;font-weight:700}
+.panel-section h3::before{content:'';width:3px;height:14px;border-radius:2px;background:linear-gradient(180deg,var(--accent),var(--violet));box-shadow:0 0 8px rgba(255,106,43,.5)}
+.note{font-size:12px;color:var(--ink-2);margin:0;line-height:1.45}.warn{font-size:11.5px;color:var(--amber);line-height:1.4}.err{color:var(--danger);font-size:12px}
+label{font-size:12.5px;color:var(--ink-2);display:block;margin-bottom:4px;font-weight:500}
+input[type=number],input[type=file],input[type=text],input[type=date],input[type=datetime-local]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);color:var(--ink);outline:none;transition:all .2s}
+input:focus{border-color:var(--accent);box-shadow:var(--glow-accent)}input[type=checkbox]{accent-color:var(--accent)}input[type=range]{width:100%;accent-color:var(--accent)}
+select{padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:12.5px;background:var(--surface-2);color:var(--ink);outline:none;cursor:pointer;width:100%}
+button{font-family:inherit}
+button.action{padding:12px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#1a0803;font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.045em;cursor:pointer;font-size:14px;box-shadow:0 4px 16px -4px rgba(255,106,43,.45);transition:all .18s}
+button.action:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 22px -4px rgba(255,106,43,.6)}button.action:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+button.secondary{padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--ink);font-size:12.5px;cursor:pointer;transition:all .18s;font-weight:500}
+button.secondary:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:var(--accent-soft);box-shadow:var(--glow-accent);transform:translateY(-1px)}button.secondary:disabled{opacity:.4;cursor:not-allowed}
+.tier-tabs{display:flex;gap:6px;position:sticky;top:0;z-index:5;padding:10px 10px 8px;background:linear-gradient(180deg,var(--surface),rgba(16,24,32,.97));border-bottom:1px solid var(--line)}
+.tier-tabs button{flex:1;padding:10px 2px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.03em;font-size:11px;cursor:pointer;border-radius:var(--radius-sm);transition:all .22s}
+.tier-tabs button:hover{color:var(--ink);border-color:var(--accent-dim);transform:translateY(-1px)}
+.tier-tabs button.active{background:linear-gradient(160deg,var(--accent),var(--accent-2));color:#1a0803;border-color:var(--accent);box-shadow:var(--glow-accent-strong)}
+.progress-track{width:100%;height:10px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-dim),var(--accent),var(--violet));width:2%;transition:width .6s var(--ease)}
+.stat-row{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed var(--line-soft)}.stat-row span:first-child{color:var(--ink-2)}.stat-row span:last-child{font-family:"IBM Plex Mono",monospace}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:10.5px;background:var(--accent-soft);color:var(--accent);text-transform:uppercase;letter-spacing:.045em;border:1px solid rgba(255,106,43,.25);font-weight:600}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}.card{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 11px}.card .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.card .v{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:21px;margin-top:2px}
+.row2{display:flex;gap:8px}.row2>*{flex:1}
+details{border:1px solid var(--line-soft);border-radius:var(--radius-sm);padding:6px 10px}summary{cursor:pointer;font-size:12.5px;color:var(--ink-2);font-weight:600}
+.list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}.item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:7px 10px;font-size:12px}
+.item small{color:var(--muted)}canvas.chart{width:100%;height:96px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm)}
+.maptools{position:absolute;top:10px;left:50px;z-index:5;display:flex;gap:6px;flex-wrap:wrap}.maptools button{padding:6px 10px;font-size:11.5px;background:rgba(16,24,32,.88);border:1px solid var(--line);color:var(--ink);border-radius:var(--radius-sm);cursor:pointer;backdrop-filter:blur(8px)}.maptools button.on{border-color:var(--accent);color:var(--accent)}
+#legend2d{position:absolute;right:10px;bottom:24px;z-index:5;background:rgba(16,24,32,.92);border:1px solid var(--line);padding:8px 10px;border-radius:8px;min-width:190px;font-size:11.5px;display:none}.ramp{height:10px;border-radius:2px;margin:5px 0}
+.layerpick{display:flex;flex-wrap:wrap;gap:6px}.layerpick button{padding:5px 9px;font-size:11.5px}.layerpick button.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+a.secondary{display:block;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--ink);font-size:12.5px;cursor:pointer;font-weight:500;text-decoration:none;text-align:center}
+a.secondary:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+small{font-size:11px}.pill,.card .k{font-size:11px}
+/* ---- map-first layout (same structure as SAILAB's current interface): full-screen map, floating toolbar, floating drawer, floating 3D view ---- */
+:root{--drawer-w:420px;--shadow-float:0 10px 40px -8px rgba(0,0,0,.65),0 2px 8px rgba(0,0,0,.4);--radius-lg:16px}
+html,body{overflow:hidden}
+.app{display:block;height:100vh;position:relative}
+.main{position:absolute;inset:0;display:block;z-index:1}
+.left-col{position:absolute;inset:0;display:block;min-width:0}
+#mapWrap{position:absolute;inset:0;display:block}#map{position:absolute;inset:0}
+header{position:absolute;top:10px;left:10px;right:calc(var(--drawer-w) + 22px);z-index:25;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:7px 10px;border:1px solid var(--line);border-radius:16px;background:rgba(14,22,29,.84);box-shadow:var(--shadow-float);transition:right .3s var(--ease)}
+header::after{display:none}
+body.drawer-closed header{right:10px}
+header .brand{font-size:20px;flex:0 0 auto;padding:0 6px 0 2px}
+header .brand small{display:none}
+#geocoderSlot{position:relative;flex:1 1 220px;min-width:130px;max-width:420px}
+#geoInput{width:100%;padding:9px 12px;font-size:13px;font-family:"Public Sans",sans-serif;border:1px solid var(--line);border-radius:12px;outline:none;background:var(--surface-2);color:var(--ink)}
+#geoInput:focus{border-color:var(--accent);box-shadow:var(--glow-accent)}
+#geoResults{position:absolute;top:calc(100% + 6px);left:0;right:0;background:rgba(16,24,32,.96);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow-float);overflow:hidden;display:none;max-height:260px;overflow-y:auto}
+#geoResults.open{display:block}
+#geoResults .geo-item{padding:10px 14px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--line-soft)}
+#geoResults .geo-item:last-child{border-bottom:none}
+#geoResults .geo-item:hover,#geoResults .geo-item.sel{background:var(--accent);color:#1a0803}
+.layer-switch{flex:0 0 auto;display:flex;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.layer-switch button{border:none;background:transparent;padding:8px 11px;font-size:11.5px;cursor:pointer;color:var(--ink-2);font-family:"Barlow Condensed",sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;transition:all .18s var(--ease)}
+.layer-switch button:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.layer-switch button.active{background:var(--accent);color:#1a0803}
+#demSource{display:flex;align-items:center;gap:7px;margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2);flex:0 1 auto;min-width:0;white-space:nowrap}#demSource span{overflow:hidden;text-overflow:ellipsis}
+#demSource::before{content:'';width:6px;height:6px;border-radius:99px;background:var(--success);box-shadow:0 0 8px rgba(62,213,152,.9);flex:0 0 auto;animation:pd 2.6s ease-in-out infinite}
+#themeToggle,#queueChip{flex:0 0 auto;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer;line-height:1;padding:0}
+#themeToggle{width:34px;font-size:16px}#queueChip{padding:0 12px;font-size:12px;font-weight:600;white-space:nowrap}
+#themeToggle:hover,#queueChip:hover{color:var(--ink);border-color:var(--accent)}#queueChip.busy{color:var(--accent);border-color:var(--accent)}
+#queuePop{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-height:60vh;overflow:auto;z-index:40;display:none;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-float);padding:10px}
+#queuePop.open{display:block}#queuePop h4{margin:2px 4px 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.qrow{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line-soft);border-radius:10px;margin-bottom:6px;font-size:12px}.qrow .qmeta{flex:1;min-width:0}.qrow .qsub{color:var(--muted);font-size:11px}
+.qrow button{border:1px solid var(--danger);color:var(--danger);background:transparent;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:11px;font-weight:600}.qrow button:hover{background:var(--danger);color:#fff}.qempty{color:var(--muted);font-size:12px;padding:6px 4px}
+.maptools{top:68px;left:56px}
+a.brand{text-decoration:none;color:inherit}
+#enterVeil{position:fixed;inset:0;z-index:200;pointer-events:none;display:none}body.entering #enterVeil{display:block}
+#enterVeil .ev-a{position:absolute;inset:0;background:#ffcc73;animation:evA .6s ease-out forwards}
+#enterVeil .ev-b{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 115%,#ff7a2a 0%,rgba(255,106,43,.55) 35%,rgba(20,6,2,0) 70%);animation:evB 1.6s ease-in forwards}
+@keyframes evA{0%{opacity:1}100%{opacity:0}}@keyframes evB{0%{opacity:0}22%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){#enterVeil{display:none!important}}
+.mapboxgl-ctrl-top-left,.mapboxgl-ctrl-top-right{top:68px!important}
+.mapboxgl-ctrl-top-right,.mapboxgl-ctrl-bottom-right{right:calc(var(--drawer-w) + 12px)!important;transition:right .3s var(--ease)}
+body.drawer-closed .mapboxgl-ctrl-top-right,body.drawer-closed .mapboxgl-ctrl-bottom-right{right:0!important}
+#legend2d{right:calc(var(--drawer-w) + 22px);transition:right .3s var(--ease)}body.drawer-closed #legend2d{right:10px}
+.right-col{position:absolute;top:10px;right:10px;bottom:10px;width:var(--drawer-w);max-width:none;min-width:0;z-index:22;border:1px solid var(--line);border-radius:20px;background:rgba(14,22,29,.90);backdrop-filter:blur(16px);box-shadow:var(--shadow-float);padding-bottom:12px;transition:transform .3s var(--ease)}
+body.drawer-closed .right-col{transform:translateX(calc(100% + 24px))}
+#drawerToggle{position:absolute;z-index:23;top:50%;right:calc(var(--drawer-w) + 14px);width:26px;height:56px;margin-top:-28px;border:1px solid var(--line);border-radius:12px;background:rgba(14,22,29,.9);color:var(--ink-2);cursor:pointer;font-size:15px;transition:right .3s var(--ease),color .15s}
+#drawerToggle:hover{color:var(--accent);border-color:var(--accent)}body.drawer-closed #drawerToggle{right:10px}
+.right-col .panel-section{margin:10px 12px 0;padding:15px 16px;border:1px solid var(--line-soft);border-radius:16px;background:rgba(24,32,40,.55)}
+.panel-section h3{font-family:"Public Sans",system-ui,sans-serif;text-transform:none;font-size:15.5px;font-weight:700;letter-spacing:0}.panel-section h3::before{display:none}
+.tier-tabs{padding:12px 12px 8px;gap:6px;background:transparent;border-bottom:none}
+.tier-tabs button{border-radius:999px;font-family:"Public Sans",system-ui,sans-serif;font-weight:600;text-transform:none;letter-spacing:0;font-size:11.5px;padding:10px 2px}
+button.action{border-radius:14px;font-family:"Public Sans",system-ui,sans-serif;text-transform:none;letter-spacing:0;font-weight:700;font-size:15px;padding:13px}
+button.secondary,a.secondary{border-radius:12px}input[type=number],input[type=file],input[type=text],input[type=date],input[type=datetime-local],select{border-radius:12px}
+.view3d-wrap{position:absolute;z-index:9;left:10px;bottom:10px;width:min(48vw,720px);height:42vh;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-float);background:var(--surface)}
+.view3d-wrap iframe.frame3d{border:none}
+body.view-main .view3d-wrap{top:66px;width:auto;height:auto;right:calc(var(--drawer-w) + 22px)}body.view-main.drawer-closed .view3d-wrap{right:10px}
+body.view-hidden .view3d-wrap{display:none}
+.view3d-tabs .v3d-btn{flex:0 0 auto;padding:8px 12px;border:none;background:transparent;color:var(--ink-2);cursor:pointer;font-size:12px;font-weight:600}.view3d-tabs .v3d-btn:hover{color:var(--accent)}
+#viewShowBtn{position:absolute;z-index:9;left:10px;bottom:10px;display:none;padding:10px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(14,22,29,.9);color:var(--ink);font-weight:600;cursor:pointer;box-shadow:var(--shadow-float)}
+body.view-hidden #viewShowBtn{display:block}
+#welcomeOverlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(4,10,13,.55);backdrop-filter:blur(5px)}
+#welcomeOverlay .wcard{position:relative;width:min(760px,100%);display:grid;grid-template-columns:1fr 1fr;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow-float);background:var(--surface)}
+#welcomeOverlay .wl{padding:28px;background:linear-gradient(160deg,var(--accent-soft),var(--surface) 80%)}
+#welcomeOverlay .wl h2{margin:0 0 14px;font-family:"Barlow Condensed",sans-serif;font-size:30px;text-transform:uppercase;letter-spacing:.05em}
+#welcomeOverlay ul{margin:0;padding:0}#welcomeOverlay .wl li{list-style:none;margin:0 0 12px;font-size:13.5px;color:var(--ink-2);line-height:1.45}#welcomeOverlay .wl li b{display:block;color:var(--ink);font-size:14.5px}
+#welcomeOverlay .wr{padding:28px;display:flex;flex-direction:column;gap:10px;background:var(--surface-2)}
+#welcomeOverlay .wr h3{margin:0 0 4px;font-size:22px;line-height:1.2}#welcomeOverlay .wr h3 em{font-style:normal;color:var(--accent)}
+#welcomeOverlay .wx{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-size:17px}
+/* ---- light theme: same tokens, light values; toggled by data-theme on <html> ---- */
+:root[data-theme="light"]{--page:#EAF0F4;--page-2:#F3F7FA;--surface:#FFFFFF;--surface-2:#F1F5F8;--surface-3:#D5DFE6;--ink:#10222B;--ink-2:#3F5964;--muted:#6B8490;--line:#CBD8E0;--line-soft:#DCE6EC;
+ --accent:#D4440F;--accent-2:#B93A0B;--accent-dim:#E8A27F;--accent-soft:#FDE7DC;--violet:#6554D6;--amber:#B8730F;--danger:#C93A3D;--success:#1E9C6B;
+ --glow-accent:0 0 0 1px rgba(212,68,15,.25),0 0 18px rgba(212,68,15,.12);--glow-accent-strong:0 0 0 1px rgba(212,68,15,.5),0 0 22px rgba(212,68,15,.25);--shadow-float:0 10px 36px -10px rgba(16,34,43,.28),0 2px 8px rgba(16,34,43,.10)}
+:root[data-theme="light"],:root[data-theme="light"] body{background:radial-gradient(1100px 620px at 14% -8%,rgba(212,68,15,.07),transparent 60%),linear-gradient(180deg,var(--page-2),var(--page) 70%)}
+:root[data-theme="light"] ::selection{color:#fff}
+:root[data-theme="light"] .brand span{background:linear-gradient(120deg,var(--accent),var(--accent-2) 55%,var(--violet));-webkit-background-clip:text;background-clip:text}
+:root[data-theme="light"] header{background:rgba(255,255,255,.88)}
+:root[data-theme="light"] #geoResults{background:rgba(255,255,255,.97)}
+:root[data-theme="light"] .right-col{background:rgba(244,248,250,.92)}
+:root[data-theme="light"] .tier-tabs{background:transparent}
+:root[data-theme="light"] .right-col .panel-section{background:rgba(255,255,255,.8)}
+:root[data-theme="light"] #drawerToggle,:root[data-theme="light"] #viewShowBtn{background:rgba(255,255,255,.95)}
+:root[data-theme="light"] #welcomeOverlay{background:rgba(234,240,244,.7)}
+:root[data-theme="light"] button.action,:root[data-theme="light"] .tier-tabs button.active,:root[data-theme="light"] .layer-switch button.active,:root[data-theme="light"] #geoResults .geo-item:hover,:root[data-theme="light"] #geoResults .geo-item.sel{color:#fff}
+:root[data-theme="light"] input,:root[data-theme="light"] select,:root[data-theme="light"] textarea{background:#fff;color:var(--ink)}
+:root[data-theme="light"] .maptools button,:root[data-theme="light"] #legend2d{background:rgba(255,255,255,.92);color:var(--ink)}
+@media (max-width:860px){:root{--drawer-w:340px}#welcomeOverlay .wcard{grid-template-columns:1fr}#welcomeOverlay .wl{display:none}}
+@media (max-width:1100px){
+  header{flex-wrap:wrap;row-gap:6px}#demSource{display:none}#geocoderSlot{flex:1 1 160px}
+  .maptools{top:112px;left:50px;right:50px}.mapboxgl-ctrl-top-left,.mapboxgl-ctrl-top-right{top:112px!important}
+}
+@media (max-width:760px){
+  :root{--drawer-w:min(92vw,380px)}
+  header{right:10px;padding:6px 8px;gap:6px}header .brand{font-size:18px}
+  #geocoderSlot{flex:1 1 120px}.layer-switch{order:5}
+  .mapboxgl-ctrl-top-right,.mapboxgl-ctrl-bottom-right{right:0!important}
+  #legend2d{right:10px}.right-col{top:112px;z-index:30}#drawerToggle{z-index:31}
+  body:not(.drawer-closed) #drawerToggle{top:122px;margin-top:0;right:16px;width:36px;height:36px;border-radius:10px;transform:rotate(180deg)}
+  .view3d-wrap{width:calc(100vw - 20px);height:38vh}body.view-main .view3d-wrap{right:10px;top:112px;bottom:10px;width:auto;height:auto}
+  .row2{flex-wrap:wrap}.cards{grid-template-columns:1fr 1fr}
+}
+</style></head><body class="view-hidden"><div id="enterVeil" aria-hidden="true"><div class="ev-a"></div><div class="ev-b"></div></div>
+<script>try{if(sessionStorage.getItem("pakfireEnter")){sessionStorage.removeItem("pakfireEnter");sessionStorage.setItem("pakfireWelcome","1");document.body.classList.add("entering");setTimeout(function(){var v=document.getElementById("enterVeil");if(v)v.remove()},1900)}}catch(e){}</script>
+<div class="app">
+<header><a class="brand" href="/" title="Back to the PAKFIRE start page"><span>PAKFIRE</span> <small>WILDFIRE MODELLING · PAKISTAN</small></a>
+<div id="geocoderSlot"><input id="geoInput" type="text" placeholder="Search a district or place in Pakistan..." autocomplete="off" aria-label="Search a district or place in Pakistan"><div id="geoResults"></div></div>
+<div class="layer-switch"><button id="layerDark" class="active" onclick="setMapLayer('dark')">Dark</button><button id="layerSat" onclick="setMapLayer('satellite')">Satellite</button><button id="layerStreets" onclick="setMapLayer('streets')">Streets</button></div>
+<div style="position:relative;flex:0 0 auto"><button id="queueChip" onclick="toggleQueue()" title="Show running and queued jobs, and cancel them">Queue: idle</button><div id="queuePop"></div></div>
+<button id="themeToggle" onclick="toggleTheme()" title="Switch between dark and light mode" aria-label="Switch between dark and light mode">&#9680;</button>
+<div id="demSource" title="SRTM 29 m · ESRI 10 m land cover · MODIS NDVI · Open-Meteo · NASA FIRMS"><span id="hwInfo"></span></div></header>
+<div class="main"><div class="left-col">
+<div id="mapWrap"><div id="map"></div>
+<div class="maptools"><button id="tFirms" title="NASA VIIRS satellite fire detections, last 48 h">Fire detections</button><button id="tDist" title="Districts shaded by satellite detections (3 days)">Districts</button><button id="tClear" title="Remove the run overlay from the 2D map">Clear overlay</button><button id="tPng">Export PNG</button></div>
+<div id="legend2d"></div></div>
+<div class="view3d-wrap"><div class="view3d-tabs"><span>Fire spread visualisation (Mapbox 3D)</span><button class="v3d-btn" id="viewExpandBtn" onclick="toggleViewMain()" title="Show the fire view on the whole screen">Expand</button><button class="v3d-btn" id="viewHideBtn" onclick="window.viewUserHidden=true;setViewMode('hidden')" title="Hide this view">Hide</button><a class="v3d-btn" id="v3dFull" style="display:none" target="_blank" href="#">Full Page &#8599;</a></div>
+<div class="empty3d" id="empty3d">Run Tier 2 (spread run), Tier 3 (ensemble) or Tier 4 (mitigation) to see the animated 3D fire here: terrain, the front spreading over time, spot fires, the spread path and a camera that follows the fire.</div>
+<iframe id="view3dFrame" class="frame3d" style="display:none" allowfullscreen title="Animated 3D fire view"></iframe></div></div>
+<button id="drawerToggle" onclick="toggleDrawer()" title="Show or hide the side panel" aria-label="Show or hide the side panel">&#8250;</button>
+<button id="viewShowBtn" onclick="window.viewUserHidden=false;setViewMode('card')">Fire view</button>
+<div class="right-col" id="rightCol">
+
+<div class="panel-section"><h3>Place the fire</h3>
+<p class="note">Use <b>Place ignition</b> then click the map (or drag the flame), or pick a satellite hotspot or district below. Optionally draw an area to set the simulation window (up to 200 km across), or upload a point/polygon file (GeoJSON, zipped shapefile).</p>
+<div class="row2"><button class="secondary" id="bIgn">&#128293; Place ignition</button><button class="secondary" id="bDraw">&#9998; Draw area</button><button class="secondary" id="bClr">Clear</button><button class="secondary" id="bShare" title="Copy a link that restores this ignition and the weather settings">&#128279; Link</button></div>
+<input type="file" id="uploadFile" aria-label="Point or area file (GeoJSON or zipped shapefile)" accept=".zip,.geojson,.json"><button class="secondary" onclick="uploadShape()">Upload point / area</button>
+<div id="areaInfo" style="display:none"><div class="stat-row"><span>Ignition</span><span id="aIgn">-</span></div><div class="stat-row"><span>District</span><span id="aDist">-</span></div><div class="stat-row"><span>Simulation window</span><span id="aWin">-</span></div><div class="stat-row"><span>Extra ignitions</span><span id="aExtra">0</span></div></div></div>
+
+<div class="panel-section"><h3>District discovery (national)</h3>
+<p class="note">Rank all 164 districts by live NASA VIIRS satellite detections. Use a district as your area and start a fire inside it.</p>
+<div class="row2"><select id="dMetric"><option value="detections">Number of detections</option><option value="frp">Fire radiative power (MW)</option></select><select id="dDays"><option value="1">last 1 day</option><option value="3" selected>last 3 days</option><option value="5">last 5 days</option></select></div>
+<input type="text" id="dQuery" placeholder="name or province filter"><button class="secondary" onclick="loadDistricts()">Show districts &rarr;</button><div id="distBox" class="list"></div></div>
+
+<div class="panel-section"><h3>Fire hotspots (national)</h3>
+<p class="note">The strongest or most recent satellite fire detections in Pakistan (375 m pixels, a detection is a fire somewhere in that pixel). Start a simulation from any of them.</p>
+<div class="row2"><select id="hMetric"><option value="frp">Strongest (FRP)</option><option value="recent">Most recent</option></select><select id="hDays"><option value="1">last 1 day</option><option value="2" selected>last 2 days</option><option value="5">last 5 days</option></select></div>
+<button class="secondary" onclick="loadHot()">Show hotspots &rarr;</button><div id="hotBox" class="list"></div></div>
+
+<div class="panel-section"><h3>Weather &amp; fuel context</h3><div id="ctxBox"><p class="note">Place an ignition first.</p></div></div>
+
+<div class="panel-section"><h3>Live monitoring</h3>
+<p class="note">Watches the NASA satellite feed around a point. When a new detection appears within the radius it automatically runs a 24 h spread scenario from the strongest one and can post to a webhook. Experimental.</p>
+<div class="row2"><div><label>Radius (km)</label><input type="number" id="wRad" value="15" min="2" max="100"></div><div><label>Check every</label><select id="wEvery"><option value="1">1 h</option><option value="3" selected>3 h</option><option value="6">6 h</option><option value="24">24 h</option></select></div></div>
+<input type="text" id="wHook" placeholder="Webhook URL (Slack/Discord/ntfy.sh, optional)"><button class="secondary" id="wBtn" disabled onclick="watchArea()">Watch this place &rarr;</button><div id="wList"><p class="note">No places watched.</p></div></div>
+
+<div class="tier-tabs">
+<button class="tier-btn active" data-tier="1" onclick="showTier(1)">&#9889; Tier 1 Instant</button>
+<button class="tier-btn" data-tier="2" onclick="showTier(2)">&#128293; Tier 2 Spread</button>
+<button class="tier-btn" data-tier="3" onclick="showTier(3)">&#127922; Tier 3 Ensemble</button>
+<button class="tier-btn" data-tier="4" onclick="showTier(4)">&#128738;&#65039; Tier 4 Mitigate</button></div>
+
+<div class="tier-content" data-tier="1"><div class="panel-section"><h3>Tier 1 &middot; Instant footprint</h3>
+<p class="note">A real small simulation (the same engine, a 24 km window, constant weather of the current hour) contoured at 1, 3 and 6 hours. A fast first look while you are still placing the ignition; use Tier 2 for the full run.</p>
+<div class="row2"><div><label>Hours</label><select id="i1h"><option value="3">3</option><option value="6" selected>6</option><option value="12">12</option></select></div><div><label>Weather</label><select id="i1w"><option value="live">Current (live)</option><option value="manual">Tier 2 manual weather</option></select></div></div>
+<button class="secondary" id="i1Btn" disabled onclick="runInstant()">Show instant footprint &rarr;</button><div id="i1Out"></div></div></div>
+
+<div class="tier-content" data-tier="2" style="display:none">
+<div class="panel-section"><h3>Weather &amp; timing</h3>
+<label>Source</label><select id="wSrc" onchange="wSrcChange()"><option value="live">Open-Meteo live / forecast / archive (hourly, 48 h moisture lead-in)</option><option value="manual">Set the weather yourself (constant)</option></select>
+<div class="row2"><div><label>Start (PKT)</label><input type="datetime-local" id="startInput"></div><div><label>Duration (h)</label><input type="number" id="hoursInput" value="24" min="1" max="120"></div></div>
+<div id="wManual" style="display:none"><div class="row2"><div><label>Wind (m/s)</label><input type="number" id="wsInput" value="8" min="0" max="30" step="0.5"></div><div><label>Blowing from (&deg;)</label><input type="number" id="wdInput" value="270" min="0" max="359"></div></div>
+<canvas id="compass" width="150" height="150" style="align-self:center;cursor:pointer" title="Click to set the direction the wind blows from"></canvas>
+<div class="row2"><div><label>Temperature (&deg;C)</label><input type="number" id="tInput" value="36" min="0" max="52"></div><div><label>Humidity (%)</label><input type="number" id="rhInput" value="20" min="3" max="100"></div></div></div>
+<button class="secondary" id="wLoadBtn" disabled onclick="loadWeather()">Preview the weather &rarr;</button><canvas id="wxChart" class="chart" width="380" height="110"></canvas><div id="wxInfo"></div></div>
+<div class="panel-section"><h3>Window &amp; solver</h3>
+<div class="row2"><div><label>Window</label><select id="winSel"><option value="auto">From the drawn area (else &plusmn;40 km)</option><option value="25">&plusmn;25 km · 50 m</option><option value="40">&plusmn;40 km · 50 m</option><option value="60">&plusmn;60 km · 75 m</option><option value="100">&plusmn;100 km · 100 m</option></select></div><div><label>Backend</label><select id="beSel"><option value="auto">GPU first (auto)</option><option value="gpu">GPU only</option><option value="cpu">CPU (numba)</option></select></div></div>
+<div class="row2"><div><label>Rates</label><select id="calSel"><option value="default">Calibrated to 2024-25 satellite fires</option><option value="none">Uncalibrated physics</option></select></div><div></div></div>
+<label><input type="checkbox" id="spotChk" checked style="width:auto"> Ember spotting (forest fuels)</label>
+<label><input type="checkbox" id="asmChk" style="width:auto"> Start from the satellite detections near the ignition (last 3 days): the run begins at the first detection and treats every detection within 6 km as burning from the time it was seen</label>
+<details><summary>Advanced</summary><div class="row2"><div><label>Random seed</label><input type="number" id="seedIn" value="1" min="0"></div><div><label>Cell size (m, 0 = auto)</label><input type="number" id="cellIn" value="0" min="0" max="250"></div></div></details>
+<button class="action" id="runBtn" disabled onclick="runFire()">Run fire model</button>
+<button class="secondary" id="cancelBtn" style="display:none" onclick="cancelRun()">Cancel</button>
+<div id="prog" style="display:none"><div class="progress-track"><div class="progress-fill" id="progFill"></div></div><p class="note" id="progTxt"></p></div><div id="runOut"></div></div></div>
+
+<div class="tier-content" data-tier="3" style="display:none"><div class="panel-section"><h3>Tier 3 &middot; Ensemble &amp; burn probability</h3>
+<p class="note">Repeats the Tier 2 run with perturbed wind speed (&plusmn;20%), wind direction (&plusmn;12&deg;), dead-fuel moisture (&plusmn;15%) and vegetation greenness, and maps the share of runs that burn each cell. The widths are assumptions, so this shows sensitivity, not a calibrated chance. Uses the weather and window of Tier 2.</p>
+<div class="row2"><div><label>Members</label><select id="ensN"><option value="12">12</option><option value="24" selected>24</option><option value="48">48</option></select></div><div></div></div>
+<button class="action" id="ensBtn" disabled onclick="runEnsemble()">Run ensemble</button><div id="prog3" style="display:none"><div class="progress-track"><div class="progress-fill" id="progFill3"></div></div><p class="note" id="progTxt3"></p></div><div id="runOut3"></div></div></div>
+
+<div class="tier-content" data-tier="4" style="display:none">
+<div class="panel-section"><h3>Fuel breaks</h3>
+<p class="note">Draw lines across the likely path with the button below. A break is applied at least three cells wide (150 m at 50 m cells) and can be crossed only by embers. Uses the weather and window of Tier 2.</p>
+<div class="row2"><button class="secondary" id="bBreak">&#9998; Draw fuel break</button><div><label>Width (m)</label><input type="number" id="brW" value="60" min="30" max="400"></div></div>
+<button class="secondary" id="sugBrk" onclick="suggestBreak()">&#10024; Suggest a break across the last run's spread path</button>
+<div id="brList" class="list"></div></div>
+<div class="panel-section"><h3>Fuel treatments</h3>
+<p class="note">Draw polygons where fuel is removed or reduced (grazing, thinning, prescribed burning, cleared roadsides). The effect size is yours to set; nothing here is a measured treatment performance.</p>
+<div class="row2"><button class="secondary" id="bTreat">&#9998; Draw treatment area</button><div><label>Effect</label><select id="trMode"><option value="remove">Remove fuel (non-burnable)</option><option value="0.5">Halve the spread rate</option><option value="0.25">Cut spread rate to 25%</option></select></div></div>
+<div id="trList" class="list"></div>
+<button class="action" id="mitBtn" disabled onclick="runMitigation()">Run mitigated vs unmitigated</button>
+<div id="mitProg" style="display:none"><div class="progress-track"><div class="progress-fill" id="mitFill"></div></div><p class="note" id="mitTxt"></p></div><div id="mitOut"></div></div></div>
+
+<div class="panel-section"><h3>Layers of this run</h3><div id="layerPick" class="layerpick"><span class="note">Run a model to see its map layers.</span></div>
+<div class="row2"><a class="secondary" style="text-decoration:none;text-align:center" id="batchLink" target="_blank">Batch PDF (all runs)</a><a id="repLink" class="secondary" style="display:none;text-decoration:none;text-align:center" target="_blank">PDF report</a></div>
+<a id="tlLink" class="secondary" style="display:none;text-decoration:none;text-align:center" target="_blank" title="Video of the fire over a terrain background (made on the server, about 20 s)">Time-lapse video (MP4)</a>
+<a id="isoLink" class="secondary" style="display:none;text-decoration:none;text-align:center" target="_blank">Spread contours (GeoJSON, hourly)</a>
+<a id="sumLink" class="secondary" style="display:none;text-decoration:none;text-align:center" target="_blank">Summary JSON</a>
+<details><summary>Score against an observed perimeter</summary><p class="note">Upload the observed burned area (GeoJSON or zipped shapefile) for the same event. Gives IoU, Dice, omission, commission, area error and centroid offset of the final footprint (timing is not scored).</p>
+<input type="file" id="obsFile" aria-label="Observed fire perimeter file" accept=".geojson,.json,.zip"><button class="secondary" onclick="scoreObserved()">Score the current run</button><div id="obsOut"></div></details></div>
+
+<div class="panel-section"><h3>Run history &amp; compare</h3>
+<div class="row2"><select id="cmpA"></select><select id="cmpB"></select></div><button class="secondary" onclick="compareRuns()">Compare two runs &rarr;</button><div id="cmpOut"></div><div id="hist" class="list"></div></div>
+<div class="panel-section"><p class="note">Research prototype. Spread rates are not calibrated or validated against observed Pakistani fires; crown fire is not modelled and wind is uniform over the window. Scenarios, not forecasts: not for operational or evacuation decisions.</p></div>
+</div></div></div>
+
+<div id="welcomeOverlay" role="dialog" aria-modal="true" aria-labelledby="wTitle" style="display:none">
+<div class="wcard"><button class="wx" onclick="closeWelcome()" aria-label="Close">&times;</button>
+<div class="wl"><h2>PAKFIRE</h2><ul>
+<li><b>Physical fire model</b>Rothermel spread with terrain wind, spotting and crown fire on the GPU: the front through time, not a snapshot.</li>
+<li><b>Impact and evacuation</b>Population, housing and roads at risk, with evacuation times.</li>
+<li><b>Scenarios</b>Ensembles with burn probability, fuel-break mitigation, and live satellite monitoring.</li></ul></div>
+<div class="wr"><h3 id="wTitle">Simulate a wildfire<br>anywhere in <em>Pakistan</em></h3>
+<button class="action" onclick="closeWelcome();$('geoInput').focus()">Search a place</button>
+<button class="secondary" onclick="closeWelcome();$('bIgn').click()">Place an ignition on the map</button>
+<button class="secondary" onclick="closeWelcome();showTier(1);$('hotBox').scrollIntoView({behavior:'smooth',block:'center'})">Start from a satellite hotspot</button>
+<p class="note">Place an ignition, set the weather and duration, then run the spread model. The 3D fire view opens on the map.</p></div></div></div>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<script src="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.js"></script>
+<script>
+mapboxgl.accessToken="__MAPBOX_TOKEN__";
+const $=id=>document.getElementById(id);const fmt=(x,d=1)=>x==null||isNaN(x)?"–":Number(x).toLocaleString(undefined,{maximumFractionDigits:d});
+const post=(u,b)=>fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(r=>r.json().then(j=>({ok:r.ok,j})));
+const PKT=5*3600e3;
+let aoi=null,ign=null,extra=[],curRun=null,ramps={},wxSeries=null,pending="ign";
+
+const map=new mapboxgl.Map({container:"map",style:"mapbox://styles/mapbox/dark-v11",center:[70.5,30.5],zoom:4.7,projection:"globe",preserveDrawingBuffer:true});
+map.addControl(new mapboxgl.NavigationControl(),"top-right");
+const draw=new MapboxDraw({displayControlsDefault:false,controls:{polygon:true,line_string:true,point:true,trash:true},
+ styles:[
+ {id:"gl-draw-polygon-fill",type:"fill",filter:["all",["==","$type","Polygon"]],paint:{"fill-color":["case",["==",["get","user_kind"],"treat"],"#3ED598","#FF6A2B"],"fill-opacity":.14}},
+ {id:"gl-draw-polygon-stroke",type:"line",filter:["all",["==","$type","Polygon"]],paint:{"line-color":["case",["==",["get","user_kind"],"treat"],"#3ED598","#FF6A2B"],"line-width":2.2,"line-dasharray":[2,1.5]}},
+ {id:"gl-draw-line",type:"line",filter:["all",["==","$type","LineString"]],paint:{"line-color":"#F5C542","line-width":4}},
+ {id:"gl-draw-point-halo",type:"circle",filter:["all",["==","$type","Point"],["==","meta","feature"]],paint:{"circle-radius":11,"circle-color":"#FF6A2B","circle-opacity":.3}},
+ {id:"gl-draw-point",type:"circle",filter:["all",["==","$type","Point"],["==","meta","feature"]],paint:{"circle-radius":6,"circle-color":"#FF3B1A","circle-stroke-color":"#fff","circle-stroke-width":2}},
+ {id:"gl-draw-vertex",type:"circle",filter:["all",["==","$type","Point"],["==","meta","vertex"]],paint:{"circle-radius":5,"circle-color":"#fff","circle-stroke-color":"#FF6A2B","circle-stroke-width":2}},
+ {id:"gl-draw-midpoint",type:"circle",filter:["all",["==","$type","Point"],["==","meta","midpoint"]],paint:{"circle-radius":3,"circle-color":"#FF6A2B"}}]});
+map.addControl(draw,"top-left");
+map.on("style.load",()=>map.setFog({color:"rgb(10,16,22)","high-color":"rgb(20,30,45)","space-color":"rgb(4,6,10)","star-intensity":.4}));
+const feats=k=>draw.getAll().features.filter(f=>f.properties.kind===k||(!f.properties.kind&&((k==="ign"&&f.geometry.type==="Point")||(k==="area"&&f.geometry.type==="Polygon")||(k==="break"&&f.geometry.type==="LineString"))));
+const polys=()=>feats("area"),lines=()=>feats("break"),treats=()=>feats("treat"),pts=()=>feats("ign");
+function startDraw(kind,mode){pending=kind;if(kind==="area")polys().forEach(p=>draw.delete(p.id));if(kind==="ign")pts().forEach(p=>draw.delete(p.id));draw.changeMode(mode)}
+$("bIgn").onclick=()=>startDraw("ign","draw_point");$("bDraw").onclick=()=>startDraw("area","draw_polygon");
+$("bBreak").onclick=()=>startDraw("break","draw_line_string");$("bTreat").onclick=()=>startDraw("treat","draw_polygon");
+$("bClr").onclick=()=>{draw.deleteAll();ign=null;aoi=null;extra=[];refresh();clearInst()};
+map.on("draw.create",e=>{const f=e.features[0];let kind=pending;if(f.geometry.type==="Point")kind="ign";else if(f.geometry.type==="LineString")kind="break";else if(kind!=="treat")kind="area";
+  draw.setFeatureProperty(f.id,"kind",kind);if(kind==="ign"&&!window._multi)pts().filter(p=>p.id!==f.id).forEach(p=>draw.delete(p.id));pending="ign";renderInterventions();refresh()});
+map.on("draw.update",()=>refresh());map.on("draw.delete",()=>{refresh();renderInterventions()});
+function setIgnition(lon,lat){pts().forEach(p=>draw.delete(p.id));const id=draw.add({type:"Feature",properties:{kind:"ign"},geometry:{type:"Point",coordinates:[lon,lat]}})[0];refresh()}
+function setAoiExternal(g){polys().forEach(p=>draw.delete(p.id));const id=draw.add({type:"Feature",properties:{kind:"area"},geometry:g})[0];
+  const xs=(g.type==="Polygon"?g.coordinates[0]:g.coordinates[0][0]).map(p=>p[0]),ys=(g.type==="Polygon"?g.coordinates[0]:g.coordinates[0][0]).map(p=>p[1]);map.fitBounds([[Math.min(...xs),Math.min(...ys)],[Math.max(...xs),Math.max(...ys)]],{padding:60});refresh()}
+async function refresh(){const p=pts()[0],a=polys()[0];ign=p?p.geometry.coordinates:null;aoi=a?a.geometry:null;
+  extra=[];const ps=pts();if(ps.length>1)ps.slice(1).forEach(q=>extra.push(q.geometry.coordinates));
+  const on=!!(ign||aoi);for(const id of["runBtn","ensBtn","i1Btn","wBtn","wLoadBtn"])$(id).disabled=!on;$("mitBtn").disabled=!on;
+  if(!on){$("areaInfo").style.display="none";$("ctxBox").innerHTML='<p class="note">Place an ignition first.</p>';return}
+  $("areaInfo").style.display="block";if(!ign&&aoi){const c=centroid(aoi);ign=c}
+  $("aIgn").textContent=ign?`${ign[1].toFixed(4)}°N ${ign[0].toFixed(4)}°E`:"–";$("aExtra").textContent=extra.length;
+  if(aoi){const {ok,j}=await post("/area/polygon",{geometry:aoi});if(ok){$("aWin").textContent=`${fmt(j.area_km2,0)} km² drawn → ±${fmt(j.half_km,0)} km window`;$("aDist").textContent=j.district?`${j.district.name}, ${j.district.province}`:"–"}else{$("aWin").innerHTML=`<span class="err">${j.error}</span>`}}
+  else{$("aWin").textContent="±40 km (default)";const {j}=await post("/area/polygon",{geometry:{type:"Polygon",coordinates:[[[ign[0]-.01,ign[1]-.01],[ign[0]+.01,ign[1]-.01],[ign[0]+.01,ign[1]+.01],[ign[0]-.01,ign[1]+.01],[ign[0]-.01,ign[1]-.01]]]}});$("aDist").textContent=j.district?`${j.district.name}, ${j.district.province}`:"–"}
+  loadContext()}
+function centroid(g){const r=g.type==="Polygon"?g.coordinates[0]:g.coordinates[0][0];return[r.reduce((a,b)=>a+b[0],0)/r.length,r.reduce((a,b)=>a+b[1],0)/r.length]}
+async function uploadShape(){const f=$("uploadFile").files[0];if(!f)return;const fd=new FormData();fd.append("file",f);const r=await fetch("/area/upload",{method:"POST",body:fd});const j=await r.json();if(j.error)return alert(j.error);
+  if(j.geometry)setAoiExternal(j.geometry);if(j.points&&j.points.length){pts().forEach(p=>draw.delete(p.id));j.points.forEach(c=>draw.add({type:"Feature",properties:{kind:"ign"},geometry:{type:"Point",coordinates:c}}));map.flyTo({center:j.points[0],zoom:11});refresh()}}
+
+// ---------- discovery
+async function loadDistricts(){const r=await fetch(`/districts/search?metric=${$("dMetric").value}&days=${$("dDays").value}&q=${encodeURIComponent($("dQuery").value)}&n=15`);const j=await r.json();
+  $("distBox").innerHTML=(j.results||[]).map(d=>`<div class="item"><div><b>${d.name}</b> <small>${d.province}</small><br><small>${d.detections} detections · ${fmt(d.frp,0)} MW FRP</small></div><button class="secondary" onclick="useDistrict(${d.idx})">Use</button></div>`).join("")||`<p class="err">${j.error||"none"}</p>`}
+async function useDistrict(i){const j=await (await fetch("/districts/"+i)).json();setAoiExternal(j.geometry);const c=centroid(j.geometry.type==="Polygon"?j.geometry:{type:"Polygon",coordinates:j.geometry.coordinates[0]});if(!ign)setIgnition(c[0],c[1])}
+async function loadHot(){const j=await (await fetch(`/fire-hotspots?metric=${$("hMetric").value}&days=${$("hDays").value}&n=12`)).json();
+  $("hotBox").innerHTML=j.error?`<p class="err">${j.error}</p>`:j.results.map(r=>`<div class="item"><div><b>${fmt(r.frp,1)}</b> <small>MW FRP · ${r.when}</small><br><small>${r.district||"–"}, ${r.province||""} · ${r.lat.toFixed(3)}, ${r.lon.toFixed(3)}</small></div><button class="secondary" onclick="useHot(${r.lon},${r.lat})">Ignite</button></div>`).join("")+`<p class="note">${j.total} detections in the last ${j.days} day(s).</p>`}
+function useHot(lon,lat){setIgnition(lon,lat);map.flyTo({center:[lon,lat],zoom:11,pitch:45})}
+
+// ---------- context
+async function loadContext(){if(!ign)return;$("ctxBox").innerHTML='<p class="note">Fetching weather and building the fuel picture…</p>';const {j}=await post("/area/context",{lat:ign[1],lon:ign[0],half_km:25});let h="";
+  const w=j.weather;if(w){const dc=j.danger,col={low:"#3ED598",moderate:"#F5C542",high:"#FF9A3C","very high":"#F0575A",extreme:"#C23CF0"}[dc.cls];h+=`<div class="stat-row"><span>Fire-weather danger</span><span><b style="color:${col}">${dc.cls.toUpperCase()}</b></span></div><p class="note">${dc.basis}. A simple screening class, not a standard index.</p>`;h+=`<div class="stat-row"><span>Now</span><span>${w.temp_now} °C · RH ${w.rh_now}% · ${w.wind_now} m/s from ${w.wdir_now}°</span></div><div class="stat-row"><span>Next 72 h: peak wind / lowest RH</span><span>${w.wind_peak_72h} m/s / ${w.rh_min_72h}%</span></div><div class="stat-row"><span>Rain: last 48 h / next 72 h</span><span>${w.rain_prior_48h_mm} / ${w.rain_72h_mm} mm</span></div><div class="stat-row"><span>1 h dead fuel moisture now / driest</span><span>${w.dead1h_now_pct}% / ${w.dead1h_min_72h_pct}%</span></div><p class="note">Source ${w.source}. Fuel burns readily below about 8% (Rothermel's grass moisture of extinction is 12%).</p>`}else h+=`<p class="err">${j.weather_error||""}</p>`;
+  if(j.landcover_pct){h+=`<div class="stat-row"><span>Burnable land in ±25 km</span><span>${j.burnable_pct}%</span></div><div class="stat-row"><span>Land cover</span><span style="max-width:230px;text-align:right">${Object.entries(j.landcover_pct).filter(e=>e[1]>=1).map(e=>e[0]+" "+e[1]+"%").join(" · ")}</span></div><div class="stat-row"><span>Elevation (5–95%) / NDVI</span><span>${j.elevation_m[0]}–${j.elevation_m[1]} m / ${j.ndvi_mean??"–"}</span></div>`}else if(j.scene_error)h+=`<p class="err">${j.scene_error}</p>`;
+  $("ctxBox").innerHTML=h}
+
+// ---------- tiers
+function showTier(n){document.querySelectorAll(".tier-btn").forEach(b=>b.classList.toggle("active",+b.dataset.tier===n));document.querySelectorAll(".tier-content").forEach(c=>c.style.display=+c.dataset.tier===n?"":"none")}
+function drawCompass(){const c=$("compass"),x=c.getContext("2d"),R=62,cx=75,cy=75;x.clearRect(0,0,150,150);x.strokeStyle="#233039";x.fillStyle="#9FB8C2";x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,R,0,6.283);x.stroke();
+  x.font="11px IBM Plex Mono";x.textAlign="center";[["N",0],["E",90],["S",180],["W",270]].forEach(([t,a])=>{const r=a*Math.PI/180;x.fillText(t,cx+Math.sin(r)*(R+0),cy-Math.cos(r)*R+4)});
+  const from=+$("wdInput").value,sp=+$("wsInput").value,to=(from+180)*Math.PI/180,len=Math.min(14+sp*2.4,R-8),sx=cx-Math.sin(to)*len/2,sy=cy+Math.cos(to)*len/2,ex=cx+Math.sin(to)*len/2,ey=cy-Math.cos(to)*len/2;
+  x.strokeStyle="#FF6A2B";x.fillStyle="#FF6A2B";x.lineWidth=3;x.beginPath();x.moveTo(sx,sy);x.lineTo(ex,ey);x.stroke();const ang=Math.atan2(ey-sy,ex-sx);x.beginPath();x.moveTo(ex,ey);x.lineTo(ex-10*Math.cos(ang-.45),ey-10*Math.sin(ang-.45));x.lineTo(ex-10*Math.cos(ang+.45),ey-10*Math.sin(ang+.45));x.closePath();x.fill();
+  x.fillStyle="#EAF3F6";x.textAlign="center";x.fillText(sp+" m/s from "+from+"°",cx,148)}
+$("compass").onclick=e=>{const r=e.target.getBoundingClientRect(),dx=e.clientX-r.left-75,dy=e.clientY-r.top-75;$("wdInput").value=Math.round(((Math.atan2(dx,-dy)*180/Math.PI+360)%360)/5)*5%360;drawCompass()};
+["wsInput","wdInput"].forEach(i=>$(i).addEventListener("input",drawCompass));drawCompass();
+function wSrcChange(){$("wManual").style.display=$("wSrc").value==="manual"?"":"none"}
+$("startInput").value=new Date(Date.now()+PKT).toISOString().slice(0,13)+":00";
+
+// ---------- 2D overlays
+function clearOverlay(){["ov","dist-fill","dist-line"].forEach(()=>{});if(map.getLayer("ov"))map.removeLayer("ov");if(map.getSource("ov"))map.removeSource("ov");$("legend2d").style.display="none"}
+function legend(l){if(!l){$("legend2d").style.display="none";return}const r=ramps[l.ramp];if(!r){$("legend2d").style.display="none";return}$("legend2d").style.display="block";
+  $("legend2d").innerHTML=`<b>${l.label}</b><div class="ramp" style="background:linear-gradient(90deg,${r.stops.map(s=>`rgb(${s[1].join(",")}) ${s[0]*100}%`).join(",")})"></div><div style="display:flex;justify-content:space-between;color:var(--muted)"><span>${l.min}</span><span>${l.max} ${l.unit}</span></div>`}
+function addImage(url,coords,l){clearOverlay();map.addSource("ov",{type:"image",url,coordinates:coords});map.addLayer({id:"ov",type:"raster",source:"ov",paint:{"raster-opacity":.88,"raster-fade-duration":0}});legend(l)}
+async function showRunLayer(rid,layer,fit){const r=await fetch(`/runs/${rid}/overlay/${layer}.png`);if(!r.ok)return;const co=JSON.parse(r.headers.get("X-Coordinates"));addImage(URL.createObjectURL(await r.blob()),co,JSON.parse(r.headers.get("X-Legend")));if(fit!==false){const xs=co.map(c=>c[0]),ys=co.map(c=>c[1]);map.fitBounds([[Math.min(...xs),Math.min(...ys)],[Math.max(...xs),Math.max(...ys)]],{padding:40,duration:1200})}}
+fetch("/api/layers").then(r=>r.json()).then(j=>ramps=j.ramps);
+$("tClear").onclick=()=>{document.querySelectorAll(".maptools button").forEach(x=>x.classList.remove("on"));clearOverlay();clearInst()};
+let firmsOn=false;$("tFirms").onclick=async()=>{firmsOn=!firmsOn;$("tFirms").classList.toggle("on",firmsOn);if(!map.getSource("firms")){const g=await (await fetch("/api/firms?days=2")).json();if(g.error){alert(g.error);firmsOn=false;$("tFirms").classList.remove("on");return}
+  map.addSource("firms",{type:"geojson",data:g});map.addLayer({id:"firms-glow",type:"circle",source:"firms",paint:{"circle-radius":["interpolate",["linear"],["zoom"],4,5,10,14],"circle-color":"#ff4d1a","circle-opacity":.28,"circle-blur":1}});
+  map.addLayer({id:"firms-pt",type:"circle",source:"firms",paint:{"circle-radius":["interpolate",["linear"],["zoom"],4,2.5,10,6],"circle-color":"#ff7a1a","circle-stroke-color":"#fff","circle-stroke-width":.8}});
+  map.on("click","firms-pt",e=>{if(draw.getMode()!=="simple_select")return;const p=e.features[0].properties,c=e.features[0].geometry.coordinates;new mapboxgl.Popup().setLngLat(c).setHTML(`<div style="color:#111"><b>Satellite detection</b><br>${p.when}<br>FRP ${fmt(p.frp,1)} MW · ${p.district||""}<br><a href="#" onclick="useHot(${c[0]},${c[1]});return false">Ignite a simulation here</a></div>`).addTo(map)});
+}
+  ["firms-glow","firms-pt"].forEach(l=>map.setLayoutProperty(l,"visibility",firmsOn?"visible":"none"))};
+let distLoaded=false;$("tDist").onclick=async()=>{if(!distLoaded){const g=await (await fetch("/api/districts?days=3")).json();if(g.error){alert(g.error);return}map.addSource("dist",{type:"geojson",data:g});
+  map.addLayer({id:"dist-fill",type:"fill",source:"dist",paint:{"fill-color":["interpolate",["linear"],["get","detections"],0,"#2a1a12",1,"#7a3a14",5,"#d9631f",20,"#ff9a3c",60,"#ffe27a"],"fill-opacity":.5}});
+  map.addLayer({id:"dist-line",type:"line",source:"dist",paint:{"line-color":"rgba(255,255,255,.35)","line-width":.6}});
+  map.on("click","dist-fill",e=>{if(draw.getMode()!=="simple_select")return;const p=e.features[0].properties;new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(`<div style="color:#111"><b>${p.name}</b> · ${p.province}<br>${p.detections} detections, ${fmt(p.frp,0)} MW FRP (3 days)</div>`).addTo(map)});distLoaded=true}
+  const on=$("tDist").classList.toggle("on");["dist-fill","dist-line"].forEach(l=>map.setLayoutProperty(l,"visibility",on?"visible":"none"))};
+$("tPng").onclick=()=>{map.once("idle",()=>{const a=document.createElement("a");a.href=map.getCanvas().toDataURL("image/png");a.download="map.png";a.click()});map.triggerRepaint()};
+
+function layerPick(rid,layers){curRun=rid;const names={arrival:"Time of arrival",intensity:"Fire intensity",prob:"Burn probability"};
+  $("layerPick").innerHTML=layers.map(l=>`<button class="secondary" data-l="${l}">${names[l]||l}</button>`).join("");
+  $("layerPick").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("layerPick").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");showRunLayer(rid,b.dataset.l,false)});
+  $("repLink").style.display=$("sumLink").style.display=$("isoLink").style.display="";$("isoLink").href=`/runs/${rid}/perimeters.geojson?step_min=60`;$("tlLink").style.display="";$("tlLink").href=`/runs/${rid}/timelapse.mp4?seconds=24`;$("repLink").href=`/runs/${rid}/report.pdf`;$("sumLink").href=`/runs/${rid}/summary.json`}
+
+// ---------- Tier 1
+function clearInst(){["inst-fill","inst-line"].forEach(l=>map.getLayer(l)&&map.removeLayer(l));map.getSource("inst")&&map.removeSource("inst")}
+async function runInstant(){if(!ign)return;$("i1Out").innerHTML='<p class="note">Simulating a 24 km window…</p>';const body={lat:ign[1],lon:ign[0],hours:+$("i1h").value};if($("i1w").value==="manual")body.wind=manualWind();
+  const {ok,j}=await post("/area/instant-footprint",body);if(!ok){$("i1Out").innerHTML=`<p class="err">${j.error}</p>`;return}clearInst();
+  map.addSource("inst",{type:"geojson",data:j});map.addLayer({id:"inst-fill",type:"fill",source:"inst",paint:{"fill-color":["interpolate",["linear"],["get","t_h"],1,"#ffb43b",3,"#ff6a2b",12,"#c8321c"],"fill-opacity":.22}});
+  map.addLayer({id:"inst-line",type:"line",source:"inst",paint:{"line-color":["interpolate",["linear"],["get","t_h"],1,"#ffd24a",3,"#ff6a2b",12,"#e0431c"],"line-width":2.2}});
+  const w=j.weather;$("i1Out").innerHTML=j.features.map(f=>`<div class="stat-row"><span>After ${f.properties.t_h} h</span><span>${fmt(f.properties.area_ha,0)} ha</span></div>`).join("")+`<div class="stat-row"><span>Head spread at ignition</span><span>${fmt(j.head_ros_m_min,1)} m/min</span></div><div class="stat-row"><span>Weather used</span><span>${w.wind} m/s from ${w.wdir}° · ${w.temp} °C · RH ${w.rh}% · 1 h fuel ${w.dead1h}%</span></div><p class="note">${j.note}</p>`;
+  const b=new mapboxgl.LngLatBounds();j.features.forEach(f=>{(f.geometry.type==="Polygon"?f.geometry.coordinates[0]:f.geometry.coordinates.flat(1).flat(1)).forEach(c=>c.length===2&&b.extend(c))});if(!b.isEmpty())map.fitBounds(b,{padding:80,maxZoom:13})}
+
+// ---------- weather preview + run parameters
+const manualWind=()=>({speed_ms:+$("wsInput").value,from_deg:+$("wdInput").value,temp_c:+$("tInput").value,rh:+$("rhInput").value});
+const startIso=()=>new Date(Date.parse($("startInput").value+":00Z")-PKT).toISOString().slice(0,19);
+async function loadWeather(){if(!ign)return;$("wxInfo").innerHTML='<p class="note">Loading…</p>';const body={lat:ign[1],lon:ign[0],start:startIso(),hours:+$("hoursInput").value};if($("wSrc").value==="manual")body.wind=manualWind();
+  const {ok,j}=await post("/area/weather-series",body);if(!ok){$("wxInfo").innerHTML=`<p class="err">${j.error}</p>`;return}wxSeries=j;drawWx();
+  $("wxInfo").innerHTML=`<div class="stat-row"><span>Source</span><span style="max-width:240px;text-align:right">${j.source}</span></div><div class="stat-row"><span>Peak wind / lowest RH / max temp</span><span>${fmt(Math.max(...j.wind))} m/s · ${fmt(Math.min(...j.rh),0)}% · ${fmt(Math.max(...j.temp))} °C</span></div><div class="stat-row"><span>Driest 1 h fuel moisture</span><span>${fmt(Math.min(...j.dead1h))}%</span></div><div class="stat-row"><span>Moisture lead-in</span><span style="max-width:240px;text-align:right">${j.conditioning}</span></div>`}
+function drawWx(){const c=$("wxChart"),x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);if(!wxSeries)return;const n=wxSeries.wind.length,mx=Math.max(...wxSeries.wind,1);
+  const X=i=>2+i/(n-1)*(c.width-4),YW=v=>c.height-14-(v/mx)*(c.height-26),YR=v=>c.height-14-(v/100)*(c.height-26);
+  x.fillStyle="rgba(255,106,43,.28)";x.strokeStyle="#FF6A2B";x.beginPath();x.moveTo(X(0),c.height-14);wxSeries.wind.forEach((v,i)=>x.lineTo(X(i),YW(v)));x.lineTo(X(n-1),c.height-14);x.closePath();x.fill();x.stroke();
+  x.strokeStyle="#4cc9ff";x.beginPath();wxSeries.rh.forEach((v,i)=>i?x.lineTo(X(i),YR(v)):x.moveTo(X(i),YR(v)));x.stroke();
+  x.fillStyle="#9FB8C2";x.font="10px IBM Plex Mono";x.fillText(fmt(mx)+" m/s wind (orange)",4,11);x.fillText("RH % (blue)",c.width-80,11);x.fillText("0",4,c.height-3);x.fillText((n-1)+" h",c.width-34,c.height-3)}
+function runParams(extraP){const win=$("winSel").value,p={hours:+$("hoursInput").value,start:startIso(),spotting:$("spotChk").checked,seed:+$("seedIn").value,backend:$("beSel").value,calibration:$("calSel").value,assimilate:$("asmChk").checked};
+  if(win!=="auto"&&!aoi){p.half_km=+win}else if(win!=="auto"){p.half_km=+win}if(+$("cellIn").value>0)p.cell_m=+$("cellIn").value;if($("wSrc").value==="manual")p.wind=manualWind();return Object.assign(p,extraP||{})}
+function base(extraP){return{geometry:win_geometry(),ignition:ign,extra_ignitions:extra,params:runParams(extraP)}}
+function win_geometry(){return $("winSel").value==="auto"?aoi:null}
+
+// ---------- runs
+function pollJob(job,prog,done){const t=setInterval(async()=>{const p=await (await fetch(`/runs/${job}/progress.json`)).json();prog(p);if(["queued","running"].includes(p.state))return;clearInterval(t);done(p)},900)}
+function jobError(p){return `<p class="err">${p.state}: ${p.error||""}</p>`}
+async function runFire(){if(!ign)return;const pf="progFill",pt="progTxt",pg="prog",out="runOut";$(pg).style.display="block";$(out).innerHTML="";$("cancelBtn").style.display="";$("runBtn").disabled=true;
+  const {ok,j}=await post("/run",base());if(!ok){$(out).innerHTML=`<p class="err">${j.error}</p>`;$(pg).style.display="none";$("runBtn").disabled=false;$("cancelBtn").style.display="none";return}
+  window._job=j.job;pollJob(j.job,p=>{$(pf).style.width=Math.max(2,p.frac*100)+"%";$(pt).textContent=`${p.stage} · ${fmt(p.elapsed_s,0)} s`},p=>{$(pg).style.display="none";$("cancelBtn").style.display="none";$("runBtn").disabled=false;
+    if(p.state!=="done"){$(out).innerHTML=jobError(p);return}showResult(p.result,out);loadHistory()})}
+function cancelRun(){fetch(`/runs/${window._job}/cancel`,{method:"POST"})}
+async function runEnsemble(){if(!ign)return;$("prog3").style.display="block";$("runOut3").innerHTML="";$("ensBtn").disabled=true;
+  const {ok,j}=await post("/area/ensemble",base({ensemble:+$("ensN").value}));if(!ok){$("runOut3").innerHTML=`<p class="err">${j.error}</p>`;$("prog3").style.display="none";$("ensBtn").disabled=false;return}
+  pollJob(j.job,p=>{$("progFill3").style.width=Math.max(2,p.frac*100)+"%";$("progTxt3").textContent=`${p.stage} · ${fmt(p.elapsed_s,0)} s`},p=>{$("prog3").style.display="none";$("ensBtn").disabled=false;if(p.state!=="done"){$("runOut3").innerHTML=jobError(p);return}showResult(p.result,"runOut3");loadHistory()})}
+function kpi(k,v){return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`}
+function showResult(r,out){const s=r.summary;let h=`<span class="pill">run complete</span> <span class="pill">${(s.backend||"").toUpperCase()} ${fmt(s.solve_s,2)} s</span>`;
+  h+=`<div class="cards">${kpi("Burned area",fmt(s.burned_ha,0)+" ha")}${kpi("Peak spread",fmt(s.max_head_ros_m_min*0.06,1)+" km/h")}${kpi("Spot fires",s.spot_fires)}${kpi("Settlement ≤1 km",fmt(s.builtup_within_1km_ha,0)+" ha")}</div>
+   <div class="stat-row"><span>Peak fireline intensity</span><span>${fmt(s.max_intensity_kw_m,0)} kW/m</span></div>${s.crown_fire_ha?`<div class="stat-row"><span>Burned as crown fire</span><span>${fmt(s.crown_fire_ha,0)} ha</span></div>`:""}<div class="stat-row"><span>Spread axis length</span><span>${fmt(s.axis_length_km,1)} km</span></div>
+   <div class="stat-row"><span>Simulated / whole run</span><span>${s.hours} h in ${fmt(s.compute_s,1)} s</span></div>`;
+  if(s.ensemble)h+=`<div class="stat-row"><span>Ensemble ${s.ensemble.members}: area 10–90%</span><span>${fmt(s.ensemble.area_ha_p10,0)}–${fmt(s.ensemble.area_ha_p90,0)} ha (median ${fmt(s.ensemble.area_ha_median,0)})</span></div>`;
+  h+=`<details><summary>Burned by land cover</summary>${Object.entries(s.by_landcover_ha).map(([k,v])=>`<div class="stat-row"><span>${k}</span><span>${fmt(v,0)} ha</span></div>`).join("")}</details>`;
+  h+=`<details><summary>Key events</summary>${(s.events||[]).map(e=>`<div class="stat-row"><span>${e.label}</span><span>+${fmt(e.t/60,1)} h</span></div>`).join("")}</details>`;
+  h+=`<details id="expoDet-${out}"><summary>Exposure: people, hospitals, schools, power</summary><div id="expoBox-${out}" class="note">Loading…</div></details><details id="evacDet-${out}"><summary>Evacuation and fire-service access</summary><div id="evacBox-${out}" class="note">Loading…</div></details><button class="secondary" id="rerun-${out}">&#8635; Run again with a new random seed</button>`;
+  h+=(r.warnings||[]).slice(0,5).map(w=>`<div class="warn">⚠ ${w}</div>`).join("");$(out).innerHTML=h;open3d(r.run_id);
+  $("expoDet-"+out).ontoggle=function(){if(this.open)loadExposure(r.run_id,"expoBox-"+out)};$("evacDet-"+out).ontoggle=function(){if(this.open)loadEvac(r.run_id,"evacBox-"+out)};$("rerun-"+out).onclick=()=>rerun(r.run_id);layerPick(r.run_id,r.layers||[]);if((r.layers||[]).includes("prob"))showRunLayer(r.run_id,"prob");else showRunLayer(r.run_id,"arrival")}
+async function loadExposure(rid,box){if($(box).dataset.done===rid)return;$(box).textContent="Reading population and facility layers…";const j=await (await fetch(`/runs/${rid}/exposure.json`)).json();if(j.error){$(box).innerHTML=`<span class="err">${j.error}</span>`;return}
+  const po=j.population;let t=po.available?`<div class="stat-row"><span>People in the burned area</span><span>${fmt(po.in_burn,0)}</span></div><div class="stat-row"><span>People within 1 km of the burn</span><span>${fmt(po.within_1km,0)}</span></div>`:'<p class="note">No population data for this area.</p>';
+  if(po.census){const c=po.census;t+=`<div class="stat-row"><span>Census-scaled: in burn / within 1 km</span><span>${fmt(c.in_burn_scaled,0)} / ${fmt(c.within_1km_scaled,0)}</span></div><div class="stat-row"><span>${c.district}: homes kacha / semi-pakka / pakka</span><span>${c.kacha_pct}% / ${c.semi_pakka_pct}% / ${c.pakka_pct}%</span></div><div class="stat-row"><span>Households cooking with firewood</span><span>${c.firewood_cooking_pct}%</span></div><p class="note">${c.note}</p>`}
+  const inf=j.informal;if(inf)t+=inf.available?`<div class="stat-row"><span>Informal settlement burned / within 1 km</span><span>${inf.burned_ha} / ${inf.within_1km_ha} ha</span></div><p class="note">${inf.note}</p>`:`<p class="note">${inf.note}</p>`;
+  const feats=[];for(const [k,v] of Object.entries(j.facilities)){if(v.error){t+=`<p class="err">${k}: ${v.error}</p>`;continue}
+    if(k==="power_lines"){t+=`<div class="stat-row"><span>Power lines burned / within 1 km</span><span>${v.km_burned} / ${v.km_within_1km} km</span></div>`;continue}
+    t+=`<div class="stat-row"><span>${k.replace("_"," ")}: burned / within 1 km</span><span>${v.burned} / ${v.threatened} of ${v.total_in_window}</span></div>`;
+    t+=v.items.slice(0,5).map(i=>`<div class="item"><div><b>${i.name}</b><br><small>${i.status}${i.arrival_min!=null?" · reached +"+fmt(i.arrival_min/60,1)+" h":" · "+i.distance_km+" km from the scar"}</small></div></div>`).join("");
+    v.items.forEach(i=>feats.push({type:"Feature",geometry:{type:"Point",coordinates:[i.lon,i.lat]},properties:{status:i.status,name:i.name}}))}
+  t+=`<p class="note">${j.note}</p>`;$(box).innerHTML=t;$(box).dataset.done=rid;
+  const g={type:"FeatureCollection",features:feats};if(map.getSource("expo"))map.getSource("expo").setData(g);else{map.addSource("expo",{type:"geojson",data:g});map.addLayer({id:"expo",type:"circle",source:"expo",paint:{"circle-radius":7,"circle-color":["match",["get","status"],"burned","#F0575A","#F5C542"],"circle-stroke-color":"#fff","circle-stroke-width":1.6}});
+    map.on("click","expo",e=>{new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(`<div style="color:#111"><b>${e.features[0].properties.name}</b><br>${e.features[0].properties.status}</div>`).addTo(map)})}}
+async function loadEvac(rid,box){if($(box).dataset.done===rid)return;$(box).textContent="Routing over the road network…";const j=await (await fetch(`/runs/${rid}/evacuation.json`)).json();if(j.error){$(box).innerHTML=`<span class="err">${j.error}</span>`;return}
+  const s=j.summary||{};let t="";if(s.origins){t+=`<div class="stat-row"><span>Populated cells analysed</span><span>${s.origins} (${fmt(s.people,0)} people)</span></div><div class="stat-row"><span>Can escape on time</span><span>${s.escape}</span></div><div class="stat-row"><span>Cut off</span><span>${s.cut_off} (${fmt(s.people_cut_off,0)} people)</span></div><div class="stat-row"><span>Need more than ${j.lead_min} min warning</span><span>${s.needing_more_warning}</span></div>`;
+    if(s.median_travel_min!=null)t+=`<div class="stat-row"><span>Median drive to safety</span><span>${s.median_travel_min} min</span></div>`}else t+='<p class="note">No populated cells near the burn.</p>';
+  const a=j.access;if(a&&a.nearest&&a.nearest.length)t+=a.nearest.slice(0,3).map(n=>`<div class="item"><div><b>${n.name}</b><br><small>${n.drive_min} min drive · fire ${fmt(n.fire_ha_at_arrival,0)} ha on arrival</small></div></div>`).join("");else if(a)t+=`<p class="note">${a.error||"No mapped fire station reachable in this window."}</p>`;
+  t+=`<p class="note">${j.assumptions}</p>`;$(box).innerHTML=t;$(box).dataset.done=rid;
+  const feats=(j.origins||[]).filter(o=>o.route&&o.route.length>1).map(o=>({type:"Feature",geometry:{type:"LineString",coordinates:o.route},properties:{status:o.status}}));const g={type:"FeatureCollection",features:feats};
+  if(map.getSource("evac"))map.getSource("evac").setData(g);else{map.addSource("evac",{type:"geojson",data:g});map.addLayer({id:"evac",type:"line",source:"evac",paint:{"line-width":3,"line-color":["match",["get","status"],"escapes","#4CC38A","#F0575A"]}})}}
+async function rerun(rid){const m=(await (await fetch(`/runs/${rid}/summary.json`)).json()).meta,p=m.params;const body={ignition:[p.lon,p.lat],params:{hours:p.hours,half_km:p.half_km,cell_m:p.cell_m,spotting:p.spotting,seed:(p.seed||1)+1,backend:p.backend,start:m.start,ensemble:p.ensemble||0}};
+  if(p.manual_weather){const w=m.weather;body.params.wind={speed_ms:w.wind[0],from_deg:w.wdir[0],temp_c:w.temp[0],rh:w.rh[0]}}
+  const {ok,j}=await post("/run",body);if(!ok)return alert(j.error);showTier(2);$("prog").style.display="block";pollJob(j.job,q=>{$("progFill").style.width=Math.max(2,q.frac*100)+"%";$("progTxt").textContent=`${q.stage} · ${fmt(q.elapsed_s,0)} s`},q=>{$("prog").style.display="none";if(q.state!=="done"){$("runOut").innerHTML=jobError(q);return}showResult(q.result,"runOut");loadHistory()})}
+function open3d(id){$("empty3d").style.display="none";const f=$("view3dFrame");f.style.display="block";const u3=`/runs/${id}/mapbox3d`;if(f.getAttribute("src")!==u3)f.src=u3;$("v3dFull").style.display="";$("v3dFull").href=`/runs/${id}/mapbox3d`;if(!window.viewUserHidden)setViewMode(document.body.classList.contains("view-main")?"main":"card")}
+
+// ---------- mitigation
+function renderInterventions(){const L=lines(),T=treats();
+  $("brList").innerHTML=L.length?L.map((f,i)=>`<div class="item"><div>Fuel break ${i+1}<br><small>${fmt(lineKm(f.geometry.coordinates),2)} km</small></div><button class="secondary" onclick="draw.delete('${f.id}');renderInterventions()">&times;</button></div>`).join(""):'<p class="note">No fuel breaks drawn.</p>';
+  $("trList").innerHTML=T.length?T.map((f,i)=>`<div class="item"><div>Treatment ${i+1}<br><small>${f.properties.mode_label||$("trMode").selectedOptions[0].text}</small></div><button class="secondary" onclick="draw.delete('${f.id}');renderInterventions()">&times;</button></div>`).join(""):'<p class="note">No treatment areas drawn.</p>';
+  T.forEach(f=>{if(!f.properties.mode){draw.setFeatureProperty(f.id,"mode",$("trMode").value);draw.setFeatureProperty(f.id,"mode_label",$("trMode").selectedOptions[0].text)}})}
+async function suggestBreak(){if(!curRun)return alert("Run the fire model first (Tier 2): the break is placed across its spread path.");const m=(await (await fetch(`/runs/${curRun}/summary.json`)).json()).meta,ax=m.axis;if(!ax||ax.length<4)return alert("This run has no spread path.");
+  const i=Math.round(ax.length*0.45),a=ax[i-1],b=ax[Math.min(i+1,ax.length-1)],c=ax[i],dx=(b[1]-a[1])*Math.cos(c[2]*Math.PI/180),dy=b[2]-a[2],n=Math.hypot(dx,dy)||1,px=-dy/n,py=dx/n,half=Math.max(1.5,m.half_km*0.12)/111;
+  const k=1/Math.cos(c[2]*Math.PI/180);draw.add({type:"Feature",properties:{kind:"break"},geometry:{type:"LineString",coordinates:[[c[1]-px*half*k,c[2]-py*half],[c[1]+px*half*k,c[2]+py*half]]}});renderInterventions();map.flyTo({center:[c[1],c[2]],zoom:12,pitch:40});
+  toast("Break placed across the spread path at about 45% of its length. Drag its ends to adjust, then run mitigated vs unmitigated.")}
+function toast(t){const d=document.createElement("div");d.textContent=t;d.style.cssText="position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#101820;border:1px solid #FF6A2B;color:#EAF3F6;padding:9px 16px;border-radius:10px;z-index:99;font-size:12.5px;max-width:420px";document.body.appendChild(d);setTimeout(()=>d.remove(),6000)}
+function lineKm(c){let d=0;for(let i=1;i<c.length;i++){const dx=(c[i][0]-c[i-1][0])*111.32*Math.cos(c[i][1]*Math.PI/180),dy=(c[i][1]-c[i-1][1])*110.57;d+=Math.hypot(dx,dy)}return d}
+function interventions(){const br=lines().map(f=>({coords:f.geometry.coordinates,width_m:+$("brW").value}));
+  const tr=treats().map(f=>{const m=f.properties.mode||$("trMode").value;return m==="remove"?{geometry:f.geometry,mode:"remove"}:{geometry:f.geometry,mode:"factor",factor:+m}});return{breaks:br,treatments:tr}}
+async function runMitigation(){if(!ign)return;const iv=interventions();if(!iv.breaks.length&&!iv.treatments.length)return alert("Draw a fuel break or a treatment area first.");
+  $("mitOut").innerHTML="";$("mitBtn").disabled=true;const body=base();body.interventions=iv;const {ok,j}=await post("/area/mitigation",body);if(!ok){$("mitOut").innerHTML=`<p class="err">${j.error}</p>`;$("mitBtn").disabled=false;return}
+  pollJob(j.job,p=>{$("mitProg").style.display="block";$("mitFill").style.width=Math.max(2,p.frac*100)+"%";$("mitTxt").textContent=`${p.stage} · ${fmt(p.elapsed_s,0)} s`},p=>{$("mitProg").style.display="none";$("mitBtn").disabled=false;if(p.state!=="done")return $("mitOut").innerHTML=jobError(p);
+    const r=p.result;$("mitOut").innerHTML=`<span class="pill">mitigated vs unmitigated</span><div class="stat-row"><span></span><span>unmitigated → mitigated</span></div>`+Object.entries(r.labels).map(([k,n])=>`<div class="stat-row"><span>${n}</span><span>${fmt(r.baseline[k],1)} → ${fmt(r.mitigated[k],1)}</span></div>`).join("")+`<p class="note">${r.note}</p>`;loadHistory();open3d(r.mitigated.run_id);layerPick(r.mitigated.run_id,["arrival","intensity"]);showRunLayer(r.mitigated.run_id,"arrival")})}
+
+// ---------- monitoring / history / compare / scoring
+async function watchArea(){if(!ign)return;await post("/monitor/watch",{centre:ign,radius_km:+$("wRad").value,every_h:+$("wEvery").value,webhook:$("wHook").value,name:$("aDist").textContent});loadWatches()}
+async function loadWatches(){const l=await (await fetch("/monitor/list")).json();$("wList").innerHTML=l.length?l.map(w=>`<div class="item"><div><b>${w.name}</b><br><small>${w.radius_km} km · every ${w.every_h} h · ${w.last?(w.last.error?'<span class="err">'+w.last.error+'</span>':w.last.new_detections+" new detections"):"not checked yet"}${w.alerts.length?" · last run "+w.alerts.at(-1).burned_ha+" ha":""}</small></div><button class="secondary" onclick="unwatch('${w.id}')">&times;</button></div>`).join(""):'<p class="note">No places watched.</p>'}
+async function unwatch(id){await post("/monitor/delete",{id});loadWatches()}
+async function loadHistory(){const h=await (await fetch("/runs")).json();
+  $("hist").innerHTML=h.map(r=>`<div class="item"><div>${r.label||"run"}${r.ensemble?" · ensemble":""} · ${fmt(r.burned_ha,0)} ha<br><small>${(r.t||"").slice(0,16).replace("T"," ")} UTC · ${r.hours} h · ${r.run_id.slice(-6)}</small></div><div style="display:flex;gap:4px"><button class="secondary" onclick="openRun('${r.run_id}')">Open</button><button class="secondary" title="Delete this run" onclick="delRun('${r.run_id}')">&times;</button></div></div>`).join("")||'<p class="note">No runs yet.</p>';
+  const opts=h.map(r=>`<option value="${r.run_id}">${(r.t||"").slice(5,16)} · ${fmt(r.burned_ha,0)} ha · ${r.run_id.slice(-6)}</option>`).join("");$("cmpA").innerHTML=opts;$("cmpB").innerHTML=opts;$("batchLink").href="/batch-report.pdf?ids="+h.slice(0,30).map(r=>r.run_id).join(",")}
+async function delRun(id){if(!confirm('Delete this run and its files?'))return;await fetch('/runs/'+id,{method:'DELETE'});loadHistory()}
+async function openRun(id){const r=await (await fetch(`/runs/${id}/summary.json`)).json();open3d(id);layerPick(id,r.layers||[]);showResult(r,"runOut");showTier(2)}
+async function compareRuns(){const {ok,j}=await post("/compare-runs",{a:$("cmpA").value,b:$("cmpB").value});$("cmpOut").innerHTML=ok?`<div class="stat-row"><span>Burned area A / B</span><span>${fmt(j.area_a_ha,0)} / ${fmt(j.area_b_ha,0)} ha</span></div><div class="stat-row"><span>Only A / only B / both</span><span>${fmt(j.only_a_ha,0)} / ${fmt(j.only_b_ha,0)} / ${fmt(j.both_ha,0)} ha</span></div><div class="stat-row"><span>Peak spread A / B</span><span>${fmt(j.ros_a,1)} / ${fmt(j.ros_b,1)} m/min</span></div><div class="stat-row"><span>Spot fires A / B</span><span>${j.spots_a} / ${j.spots_b}</span></div><p class="note">${j.note}</p>`:`<p class="err">${j.error}</p>`}
+async function scoreObserved(){const f=$("obsFile").files[0];if(!f||!curRun)return alert("Run a model and choose an observed perimeter first.");const fd=new FormData();fd.append("file",f);
+  const j=await (await fetch(`/runs/${curRun}/validate-observed`,{method:"POST",body:fd})).json();$("obsOut").innerHTML=j.error?`<p class="err">${j.error}</p>`:`<div class="stat-row"><span>IoU / Dice</span><span>${fmt(j.IoU,2)} / ${fmt(j.Dice,2)}</span></div><div class="stat-row"><span>Omission / commission</span><span>${fmt(j.omission,2)} / ${fmt(j.commission,2)}</span></div><div class="stat-row"><span>Observed / simulated</span><span>${fmt(j.observed_ha,0)} / ${fmt(j.simulated_ha,0)} ha (${j.area_error_pct>0?"+":""}${j.area_error_pct}%)</span></div><div class="stat-row"><span>Centroid offset</span><span>${fmt(j.centroid_offset_km,2)} km</span></div><p class="note">${j.note}</p>`}
+
+// ---------- map-first interface: theme, drawer, 3D view mode, place search, basemap, job queue, welcome card
+function applyTheme(t){document.documentElement.setAttribute("data-theme",t);const b=$("themeToggle");if(b)b.innerHTML=t==="light"?"&#9790;":"&#9728;"}
+function toggleTheme(){const t=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";applyTheme(t);try{localStorage.setItem("pakfireTheme",t)}catch(e){}}
+(function(){let t="dark";try{t=localStorage.getItem("pakfireTheme")||"dark"}catch(e){}applyTheme(t)})();
+function toggleDrawer(){document.body.classList.toggle("drawer-closed");setTimeout(()=>map.resize(),320)}
+if(window.innerWidth<=760)document.body.classList.add("drawer-closed");
+function setViewMode(m){document.body.classList.toggle("view-main",m==="main");document.body.classList.toggle("view-hidden",m==="hidden");
+  const b=$("viewExpandBtn");if(b)b.textContent=m==="main"?"Shrink":"Expand";setTimeout(()=>map.resize(),50)}
+function toggleViewMain(){setViewMode(document.body.classList.contains("view-main")?"card":"main")}
+function closeWelcome(){$("welcomeOverlay").style.display="none";try{sessionStorage.setItem("pakfireWelcome","1")}catch(e){}}
+(function(){let seen=false;try{seen=!!sessionStorage.getItem("pakfireWelcome")}catch(e){}
+  if(!seen&&!location.hash.includes("ign="))$("welcomeOverlay").style.display="flex"})();
+// basemap: the dark style stays underneath; satellite and street imagery are raster layers shown on request, below every run layer
+const BASEMAPS={satellite:"satellite-streets-v12",streets:"streets-v12"};
+map.on("style.load",()=>{for(const [k,sid] of Object.entries(BASEMAPS)){if(map.getSource("bm-"+k))continue;
+  map.addSource("bm-"+k,{type:"raster",tileSize:512,tiles:[`https://api.mapbox.com/styles/v1/mapbox/${sid}/tiles/512/{z}/{x}/{y}?access_token=${mapboxgl.accessToken}`]});
+  map.addLayer({id:"bm-"+k,type:"raster",source:"bm-"+k,layout:{visibility:"none"}})}});
+function setMapLayer(k){for(const b of Object.keys(BASEMAPS))if(map.getLayer("bm-"+b))map.setLayoutProperty("bm-"+b,"visibility",b===k?"visible":"none");
+  $("layerDark").classList.toggle("active",k==="dark");$("layerSat").classList.toggle("active",k==="satellite");$("layerStreets").classList.toggle("active",k==="streets")}
+// place search: districts from the server, places from Mapbox (Pakistan only)
+const geoInput=$("geoInput"),geoResults=$("geoResults");let geoDeb=null,geoF=[],geoSel=-1;
+function geoRender(){geoResults.innerHTML=geoF.map((f,i)=>`<div class="geo-item${i===geoSel?" sel":""}" data-i="${i}">${f.kind==="district"?"<b>District:</b> ":""}${f.place_name}</div>`).join("");geoResults.classList.toggle("open",geoF.length>0)}
+function geoGo(f){if(!f)return;geoInput.value=f.place_name;geoF=[];geoSel=-1;geoRender();geoInput.blur();
+  if(f.kind==="district"){useDistrict(f.idx);return}
+  if(f.bbox)map.fitBounds([[f.bbox[0],f.bbox[1]],[f.bbox[2],f.bbox[3]]],{padding:60,duration:1500});else map.flyTo({center:f.center,zoom:11,duration:1500})}
+geoInput.addEventListener("input",()=>{clearTimeout(geoDeb);const q=geoInput.value.trim();if(q.length<2){geoF=[];geoRender();return}
+  geoDeb=setTimeout(()=>{Promise.all([
+    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?access_token=${encodeURIComponent(mapboxgl.accessToken)}&limit=5&bbox=60.87,23.63,77.84,37.13`).then(r=>r.json()).catch(()=>({features:[]})),
+    fetch(`/places/search?q=${encodeURIComponent(q)}`).then(r=>r.json()).catch(()=>({results:[]}))]).then(([pl,di])=>{
+    geoF=(di.results||[]).map(d=>({kind:"district",idx:d.idx,place_name:`${d.name} (${d.province})`})).concat((pl.features||[]).map(f=>Object.assign({kind:"place"},f)));geoSel=-1;geoRender()})},300)});
+geoInput.addEventListener("keydown",e=>{if(e.key==="ArrowDown"){geoSel=Math.min(geoSel+1,geoF.length-1);geoRender();e.preventDefault()}
+  else if(e.key==="ArrowUp"){geoSel=Math.max(geoSel-1,0);geoRender();e.preventDefault()}
+  else if(e.key==="Enter"){geoGo(geoF[geoSel>=0?geoSel:0])}else if(e.key==="Escape"){geoF=[];geoRender()}});
+geoResults.addEventListener("mousedown",e=>{const it=e.target.closest(".geo-item");if(it)geoGo(geoF[+it.dataset.i])});
+document.addEventListener("click",e=>{if(!e.target.closest("#geocoderSlot")){geoF=[];geoRender()}});
+// job queue chip
+function toggleQueue(){$("queuePop").classList.toggle("open");refreshQueue()}
+function refreshQueue(){fetch("/api/queue").then(r=>r.json()).then(d=>{const jobs=d.jobs||[],chip=$("queueChip");
+  chip.textContent=jobs.length?`Queue: ${jobs.length} job${jobs.length>1?"s":""}`:"Queue: idle";chip.classList.toggle("busy",jobs.length>0);
+  const pop=$("queuePop");if(!pop.classList.contains("open"))return;
+  pop.innerHTML="<h4>Fire runs</h4>"+(jobs.length?jobs.map(j=>`<div class="qrow"><div class="qmeta"><div>Job ${j.id.slice(0,6)}</div><div class="qsub">${j.state==="queued"?"waiting for the solver":j.stage||"running"} · ${j.age_s} s</div></div><button onclick="cancelQueued('${j.id}',this)">Cancel</button></div>`).join(""):'<div class="qempty">None</div>')}).catch(()=>{})}
+function cancelQueued(id,btn){if(!confirm("Cancel this job?"))return;btn.disabled=true;fetch(`/runs/${id}/cancel`,{method:"POST"}).then(()=>refreshQueue())}
+document.addEventListener("click",e=>{if(!e.target.closest("#queueChip")&&!e.target.closest("#queuePop"))$("queuePop").classList.remove("open")});
+setInterval(refreshQueue,5000);setTimeout(refreshQueue,800);
+fetch("/api/hw").then(r=>r.json()).then(h=>$("hwInfo").textContent=h.text).catch(()=>{});
+// ---------- shareable link: #ign=lon,lat&h=24&w=live
+function writeHash(){if(!ign)return;history.replaceState(null,"",`#ign=${ign[0].toFixed(5)},${ign[1].toFixed(5)}&h=${$("hoursInput").value}&w=${$("wSrc").value}`+($("wSrc").value==="manual"?`&ws=${$("wsInput").value}&wd=${$("wdInput").value}&t=${$("tInput").value}&rh=${$("rhInput").value}`:""))}
+["hoursInput","wSrc","wsInput","wdInput","tInput","rhInput"].forEach(i=>$(i).addEventListener("change",writeHash));map.on("draw.create",writeHash);map.on("draw.update",writeHash);
+map.on("load",()=>{const q=new URLSearchParams(location.hash.slice(1));if(q.get("ign")){const [lo,la]=q.get("ign").split(",").map(Number);if(isFinite(lo)&&isFinite(la)){if(q.get("h"))$("hoursInput").value=q.get("h");if(q.get("w")==="manual"){$("wSrc").value="manual";wSrcChange();["ws","wd","t","rh"].forEach(k=>{if(q.get(k))$({ws:"wsInput",wd:"wdInput",t:"tInput",rh:"rhInput"}[k]).value=q.get(k)});drawCompass()}setIgnition(lo,la);map.flyTo({center:[lo,la],zoom:10.5,pitch:40})}}});
+$("bShare")&&($("bShare").onclick=()=>{writeHash();navigator.clipboard&&navigator.clipboard.writeText(location.href);toast("Link copied: it restores the ignition and weather settings.")});
+renderInterventions();loadWatches();loadHistory();
+</script></body></html>

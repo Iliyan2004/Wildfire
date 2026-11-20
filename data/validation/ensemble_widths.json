@@ -1,0 +1,75 @@
+{
+ "dev_0.0": {
+  "n": 60,
+  "brier": 0.1265,
+  "coverage": 0.0,
+  "area_pit": 0.167
+ },
+ "dev_0.5": {
+  "n": 60,
+  "brier": 0.11723,
+  "coverage": 0.0,
+  "area_pit": 0.167
+ },
+ "dev_1.0": {
+  "n": 60,
+  "brier": 0.10897,
+  "coverage": 0.017,
+  "area_pit": 0.167
+ },
+ "dev_1.5": {
+  "n": 60,
+  "brier": 0.10171,
+  "coverage": 0.067,
+  "area_pit": 0.172
+ },
+ "dev_2.0": {
+  "n": 60,
+  "brier": 0.09518,
+  "coverage": 0.133,
+  "area_pit": 0.183
+ },
+ "dev_3.0": {
+  "n": 60,
+  "brier": 0.08404,
+  "coverage": 0.233,
+  "area_pit": 0.203
+ },
+ "test_0.0": {
+  "n": 60,
+  "brier": 0.11711,
+  "coverage": 0.0,
+  "area_pit": 0.433
+ },
+ "test_0.5": {
+  "n": 60,
+  "brier": 0.11115,
+  "coverage": 0.117,
+  "area_pit": 0.417
+ },
+ "test_1.0": {
+  "n": 60,
+  "brier": 0.10573,
+  "coverage": 0.2,
+  "area_pit": 0.422
+ },
+ "test_1.5": {
+  "n": 60,
+  "brier": 0.10087,
+  "coverage": 0.233,
+  "area_pit": 0.425
+ },
+ "test_2.0": {
+  "n": 60,
+  "brier": 0.09651,
+  "coverage": 0.283,
+  "area_pit": 0.424
+ },
+ "test_3.0": {
+  "n": 60,
+  "brier": 0.08889,
+  "coverage": 0.35,
+  "area_pit": 0.43
+ },
+ "best_scale": 3.0
+}

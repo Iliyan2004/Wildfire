@@ -1,0 +1,21 @@
+.secrets/
+__pycache__/
+*.pyc
+.pytest_cache/
+logs/
+node_modules/
+
+# data is large (13 GB) and mostly rebuildable: only small curated files are tracked, see data/README.md
+data/*
+!data/README.md
+!data/external/
+data/external/*
+!data/external/pbs_districts.json
+!data/external/fire_stations.geojson
+!data/external/informal/
+data/external/informal/*
+!data/external/informal/SOURCES.txt
+!data/validation/
+data/validation/*
+!data/validation/*.json
+!data/validation/earlier_527_event_set/

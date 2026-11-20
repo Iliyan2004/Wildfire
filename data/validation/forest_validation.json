@@ -1,0 +1,102 @@
+{
+ "results": "v2cal",
+ "definition": "forest fire: >= 40 % of the burnable cells within 3 km of the ignition are trees",
+ "groups": {
+  "all forest fires": {
+   "n": 347,
+   "iou": 0.326,
+   "circle": 0.314,
+   "beats_circle": 0.519,
+   "area_ratio": 1.97,
+   "timing_bias_h": -9.5,
+   "n_modis": 102,
+   "modis_iou": 0.237,
+   "modis_circle": 0.232,
+   "modis_area_ratio": 2.05
+  },
+  "test 2024-2026": {
+   "n": 145,
+   "iou": 0.317,
+   "circle": 0.307,
+   "beats_circle": 0.524,
+   "area_ratio": 1.75,
+   "timing_bias_h": -9.9,
+   "n_modis": 40,
+   "modis_iou": 0.269,
+   "modis_circle": 0.259,
+   "modis_area_ratio": 1.52
+  },
+  "dev 2012-2023": {
+   "n": 202,
+   "iou": 0.334,
+   "circle": 0.319,
+   "beats_circle": 0.515,
+   "area_ratio": 2.11,
+   "timing_bias_h": -8.9,
+   "n_modis": 62,
+   "modis_iou": 0.222,
+   "modis_circle": 0.185,
+   "modis_area_ratio": 2.6
+  },
+  "needleleaf (>= 60 % of trees)": {
+   "n": 214,
+   "iou": 0.354,
+   "circle": 0.343,
+   "beats_circle": 0.551,
+   "area_ratio": 2.25,
+   "timing_bias_h": -9.6,
+   "n_modis": 56,
+   "modis_iou": 0.257,
+   "modis_circle": 0.255,
+   "modis_area_ratio": 2.29
+  },
+  "broadleaf or unknown (< 60 % needleleaf)": {
+   "n": 133,
+   "iou": 0.265,
+   "circle": 0.26,
+   "beats_circle": 0.466,
+   "area_ratio": 1.54,
+   "timing_bias_h": -7.8,
+   "n_modis": 46,
+   "modis_iou": 0.19,
+   "modis_circle": 0.183,
+   "modis_area_ratio": 1.52
+  },
+  "below 1000 m": {
+   "n": 133,
+   "iou": 0.312,
+   "circle": 0.283,
+   "beats_circle": 0.534,
+   "area_ratio": 1.51,
+   "timing_bias_h": -6.0,
+   "n_modis": 59,
+   "modis_iou": 0.227,
+   "modis_circle": 0.229,
+   "modis_area_ratio": 1.75
+  },
+  "1000-2000 m": {
+   "n": 159,
+   "iou": 0.352,
+   "circle": 0.344,
+   "beats_circle": 0.541,
+   "area_ratio": 1.97,
+   "timing_bias_h": -9.5,
+   "n_modis": 41,
+   "modis_iou": 0.285,
+   "modis_circle": 0.257,
+   "modis_area_ratio": 2.34
+  },
+  "above 2000 m": {
+   "n": 55,
+   "iou": 0.319,
+   "circle": 0.308,
+   "beats_circle": 0.418,
+   "area_ratio": 5.78,
+   "timing_bias_h": -17.5,
+   "n_modis": 2,
+   "modis_iou": 0.002,
+   "modis_circle": 0.0,
+   "modis_area_ratio": 16.39
+  }
+ }
+}
