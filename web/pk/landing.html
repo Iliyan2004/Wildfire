@@ -44,7 +44,7 @@ a{color:inherit;text-decoration:none} img,svg,canvas{display:block}
 #hero{position:relative;height:100vh;height:100svh;min-height:620px;overflow:hidden;background:#020408}
 .screen1{position:absolute;inset:0}
 .hero-media{position:absolute;inset:0}
-.hero-media canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero-media canvas,.hero-media .hero-bg{position:absolute;inset:0;width:100%;height:100%}.hero-media .hero-bg{object-fit:cover;object-position:50% 60%}
 #embers{z-index:1;pointer-events:none}
 .title-shade{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(70% 55% at 50% 48%,rgba(6,3,2,.55),rgba(6,3,2,.15) 70%,rgba(6,3,2,.55) 100%)}
 .title{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px var(--gut) 96px}
@@ -80,6 +80,7 @@ a{color:inherit;text-decoration:none} img,svg,canvas{display:block}
 .gauge .bar{width:3px;height:34vh;background:rgba(248,241,234,.2);border-radius:3px;position:relative;overflow:hidden}
 .gauge .fill{position:absolute;inset:0;background:linear-gradient(0deg,#FFD27A,#FF6A2B 60%,#B3260B);transform-origin:bottom;transform:scaleY(0)}
 .gauge .read{font-family:var(--mono);font-size:11px;color:#F8F1EA;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.1em}
+.gauge.light .read{color:#120806}.gauge.light .bar{background:rgba(18,8,6,.18)}
 @media (max-width:900px){.gauge{display:none}}
 .going .title,.going .cover,.going .nav,.going .gauge,.going .scroll-cue,.going .cover-cap{opacity:0!important;pointer-events:none;transition:opacity .6s}
 .flash{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0;background:#ffcc73;transition:opacity .5s}
@@ -149,7 +150,7 @@ footer{padding:44px 0;border-top:1px solid var(--ln);font-size:13px;color:var(--
 <section id="hero">
   <div class="screen1" id="screen1">
     <div class="hero-media">
-      <canvas id="fire" aria-hidden="true"></canvas>
+      <img class="hero-bg" src="/static/landing/img/hero-forest.jpg" alt="" aria-hidden="true">
       <canvas id="embers" aria-hidden="true"></canvas>
       <div class="title-shade"></div>
     </div>
@@ -179,7 +180,7 @@ footer{padding:44px 0;border-top:1px solid var(--ln);font-size:13px;color:var(--
       <p class="acro-full">Pakistan Wildfire Spread Simulation, Exposure &amp; Response Analytics</p>
       <span class="micro kick">Wildfire intelligence &middot; Pakistan</span>
     </div>
-    <span class="cover-cap micro" aria-hidden="true">Real-time 3D scene &middot; illustration</span>
+    <span class="cover-cap micro" aria-hidden="true">PAKFIRE 3D scene &middot; illustration</span>
     <div class="scroll-cue micro" id="cue">Scroll<i></i></div>
   </div>
 
@@ -360,17 +361,27 @@ footer{padding:44px 0;border-top:1px solid var(--ln);font-size:13px;color:var(--
   // fire inside the letters: a flickering surface at `level` (0..1 of the letter height)
   const fire = (() => {
     const back = $("#fireBack"), clip = $("#firePath"), line = $("#fireLine"), pat = $("#reliefPat"), noise = $("#heatNoise");
-    const TOP = 46, BOT = 264; let level = 0, live = true;
-    const surf = (y, t, ph, amp) => { let p = ""; for (let x = -10; x <= 1010; x += 10) {
-        const lick = Math.max(0, Math.sin(x * .045 + t * 3.1 + ph)) ** 3 * amp * 2.4 + amp * .6 * Math.sin(x * .021 - t * 2.4 + ph) + amp * .4 * Math.sin(x * .09 + t * 5.3);
-        p += (x < 0 ? "M" : "L") + x + " " + (y - lick).toFixed(1); } return p; };
+    const TOP = 46, BOT = 264, N = 46; let level = 0, live = true;
+    const seed = Array.from({ length: N }, (_, k) => [Math.abs(Math.sin(k * 12.9898) * 43758.5453 % 1), Math.abs(Math.sin(k * 78.233) * 12345.678 % 1)]);
+    // one flame tongue: wide at its foot, a pointed tip that sways; its height pulses as the flame licks up and dies back
+    const tongues = (y, t, scale, ph) => { let d = ""; const step = 1040 / N;
+      for (let k = 0; k < N; k++) {
+        const a = seed[k][0], b = seed[k][1], x = -20 + (k + .5 * b) * step, w = step * (1.15 + .7 * a);
+        const lick = .5 + .5 * Math.sin(t * (2.6 + 2.2 * a) + k * 1.7 + ph), flick = .5 + .5 * Math.sin(t * (7 + 5 * b) + k * 3.1);
+        const h = scale * (22 + 70 * a) * (.45 + .55 * lick) * (.85 + .15 * flick), sway = 9 * Math.sin(t * 2.3 + k + ph) * (h / 60);
+        const tipX = x + sway, base = y + 3;
+        d += "M" + (x - w).toFixed(1) + " " + base + " C" + (x - w * .55).toFixed(1) + " " + (base - h * .35).toFixed(1) + " " + (tipX - w * .25).toFixed(1) + " " + (base - h * .7).toFixed(1) + " " + tipX.toFixed(1) + " " + (base - h).toFixed(1)
+           + " C" + (tipX + w * .2).toFixed(1) + " " + (base - h * .65).toFixed(1) + " " + (x + w * .55).toFixed(1) + " " + (base - h * .3).toFixed(1) + " " + (x + w).toFixed(1) + " " + base + " Z ";
+      }
+      return d; };
     function draw(ms) {
-      const t = ms / 1000, y = BOT - level * (BOT - TOP + 14), front = surf(y, t, 0, 6);
-      clip.setAttribute("d", front + "L1010 310L-10 310Z");
-      line.setAttribute("d", level > .005 ? front : "");
-      back.setAttribute("d", level > .005 ? surf(y - 8, t * .8, 2.1, 8) + "L1010 310L-10 310Z" : "");
-      pat.setAttribute("patternTransform", "translate(" + (-150 + 70 * Math.sin(t * .05)).toFixed(1) + " -120)");
-      noise.setAttribute("seed", String(Math.floor(t * 12) % 50));
+      const t = ms / 1000, y = BOT - level * (BOT - TOP + 14), on = level > .005;
+      const body = "M-20 " + (y + 2) + " H1020 V310 H-20 Z ";
+      clip.setAttribute("d", on ? body + tongues(y, t, .75 + .35 * level, 0) : "M0 300H1000V300H0Z");
+      back.setAttribute("d", on ? tongues(y - 4, t * .85, 1.25 + .4 * level, 2.1) : "");
+      line.setAttribute("d", "");
+      pat.setAttribute("patternTransform", "translate(" + (-150 + 70 * Math.sin(t * .05)).toFixed(1) + " " + (-120 - 18 * (t % 6)).toFixed(1) + ")");
+      noise.setAttribute("seed", String(Math.floor(t * 14) % 50));
     }
     function loop(ms) { draw(ms); if (live) requestAnimationFrame(loop); }
     new IntersectionObserver(([e]) => { const was = live; live = e.isIntersecting && !REDUCE; if (live && !was) requestAnimationFrame(loop); }).observe($("#hero"));
@@ -426,6 +437,9 @@ footer{padding:44px 0;border-top:1px solid var(--ln);font-size:13px;color:var(--
     .to({}, { duration: .1 }, .95);
   // heat gauge on the right: 20 to 1,200 degC over the page (flame temperatures reach about 1,200 degC)
   ScrollTrigger.create({ start: 0, end: "max", onUpdate: (st) => { gsap.set("#gaugeFill", { scaleY: st.progress }); $("#gaugeRead").textContent = Math.round(20 + st.progress * 1180).toLocaleString() + " \u00b0C"; } });
+  const gauge = $("#gauge"), papers = $$(".paper");
+  const shade = () => { const y = innerHeight / 2; gauge.classList.toggle("light", papers.some((sec) => { const r = sec.getBoundingClientRect(); return r.top <= y && r.bottom >= y; })); };
+  addEventListener("scroll", shade, { passive: true }); ScrollTrigger.addEventListener("refresh", shade); shade();
   ScrollTrigger.refresh();
 })();
 </script>
@@ -471,31 +485,23 @@ footer{padding:44px 0;border-top:1px solid var(--ln);font-size:13px;color:var(--
     I = 50 * Math.pow(20000 / 50, k);                               // 50 kW/m to 20,000 kW/m, logarithmic
   }
   addEventListener("scroll", fromScroll, { passive: true }); fromScroll();
-  (function loop() { t += 0.016; draw(); requestAnimationFrame(loop); })();
+  let iLive = false;
+  new IntersectionObserver(([e]) => { const was = iLive; iLive = e.isIntersecting; if (iLive && !was) requestAnimationFrame(loop); }).observe(document.getElementById("intensity"));
+  function loop() { if (!iLive) return; t += 0.016; draw(); requestAnimationFrame(loop); }
 })();
 </script>
-<script type="importmap">{"imports":{"three":"/static/vendor/three/three.module.min.js","three/addons/":"/static/vendor/three/addons/"}}</script>
-<script type="module">
-// the hero is the 3D forest; pressing a mode button makes the fire run through it, then opens the page
-if (/ign=/.test(location.hash)) { location.replace("/app" + location.search + location.hash); }
-else {
-  const flash = document.getElementById("flash"), canvas = document.getElementById("fire"), hero = document.getElementById("hero");
-  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const DURATION = 4800;
-  let scene = null, busy = false;
-  const enter = (href) => { try { sessionStorage.setItem("pakfireEnter", "1"); } catch (e) {} location.href = href; };
+<script>
+// the mode buttons: a short flash of fire-light, then the page
+(function () {
+  if (/ign=/.test(location.hash)) { location.replace("/app" + location.search + location.hash); return; }
+  const flash = document.getElementById("flash"), reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.querySelectorAll("a.go").forEach((link) => link.addEventListener("click", (e) => {
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (reduce || busy || !scene) { try { sessionStorage.setItem("pakfireEnter", "1"); } catch (x) {} return; }
-    e.preventDefault(); busy = true;
-    if (window.__lenis) window.__lenis.scrollTo(0, { immediate: true }); else window.scrollTo({ top: 0, behavior: "auto" }); window.__pkPaused = false;
-    document.body.classList.add("going");
-    scene.surge(DURATION).then(() => { flash.style.opacity = "1"; setTimeout(() => enter(link.href), 250); });
+    try { sessionStorage.setItem("pakfireEnter", "1"); } catch (x) {}
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || reduce) return;
+    e.preventDefault(); document.body.classList.add("going"); flash.style.opacity = "1";
+    setTimeout(() => { location.href = link.href; }, 450);
   }));
-  new IntersectionObserver((es) => { window.__pkPaused = !es[0].isIntersecting && !busy; }).observe(hero);   // no rendering while scrolled away
-  try { const m = await import("/static/landing/scene.js"); scene = m.init({ canvas }); window.__pakfireScene = scene; }
-  catch (err) { console.warn("landing scene unavailable:", err); document.body.classList.add("no-gl"); canvas.style.display = "none"; }
-}
+})();
 </script>
 </body>
 </html>

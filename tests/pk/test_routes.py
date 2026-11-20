@@ -23,7 +23,7 @@ def client():
 
 def test_pages(client):
     land = client.get("/").data
-    assert b"PAKFIRE" in land and b'href="/app"' in land and b'href="/instant"' in land and b"/static/landing/scene.js" in land   # landing page: scene module and both buttons
+    assert b"PAKFIRE" in land and b'href="/app"' in land and b'href="/instant"' in land and b"hero-forest.jpg" in land   # landing page: static hero and both buttons
     assert client.get("/static/landing/scene.js").status_code == 200 and client.get("/static/vendor/three/three.module.min.js").status_code == 200
     assert client.get("/api/pakistan.geojson").get_json()["features"][0]["properties"]["kind"] == "mask"
     assert client.get("/manual").status_code in (200, 404)                                     # manual route
