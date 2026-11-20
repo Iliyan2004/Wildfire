@@ -97,6 +97,12 @@ header .brand small{display:none}
 .qrow{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line-soft);border-radius:10px;margin-bottom:6px;font-size:12px}.qrow .qmeta{flex:1;min-width:0}.qrow .qsub{color:var(--muted);font-size:11px}
 .qrow button{border:1px solid var(--danger);color:var(--danger);background:transparent;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:11px;font-weight:600}.qrow button:hover{background:var(--danger);color:#fff}.qempty{color:var(--muted);font-size:12px;padding:6px 4px}
 .maptools{top:68px;left:56px}
+.hdr-nav{display:flex;gap:6px;flex:0 0 auto}.hdr-nav a{text-decoration:none;color:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:600;background:var(--surface-2)}
+.hdr-nav a:hover{color:var(--accent);border-color:var(--accent)}.hdr-nav a.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.ptabs{position:sticky;top:0;z-index:6;background:rgba(14,22,29,.96)!important;backdrop-filter:blur(10px);margin:0;padding:12px 12px 10px!important;border-radius:20px 20px 0 0}
+.ptabs .pbtn{flex:1;min-width:0;padding:9px 2px!important;font-size:12px!important;white-space:nowrap}
+:root[data-theme="light"] .ptabs{background:rgba(244,248,250,.97)!important}
+.pane[hidden]{display:none}
 a.brand{text-decoration:none;color:inherit}
 #enterVeil{position:fixed;inset:0;z-index:200;pointer-events:none;display:none}body.entering #enterVeil{display:block}
 #enterVeil .ev-a{position:absolute;inset:0;background:#ffcc73;animation:evA .6s ease-out forwards}
@@ -170,9 +176,10 @@ body.view-hidden #viewShowBtn{display:block}
 <header><a class="brand" href="/" title="Back to the PAKFIRE start page"><span>PAKFIRE</span> <small>WILDFIRE MODELLING · PAKISTAN</small></a>
 <div id="geocoderSlot"><input id="geoInput" type="text" placeholder="Search a district or place in Pakistan..." autocomplete="off" aria-label="Search a district or place in Pakistan"><div id="geoResults"></div></div>
 <div class="layer-switch"><button id="layerDark" class="active" onclick="setMapLayer('dark')">Dark</button><button id="layerSat" onclick="setMapLayer('satellite')">Satellite</button><button id="layerStreets" onclick="setMapLayer('streets')">Streets</button></div>
+<div class="hdr-nav"><a href="/instant" title="Fire footprint in about a second">Instant</a><a href="/app" class="on" title="The full physical fire model">Physics</a><a href="/manual" target="_blank" rel="noopener" title="User manual (PDF)">Manual</a></div>
 <div style="position:relative;flex:0 0 auto"><button id="queueChip" onclick="toggleQueue()" title="Show running and queued jobs, and cancel them">Queue: idle</button><div id="queuePop"></div></div>
 <button id="themeToggle" onclick="toggleTheme()" title="Switch between dark and light mode" aria-label="Switch between dark and light mode">&#9680;</button>
-<div id="demSource" title="SRTM 29 m · ESRI 10 m land cover · MODIS NDVI · Open-Meteo · NASA FIRMS"><span id="hwInfo"></span></div></header>
+</header>
 <div class="main"><div class="left-col">
 <div id="mapWrap"><div id="map"></div>
 <div class="maptools"><button id="tFirms" title="NASA VIIRS satellite fire detections, last 48 h">Fire detections</button><button id="tDist" title="Districts shaded by satellite detections (3 days)">Districts</button><button id="tClear" title="Remove the run overlay from the 2D map">Clear overlay</button><button id="tPng">Export PNG</button></div>
@@ -183,42 +190,17 @@ body.view-hidden #viewShowBtn{display:block}
 <button id="drawerToggle" onclick="toggleDrawer()" title="Show or hide the side panel" aria-label="Show or hide the side panel">&#8250;</button>
 <button id="viewShowBtn" onclick="window.viewUserHidden=false;setViewMode('card')">Fire view</button>
 <div class="right-col" id="rightCol">
-
+<div class="tier-tabs ptabs" id="ptabs" role="tablist" aria-label="Sections"><button class="pbtn active" role="tab" data-pane="fire" onclick="showPane('fire')">Fire</button><button class="pbtn" role="tab" data-pane="runs" onclick="showPane('runs')">Runs</button><button class="pbtn" role="tab" data-pane="impact" onclick="showPane('impact')">Impact</button><button class="pbtn" role="tab" data-pane="mitigate" onclick="showPane('mitigate')">Mitigation</button><button class="pbtn" role="tab" data-pane="discover" onclick="showPane('discover')">Discover</button></div>
+<div class="pane" data-pane="fire">
 <div class="panel-section"><h3>Place the fire</h3>
 <p class="note">Use <b>Place ignition</b> then click the map (or drag the flame), or pick a satellite hotspot or district below. Optionally draw an area to set the simulation window (up to 200 km across), or upload a point/polygon file (GeoJSON, zipped shapefile).</p>
 <div class="row2"><button class="secondary" id="bIgn">&#128293; Place ignition</button><button class="secondary" id="bDraw">&#9998; Draw area</button><button class="secondary" id="bClr">Clear</button><button class="secondary" id="bShare" title="Copy a link that restores this ignition and the weather settings">&#128279; Link</button></div>
 <input type="file" id="uploadFile" aria-label="Point or area file (GeoJSON or zipped shapefile)" accept=".zip,.geojson,.json"><button class="secondary" onclick="uploadShape()">Upload point / area</button>
 <div id="areaInfo" style="display:none"><div class="stat-row"><span>Ignition</span><span id="aIgn">-</span></div><div class="stat-row"><span>District</span><span id="aDist">-</span></div><div class="stat-row"><span>Simulation window</span><span id="aWin">-</span></div><div class="stat-row"><span>Extra ignitions</span><span id="aExtra">0</span></div></div></div>
 
-<div class="panel-section"><h3>District discovery (national)</h3>
-<p class="note">Rank all 164 districts by live NASA VIIRS satellite detections. Use a district as your area and start a fire inside it.</p>
-<div class="row2"><select id="dMetric"><option value="detections">Number of detections</option><option value="frp">Fire radiative power (MW)</option></select><select id="dDays"><option value="1">last 1 day</option><option value="3" selected>last 3 days</option><option value="5">last 5 days</option></select></div>
-<input type="text" id="dQuery" placeholder="name or province filter"><button class="secondary" onclick="loadDistricts()">Show districts &rarr;</button><div id="distBox" class="list"></div></div>
-
-<div class="panel-section"><h3>Fire hotspots (national)</h3>
-<p class="note">The strongest or most recent satellite fire detections in Pakistan (375 m pixels, a detection is a fire somewhere in that pixel). Start a simulation from any of them.</p>
-<div class="row2"><select id="hMetric"><option value="frp">Strongest (FRP)</option><option value="recent">Most recent</option></select><select id="hDays"><option value="1">last 1 day</option><option value="2" selected>last 2 days</option><option value="5">last 5 days</option></select></div>
-<button class="secondary" onclick="loadHot()">Show hotspots &rarr;</button><div id="hotBox" class="list"></div></div>
-
 <div class="panel-section"><h3>Weather &amp; fuel context</h3><div id="ctxBox"><p class="note">Place an ignition first.</p></div></div>
 
-<div class="panel-section"><h3>Live monitoring</h3>
-<p class="note">Watches the NASA satellite feed around a point. When a new detection appears within the radius it automatically runs a 24 h spread scenario from the strongest one and can post to a webhook. Experimental.</p>
-<div class="row2"><div><label>Radius (km)</label><input type="number" id="wRad" value="15" min="2" max="100"></div><div><label>Check every</label><select id="wEvery"><option value="1">1 h</option><option value="3" selected>3 h</option><option value="6">6 h</option><option value="24">24 h</option></select></div></div>
-<input type="text" id="wHook" placeholder="Webhook URL (Slack/Discord/ntfy.sh, optional)"><button class="secondary" id="wBtn" disabled onclick="watchArea()">Watch this place &rarr;</button><div id="wList"><p class="note">No places watched.</p></div></div>
 
-<div class="tier-tabs">
-<button class="tier-btn active" data-tier="1" onclick="showTier(1)">&#9889; Tier 1 Instant</button>
-<button class="tier-btn" data-tier="2" onclick="showTier(2)">&#128293; Tier 2 Spread</button>
-<button class="tier-btn" data-tier="3" onclick="showTier(3)">&#127922; Tier 3 Ensemble</button>
-<button class="tier-btn" data-tier="4" onclick="showTier(4)">&#128738;&#65039; Tier 4 Mitigate</button></div>
-
-<div class="tier-content" data-tier="1"><div class="panel-section"><h3>Tier 1 &middot; Instant footprint</h3>
-<p class="note">A real small simulation (the same engine, a 24 km window, constant weather of the current hour) contoured at 1, 3 and 6 hours. A fast first look while you are still placing the ignition; use Tier 2 for the full run.</p>
-<div class="row2"><div><label>Hours</label><select id="i1h"><option value="3">3</option><option value="6" selected>6</option><option value="12">12</option></select></div><div><label>Weather</label><select id="i1w"><option value="live">Current (live)</option><option value="manual">Tier 2 manual weather</option></select></div></div>
-<button class="secondary" id="i1Btn" disabled onclick="runInstant()">Show instant footprint &rarr;</button><div id="i1Out"></div></div></div>
-
-<div class="tier-content" data-tier="2" style="display:none">
 <div class="panel-section"><h3>Weather &amp; timing</h3>
 <label>Source</label><select id="wSrc" onchange="wSrcChange()"><option value="live">Open-Meteo live / forecast / archive (hourly, 48 h moisture lead-in)</option><option value="manual">Set the weather yourself (constant)</option></select>
 <div class="row2"><div><label>Start (PKT)</label><input type="datetime-local" id="startInput"></div><div><label>Duration (h)</label><input type="number" id="hoursInput" value="24" min="1" max="120"></div></div>
@@ -234,26 +216,15 @@ body.view-hidden #viewShowBtn{display:block}
 <details><summary>Advanced</summary><div class="row2"><div><label>Random seed</label><input type="number" id="seedIn" value="1" min="0"></div><div><label>Cell size (m, 0 = auto)</label><input type="number" id="cellIn" value="0" min="0" max="250"></div></div></details>
 <button class="action" id="runBtn" disabled onclick="runFire()">Run fire model</button>
 <button class="secondary" id="cancelBtn" style="display:none" onclick="cancelRun()">Cancel</button>
-<div id="prog" style="display:none"><div class="progress-track"><div class="progress-fill" id="progFill"></div></div><p class="note" id="progTxt"></p></div><div id="runOut"></div></div></div>
-
-<div class="tier-content" data-tier="3" style="display:none"><div class="panel-section"><h3>Tier 3 &middot; Ensemble &amp; burn probability</h3>
+<div id="prog" style="display:none"><div class="progress-track"><div class="progress-fill" id="progFill"></div></div><p class="note" id="progTxt"></p></div><div id="runOut"></div></div><div class="panel-section"><details><summary><b>Quick footprint</b> (about a second; full page at <a href="/instant" style="color:var(--accent)">PAKFIRE Instant</a>)</summary>
+<p class="note">A real small simulation (the same engine, a 24 km window, constant weather of the current hour) contoured at 1, 3 and 6 hours. A fast first look while you are still placing the ignition; use Tier 2 for the full run.</p>
+<div class="row2"><div><label>Hours</label><select id="i1h"><option value="3">3</option><option value="6" selected>6</option><option value="12">12</option></select></div><div><label>Weather</label><select id="i1w"><option value="live">Current (live)</option><option value="manual">Tier 2 manual weather</option></select></div></div>
+<button class="secondary" id="i1Btn" disabled onclick="runInstant()">Show instant footprint &rarr;</button><div id="i1Out"></div></details></div><div class="panel-section"><h3>Ensemble &amp; burn probability</h3>
 <p class="note">Repeats the Tier 2 run with perturbed wind speed (&plusmn;20%), wind direction (&plusmn;12&deg;), dead-fuel moisture (&plusmn;15%) and vegetation greenness, and maps the share of runs that burn each cell. The widths are assumptions, so this shows sensitivity, not a calibrated chance. Uses the weather and window of Tier 2.</p>
 <div class="row2"><div><label>Members</label><select id="ensN"><option value="12">12</option><option value="24" selected>24</option><option value="48">48</option></select></div><div></div></div>
-<button class="action" id="ensBtn" disabled onclick="runEnsemble()">Run ensemble</button><div id="prog3" style="display:none"><div class="progress-track"><div class="progress-fill" id="progFill3"></div></div><p class="note" id="progTxt3"></p></div><div id="runOut3"></div></div></div>
-
-<div class="tier-content" data-tier="4" style="display:none">
-<div class="panel-section"><h3>Fuel breaks</h3>
-<p class="note">Draw lines across the likely path with the button below. A break is applied at least three cells wide (150 m at 50 m cells) and can be crossed only by embers. Uses the weather and window of Tier 2.</p>
-<div class="row2"><button class="secondary" id="bBreak">&#9998; Draw fuel break</button><div><label>Width (m)</label><input type="number" id="brW" value="60" min="30" max="400"></div></div>
-<button class="secondary" id="sugBrk" onclick="suggestBreak()">&#10024; Suggest a break across the last run's spread path</button>
-<div id="brList" class="list"></div></div>
-<div class="panel-section"><h3>Fuel treatments</h3>
-<p class="note">Draw polygons where fuel is removed or reduced (grazing, thinning, prescribed burning, cleared roadsides). The effect size is yours to set; nothing here is a measured treatment performance.</p>
-<div class="row2"><button class="secondary" id="bTreat">&#9998; Draw treatment area</button><div><label>Effect</label><select id="trMode"><option value="remove">Remove fuel (non-burnable)</option><option value="0.5">Halve the spread rate</option><option value="0.25">Cut spread rate to 25%</option></select></div></div>
-<div id="trList" class="list"></div>
-<button class="action" id="mitBtn" disabled onclick="runMitigation()">Run mitigated vs unmitigated</button>
-<div id="mitProg" style="display:none"><div class="progress-track"><div class="progress-fill" id="mitFill"></div></div><p class="note" id="mitTxt"></p></div><div id="mitOut"></div></div></div>
-
+<button class="action" id="ensBtn" disabled onclick="runEnsemble()">Run ensemble</button><div id="prog3" style="display:none"><div class="progress-track"><div class="progress-fill" id="progFill3"></div></div><p class="note" id="progTxt3"></p></div><div id="runOut3"></div></div>
+</div>
+<div class="pane" data-pane="runs" hidden>
 <div class="panel-section"><h3>Layers of this run</h3><div id="layerPick" class="layerpick"><span class="note">Run a model to see its map layers.</span></div>
 <div class="row2"><a class="secondary" style="text-decoration:none;text-align:center" id="batchLink" target="_blank">Batch PDF (all runs)</a><a id="repLink" class="secondary" style="display:none;text-decoration:none;text-align:center" target="_blank">PDF report</a></div>
 <a id="tlLink" class="secondary" style="display:none;text-decoration:none;text-align:center" target="_blank" title="Video of the fire over a terrain background (made on the server, about 20 s)">Time-lapse video (MP4)</a>
@@ -264,7 +235,49 @@ body.view-hidden #viewShowBtn{display:block}
 
 <div class="panel-section"><h3>Run history &amp; compare</h3>
 <div class="row2"><select id="cmpA"></select><select id="cmpB"></select></div><button class="secondary" onclick="compareRuns()">Compare two runs &rarr;</button><div id="cmpOut"></div><div id="hist" class="list"></div></div>
-<div class="panel-section"><p class="note">Research prototype. Spread rates are not calibrated or validated against observed Pakistani fires; crown fire is not modelled and wind is uniform over the window. Scenarios, not forecasts: not for operational or evacuation decisions.</p></div>
+
+</div>
+<div class="pane" data-pane="impact" hidden>
+<div class="panel-section"><h3>Exposure</h3><p class="note">People (WorldPop scaled to the 2023 census), housing, informal settlements, hospitals, schools and power in and near the burned area of the open run, with the time the fire reaches them.</p>
+<button class="secondary" id="impExpoBtn" onclick="impactLoad('expo')" disabled>Show exposure of the open run</button><div id="impExpoBox" class="note"></div></div>
+<div class="panel-section"><h3>Evacuation &amp; fire-service access</h3><p class="note">Routes from settlements out of the fire's path and from the nearest fire station to the fire, over the OSM road network, with the time each route is cut off. Needs the road database.</p>
+<label>Warning given (minutes before arrival)</label><select id="impLead"><option value="30">30 min</option><option value="60" selected>60 min</option><option value="120">2 h</option></select>
+<button class="secondary" id="impEvacBtn" onclick="impactLoad('evac')" disabled>Show evacuation for the open run</button><div id="impEvacBox" class="note"></div></div>
+<div class="panel-section" id="impNone"><p class="note">Run the fire model in the <b>Fire</b> tab, or open a run in <b>Runs</b>, to see what it reaches.</p></div>
+</div>
+<div class="pane" data-pane="mitigate" hidden>
+
+<div class="panel-section"><h3>Fuel breaks</h3>
+<p class="note">Draw lines across the likely path with the button below. A break is applied at least three cells wide (150 m at 50 m cells) and can be crossed only by embers. Uses the weather and window of Tier 2.</p>
+<div class="row2"><button class="secondary" id="bBreak">&#9998; Draw fuel break</button><div><label>Width (m)</label><input type="number" id="brW" value="60" min="30" max="400"></div></div>
+<button class="secondary" id="sugBrk" onclick="suggestBreak()">&#10024; Suggest a break across the last run's spread path</button>
+<div id="brList" class="list"></div></div>
+<div class="panel-section"><h3>Fuel treatments</h3>
+<p class="note">Draw polygons where fuel is removed or reduced (grazing, thinning, prescribed burning, cleared roadsides). The effect size is yours to set; nothing here is a measured treatment performance.</p>
+<div class="row2"><button class="secondary" id="bTreat">&#9998; Draw treatment area</button><div><label>Effect</label><select id="trMode"><option value="remove">Remove fuel (non-burnable)</option><option value="0.5">Halve the spread rate</option><option value="0.25">Cut spread rate to 25%</option></select></div></div>
+<div id="trList" class="list"></div>
+<button class="action" id="mitBtn" disabled onclick="runMitigation()">Run mitigated vs unmitigated</button>
+<div id="mitProg" style="display:none"><div class="progress-track"><div class="progress-fill" id="mitFill"></div></div><p class="note" id="mitTxt"></p></div><div id="mitOut"></div></div>
+</div>
+<div class="pane" data-pane="discover" hidden>
+<div class="panel-section"><h3>District discovery (national)</h3>
+<p class="note">Rank all 164 districts by live NASA VIIRS satellite detections. Use a district as your area and start a fire inside it.</p>
+<div class="row2"><select id="dMetric"><option value="detections">Number of detections</option><option value="frp">Fire radiative power (MW)</option></select><select id="dDays"><option value="1">last 1 day</option><option value="3" selected>last 3 days</option><option value="5">last 5 days</option></select></div>
+<input type="text" id="dQuery" placeholder="name or province filter"><button class="secondary" onclick="loadDistricts()">Show districts &rarr;</button><div id="distBox" class="list"></div></div>
+
+<div class="panel-section"><h3>Fire hotspots (national)</h3>
+<p class="note">The strongest or most recent satellite fire detections in Pakistan (375 m pixels, a detection is a fire somewhere in that pixel). Start a simulation from any of them.</p>
+<div class="row2"><select id="hMetric"><option value="frp">Strongest (FRP)</option><option value="recent">Most recent</option></select><select id="hDays"><option value="1">last 1 day</option><option value="2" selected>last 2 days</option><option value="5">last 5 days</option></select></div>
+<button class="secondary" onclick="loadHot()">Show hotspots &rarr;</button><div id="hotBox" class="list"></div></div>
+
+<div class="panel-section"><h3>Live monitoring</h3>
+<p class="note">Watches the NASA satellite feed around a point. When a new detection appears within the radius it automatically runs a 24 h spread scenario from the strongest one and can post to a webhook. Experimental.</p>
+<div class="row2"><div><label>Radius (km)</label><input type="number" id="wRad" value="15" min="2" max="100"></div><div><label>Check every</label><select id="wEvery"><option value="1">1 h</option><option value="3" selected>3 h</option><option value="6">6 h</option><option value="24">24 h</option></select></div></div>
+<input type="text" id="wHook" placeholder="Webhook URL (Slack/Discord/ntfy.sh, optional)"><button class="secondary" id="wBtn" disabled onclick="watchArea()">Watch this place &rarr;</button><div id="wList"><p class="note">No places watched.</p></div></div>
+
+
+</div>
+<div class="panel-section"><p class="note">Research prototype. Spread rates are calibrated to satellite-observed fires in Pakistan (2012&ndash;2026), but on held-back fires the shape and direction of the burn are only slightly better than an equal-area circle; crown fire uses assumed canopy values. Use it to compare scenarios and places, not as a forecast. <span id="hwInfo"></span></p></div>
 </div></div></div>
 
 <div id="welcomeOverlay" role="dialog" aria-modal="true" aria-labelledby="wTitle" style="display:none">
@@ -276,9 +289,10 @@ body.view-hidden #viewShowBtn{display:block}
 <div class="wr"><h3 id="wTitle">Simulate a wildfire<br>anywhere in <em>Pakistan</em></h3>
 <button class="action" onclick="closeWelcome();$('geoInput').focus()">Search a place</button>
 <button class="secondary" onclick="closeWelcome();$('bIgn').click()">Place an ignition on the map</button>
-<button class="secondary" onclick="closeWelcome();showTier(1);$('hotBox').scrollIntoView({behavior:'smooth',block:'center'})">Start from a satellite hotspot</button>
+<button class="secondary" onclick="closeWelcome();showPane('discover');loadHot()">Start from a satellite hotspot</button>
 <p class="note">Place an ignition, set the weather and duration, then run the spread model. The 3D fire view opens on the map.</p></div></div></div>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<script src="/static/pkmask.js"></script>
 <script src="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.js"></script>
 <script>
 mapboxgl.accessToken="__MAPBOX_TOKEN__";
@@ -287,8 +301,9 @@ const post=(u,b)=>fetch(u,{method:"POST",headers:{"Content-Type":"application/js
 const PKT=5*3600e3;
 let aoi=null,ign=null,extra=[],curRun=null,ramps={},wxSeries=null,pending="ign";
 
-const map=new mapboxgl.Map({container:"map",style:"mapbox://styles/mapbox/dark-v11",center:[70.5,30.5],zoom:4.7,projection:"globe",preserveDrawingBuffer:true});
+const map=new mapboxgl.Map({container:"map",style:"mapbox://styles/mapbox/dark-v11",center:[70.5,30.5],zoom:4.7,projection:"mercator",preserveDrawingBuffer:true});
 map.addControl(new mapboxgl.NavigationControl(),"top-right");
+pkMask(map);
 const draw=new MapboxDraw({displayControlsDefault:false,controls:{polygon:true,line_string:true,point:true,trash:true},
  styles:[
  {id:"gl-draw-polygon-fill",type:"fill",filter:["all",["==","$type","Polygon"]],paint:{"fill-color":["case",["==",["get","user_kind"],"treat"],"#3ED598","#FF6A2B"],"fill-opacity":.14}},
@@ -340,7 +355,11 @@ async function loadContext(){if(!ign)return;$("ctxBox").innerHTML='<p class="not
   $("ctxBox").innerHTML=h}
 
 // ---------- tiers
-function showTier(n){document.querySelectorAll(".tier-btn").forEach(b=>b.classList.toggle("active",+b.dataset.tier===n));document.querySelectorAll(".tier-content").forEach(c=>c.style.display=+c.dataset.tier===n?"":"none")}
+function showPane(k){document.querySelectorAll("#ptabs .pbtn").forEach(b=>b.classList.toggle("active",b.dataset.pane===k));document.querySelectorAll(".pane").forEach(c=>c.hidden=c.dataset.pane!==k);$("rightCol").dataset.pane=k;$("rightCol").scrollTop=0;
+  if(k==="impact")impactState()}
+function showTier(n){showPane(n===4?"mitigate":"fire")}                      // older calls: tiers 1-3 live in the Fire tab, 4 in Mitigation
+function impactState(){const on=!!curRun;$("impExpoBtn").disabled=$("impEvacBtn").disabled=!on;$("impNone").style.display=on?"none":""}
+function impactLoad(k){if(!curRun)return;if(k==="expo"){$("impExpoBox").dataset.done="";loadExposure(curRun,"impExpoBox")}else{$("impEvacBox").dataset.done="";loadEvac(curRun,"impEvacBox",+$("impLead").value)}}
 function drawCompass(){const c=$("compass"),x=c.getContext("2d"),R=62,cx=75,cy=75;x.clearRect(0,0,150,150);x.strokeStyle="#233039";x.fillStyle="#9FB8C2";x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,R,0,6.283);x.stroke();
   x.font="11px IBM Plex Mono";x.textAlign="center";[["N",0],["E",90],["S",180],["W",270]].forEach(([t,a])=>{const r=a*Math.PI/180;x.fillText(t,cx+Math.sin(r)*(R+0),cy-Math.cos(r)*R+4)});
   const from=+$("wdInput").value,sp=+$("wsInput").value,to=(from+180)*Math.PI/180,len=Math.min(14+sp*2.4,R-8),sx=cx-Math.sin(to)*len/2,sy=cy+Math.cos(to)*len/2,ex=cx+Math.sin(to)*len/2,ey=cy-Math.cos(to)*len/2;
@@ -372,7 +391,7 @@ let distLoaded=false;$("tDist").onclick=async()=>{if(!distLoaded){const g=await 
   const on=$("tDist").classList.toggle("on");["dist-fill","dist-line"].forEach(l=>map.setLayoutProperty(l,"visibility",on?"visible":"none"))};
 $("tPng").onclick=()=>{map.once("idle",()=>{const a=document.createElement("a");a.href=map.getCanvas().toDataURL("image/png");a.download="map.png";a.click()});map.triggerRepaint()};
 
-function layerPick(rid,layers){curRun=rid;const names={arrival:"Time of arrival",intensity:"Fire intensity",prob:"Burn probability"};
+function layerPick(rid,layers){curRun=rid;setTimeout(impactState,0);["impExpoBox","impEvacBox"].forEach(b=>{$(b).innerHTML="";$(b).dataset.done=""});const names={arrival:"Time of arrival",intensity:"Fire intensity",prob:"Burn probability"};
   $("layerPick").innerHTML=layers.map(l=>`<button class="secondary" data-l="${l}">${names[l]||l}</button>`).join("");
   $("layerPick").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("layerPick").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");showRunLayer(rid,b.dataset.l,false)});
   $("repLink").style.display=$("sumLink").style.display=$("isoLink").style.display="";$("isoLink").href=`/runs/${rid}/perimeters.geojson?step_min=60`;$("tlLink").style.display="";$("tlLink").href=`/runs/${rid}/timelapse.mp4?seconds=24`;$("repLink").href=`/runs/${rid}/report.pdf`;$("sumLink").href=`/runs/${rid}/summary.json`}
@@ -421,9 +440,9 @@ function showResult(r,out){const s=r.summary;let h=`<span class="pill">run compl
   if(s.ensemble)h+=`<div class="stat-row"><span>Ensemble ${s.ensemble.members}: area 10–90%</span><span>${fmt(s.ensemble.area_ha_p10,0)}–${fmt(s.ensemble.area_ha_p90,0)} ha (median ${fmt(s.ensemble.area_ha_median,0)})</span></div>`;
   h+=`<details><summary>Burned by land cover</summary>${Object.entries(s.by_landcover_ha).map(([k,v])=>`<div class="stat-row"><span>${k}</span><span>${fmt(v,0)} ha</span></div>`).join("")}</details>`;
   h+=`<details><summary>Key events</summary>${(s.events||[]).map(e=>`<div class="stat-row"><span>${e.label}</span><span>+${fmt(e.t/60,1)} h</span></div>`).join("")}</details>`;
-  h+=`<details id="expoDet-${out}"><summary>Exposure: people, hospitals, schools, power</summary><div id="expoBox-${out}" class="note">Loading…</div></details><details id="evacDet-${out}"><summary>Evacuation and fire-service access</summary><div id="evacBox-${out}" class="note">Loading…</div></details><button class="secondary" id="rerun-${out}">&#8635; Run again with a new random seed</button>`;
+  h+=`<button class="secondary" onclick="showPane('impact');impactLoad('expo')">Exposure and evacuation &rarr; Impact tab</button><button class="secondary" id="rerun-${out}">&#8635; Run again with a new random seed</button>`;
   h+=(r.warnings||[]).slice(0,5).map(w=>`<div class="warn">⚠ ${w}</div>`).join("");$(out).innerHTML=h;open3d(r.run_id);
-  $("expoDet-"+out).ontoggle=function(){if(this.open)loadExposure(r.run_id,"expoBox-"+out)};$("evacDet-"+out).ontoggle=function(){if(this.open)loadEvac(r.run_id,"evacBox-"+out)};$("rerun-"+out).onclick=()=>rerun(r.run_id);layerPick(r.run_id,r.layers||[]);if((r.layers||[]).includes("prob"))showRunLayer(r.run_id,"prob");else showRunLayer(r.run_id,"arrival")}
+  $("rerun-"+out).onclick=()=>rerun(r.run_id);layerPick(r.run_id,r.layers||[]);if((r.layers||[]).includes("prob"))showRunLayer(r.run_id,"prob");else showRunLayer(r.run_id,"arrival")}
 async function loadExposure(rid,box){if($(box).dataset.done===rid)return;$(box).textContent="Reading population and facility layers…";const j=await (await fetch(`/runs/${rid}/exposure.json`)).json();if(j.error){$(box).innerHTML=`<span class="err">${j.error}</span>`;return}
   const po=j.population;let t=po.available?`<div class="stat-row"><span>People in the burned area</span><span>${fmt(po.in_burn,0)}</span></div><div class="stat-row"><span>People within 1 km of the burn</span><span>${fmt(po.within_1km,0)}</span></div>`:'<p class="note">No population data for this area.</p>';
   if(po.census){const c=po.census;t+=`<div class="stat-row"><span>Census-scaled: in burn / within 1 km</span><span>${fmt(c.in_burn_scaled,0)} / ${fmt(c.within_1km_scaled,0)}</span></div><div class="stat-row"><span>${c.district}: homes kacha / semi-pakka / pakka</span><span>${c.kacha_pct}% / ${c.semi_pakka_pct}% / ${c.pakka_pct}%</span></div><div class="stat-row"><span>Households cooking with firewood</span><span>${c.firewood_cooking_pct}%</span></div><p class="note">${c.note}</p>`}
@@ -436,7 +455,7 @@ async function loadExposure(rid,box){if($(box).dataset.done===rid)return;$(box).
   t+=`<p class="note">${j.note}</p>`;$(box).innerHTML=t;$(box).dataset.done=rid;
   const g={type:"FeatureCollection",features:feats};if(map.getSource("expo"))map.getSource("expo").setData(g);else{map.addSource("expo",{type:"geojson",data:g});map.addLayer({id:"expo",type:"circle",source:"expo",paint:{"circle-radius":7,"circle-color":["match",["get","status"],"burned","#F0575A","#F5C542"],"circle-stroke-color":"#fff","circle-stroke-width":1.6}});
     map.on("click","expo",e=>{new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(`<div style="color:#111"><b>${e.features[0].properties.name}</b><br>${e.features[0].properties.status}</div>`).addTo(map)})}}
-async function loadEvac(rid,box){if($(box).dataset.done===rid)return;$(box).textContent="Routing over the road network…";const j=await (await fetch(`/runs/${rid}/evacuation.json`)).json();if(j.error){$(box).innerHTML=`<span class="err">${j.error}</span>`;return}
+async function loadEvac(rid,box,lead){if($(box).dataset.done===rid)return;$(box).textContent="Routing over the road network…";const j=await (await fetch(`/runs/${rid}/evacuation.json`+(lead?`?lead=${lead}`:""))).json();if(j.error){$(box).innerHTML=`<span class="err">${j.error}</span>`;return}
   const s=j.summary||{};let t="";if(s.origins){t+=`<div class="stat-row"><span>Populated cells analysed</span><span>${s.origins} (${fmt(s.people,0)} people)</span></div><div class="stat-row"><span>Can escape on time</span><span>${s.escape}</span></div><div class="stat-row"><span>Cut off</span><span>${s.cut_off} (${fmt(s.people_cut_off,0)} people)</span></div><div class="stat-row"><span>Need more than ${j.lead_min} min warning</span><span>${s.needing_more_warning}</span></div>`;
     if(s.median_travel_min!=null)t+=`<div class="stat-row"><span>Median drive to safety</span><span>${s.median_travel_min} min</span></div>`}else t+='<p class="note">No populated cells near the burn.</p>';
   const a=j.access;if(a&&a.nearest&&a.nearest.length)t+=a.nearest.slice(0,3).map(n=>`<div class="item"><div><b>${n.name}</b><br><small>${n.drive_min} min drive · fire ${fmt(n.fire_ha_at_arrival,0)} ha on arrival</small></div></div>`).join("");else if(a)t+=`<p class="note">${a.error||"No mapped fire station reachable in this window."}</p>`;

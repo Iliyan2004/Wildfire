@@ -464,10 +464,11 @@ export function init(opts = {}) {
   const fin = new ShaderPass(FINAL); composer.addPass(fin);
 
   function resize() {
-    const w = Math.max(2, Math.floor(innerWidth * scale)), h = Math.max(2, Math.floor(innerHeight * scale));
+    const cw = canvas.clientWidth || innerWidth, ch = canvas.clientHeight || innerHeight;
+    const w = Math.max(2, Math.floor(cw * scale)), h = Math.max(2, Math.floor(ch * scale));
     renderer.setPixelRatio(1); renderer.setSize(w, h, false); composer.setSize(w, h);
     canvas.style.width = "100%"; canvas.style.height = "100%";
-    camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+    camera.aspect = cw / ch; camera.updateProjectionMatrix();
     const px = h / (2 * Math.tan(camera.fov * Math.PI / 360));
     [flames, smoke, sparks, embersPool].forEach((P) => (P.mat.uniforms.uPx.value = px)); haloMat.uniforms.uPx.value = px;
     fin.uniforms.uRes.value.set(w, h);
@@ -588,6 +589,7 @@ export function init(opts = {}) {
   const maxFrames = q.has("frames") ? parseInt(q.get("frames"), 10) : Infinity;      // debug: draw N frames and stop
   const cam = camera;
   function frame(now) {
+    if (window.__pkPaused) { last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (!tuned && !q.has("notune") && q.get("t") === null && dt < 0.5) { acc += dt; if (++frames === 50) { tuned = true; const avg = acc / frames * 1000; if (avg > 36) { qs = Math.max(0.35, qs * 30 / avg); scale = Math.max(0.4, scale * Math.sqrt(30 / avg)); resize(); } } }
     mx += (tx - mx) * 0.05;

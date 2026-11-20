@@ -3,151 +3,330 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PAKFIRE</title>
-<meta name="description" content="PAKFIRE - Pakistan wildfire spread simulation, exposure and response analytics.">
-<meta name="theme-color" content="#000">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23000'/%3E%3Cpath d='M16 3c1 5 6 7 6 14a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 2 3 4 1-3 1-6 1-11z' fill='%23ff6a2b'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100,800..900&family=Archivo+Narrow:wght@500;600&display=swap">
+<title>PAKFIRE: Wildfire intelligence for Pakistan</title>
+<meta name="description" content="PAKFIRE tells you where a wildfire goes, when it arrives, how hot it burns and who is in its way, with a fast estimate in a second and a full physical spread run when it matters.">
+<meta name="theme-color" content="#120806">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23120806'/%3E%3Cpath d='M16 3c1 5 6 7 6 14a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 2 3 4 1-3 1-6 1-11z' fill='%23ff6a2b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --ink: #ffb78a;
-    --ember: #ff6a2b;
-    --ember-deep: #a33c14;
-    --bg: #000;
-    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
-    --text: "Archivo Narrow", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-  body { background: var(--bg); color: var(--ink); font-family: var(--text); overflow: hidden; -webkit-font-smoothing: antialiased; }
-  /* CSS-only night forest with a glow, shown if WebGL is unavailable */
-  body.no-gl {
-    background:
-      radial-gradient(60% 34% at 50% 78%, rgba(255, 106, 43, .55) 0%, rgba(255, 106, 43, .18) 45%, transparent 100%),
-      radial-gradient(120% 60% at 50% 100%, #2a0f05 0%, transparent 60%),
-      linear-gradient(180deg, #02040a 0%, #07090f 55%, #120805 100%);
-  }
-  canvas#fire { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-  .veil {
-    position: fixed; inset: 0; pointer-events: none;
-    background:
-      radial-gradient(60% 40% at 50% 38%, rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, .22) 55%, transparent 100%),
-      radial-gradient(130% 100% at 50% 50%, transparent 55%, rgba(4, 2, 0, .6) 100%);
-  }
-  header.top, footer.meta {
-    position: fixed; z-index: 3; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; gap: 16px;
-    padding: 0 clamp(16px, 4vw, 48px); font-size: .74rem; letter-spacing: .26em; text-transform: uppercase;
-    color: rgba(255, 255, 255, .72);
-  }
-  header.top { top: 0; height: 58px; border-bottom: 1px solid rgba(255, 106, 43, .22); background: linear-gradient(180deg, rgba(0, 0, 0, .75), rgba(0, 0, 0, .25)); }
-  header.top .left { display: flex; align-items: center; gap: 14px; min-width: 0; }
-  header.top .brand { font-family: var(--display); font-weight: 800; letter-spacing: .3em; color: #fff; }
-  header.top .agn-logo {
-    display: inline-flex; align-items: center; line-height: 0; flex: 0 0 auto;
-    background: #fff; border-radius: 6px; padding: 3px 8px; border: 1px solid rgba(255, 106, 43, .3);
-  }
-  header.top .agn-logo img { height: 28px; width: auto; display: block; }
-  footer.meta { bottom: 0; height: 52px; border-top: 1px solid rgba(255, 106, 43, .22); background: linear-gradient(0deg, rgba(0, 0, 0, .8), rgba(0, 0, 0, .25)); padding-bottom: env(safe-area-inset-bottom); }
-  @media (max-width: 640px) { header.top .tag { display: none; } footer.meta span:first-child { display: none; } footer.meta { justify-content: center; } }
-  main {
-    position: relative; z-index: 2; min-height: 100%;
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    padding: clamp(84px, 17vh, 190px) 20px 14vh; text-align: center;
-    transition: opacity .7s ease, transform .9s cubic-bezier(.4, 0, .2, 1);
-  }
-  body.going main, body.going header.top, body.going footer.meta { opacity: 0; }
-  body.going main { transform: translateY(-26px) scale(1.03); }
-  header.top, footer.meta { transition: opacity .7s ease; }
-  h1 {
-    margin: 0; font-family: var(--display); font-weight: 800; font-stretch: 100%;
-    font-size: clamp(2.2rem, 7.2vw, 5.2rem); line-height: 1; letter-spacing: .16em; padding-left: .16em; color: #fff;
-    text-shadow: 0 0 30px rgba(255, 106, 43, .5), 0 0 80px rgba(255, 90, 20, .28), 0 2px 24px rgba(0, 0, 0, .85);
-  }
-  .full {
-    margin: clamp(16px, 3vh, 30px) 0 0; max-width: 40em; font-family: var(--text); font-weight: 500;
-    font-size: clamp(.78rem, 1.3vw, .98rem); letter-spacing: .28em; text-transform: uppercase; line-height: 2; text-wrap: balance;
-    color: #fff; text-shadow: 0 2px 14px rgba(0, 0, 0, .95);
-  }
-  .full b { color: #fff; font-weight: 700; }
-  .rule { width: 64px; height: 1px; margin: clamp(20px, 3.6vh, 36px) 0; background: var(--ember); opacity: .95; }
-  .choices { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-  .open {
-    appearance: none; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: .9em; padding: 1em 2.2em;
-    font-family: var(--display); font-weight: 700; font-stretch: 100%; font-size: clamp(.8rem, 1.2vw, .92rem);
-    letter-spacing: .24em; text-transform: uppercase; color: #fff; background: rgba(0, 0, 0, .55);
-    border: 1px solid var(--ember); border-radius: 2px; transition: background .25s, color .25s, border-color .25s, box-shadow .25s;
-    box-shadow: 0 0 26px rgba(255, 106, 43, .18);
-  }
-  .open svg { width: 1.2em; height: 1.2em; transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
-  .open:hover, .open:focus-visible { background: var(--ember); color: #170702; box-shadow: 0 0 40px rgba(255, 106, 43, .55); }
-  .open:hover svg, .open:focus-visible svg { transform: translateX(4px); }
-  .open:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
-  .rise > * { opacity: 0; transform: translateY(18px); animation: rise .9s cubic-bezier(.2, .8, .2, 1) forwards; }
-  .rise > :nth-child(1) { animation-delay: .15s; }
-  .rise > :nth-child(2) { animation-delay: .4s; }
-  .rise > :nth-child(3) { animation-delay: .6s; }
-  .rise > :nth-child(4) { animation-delay: .75s; }
-  @keyframes rise { to { opacity: 1; transform: none; } }
-  .flash { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: #ffcc73; }
-  @media (prefers-reduced-motion: reduce) { .rise > * { animation: none; opacity: 1; transform: none; } }
-  @media (max-width: 520px) { main { padding-left: 14px; padding-right: 14px; } h1 { letter-spacing: .12em; } .full { letter-spacing: .14em; font-size: .72rem; line-height: 1.9; max-width: 100%; overflow-wrap: anywhere; } .open { padding-left: 1.4em; padding-right: 1.4em; } }
-  @media (max-height: 520px) { h1 { font-size: clamp(2rem, 8vw, 4.5rem); } .rule { margin: 10px 0 16px; } main { padding-top: 70px; } }
+/* PAKFIRE landing, in the structure of SAILAB's landing (hero, a real event, a scale that means something, capabilities, modes, manual)
+   with PAKFIRE's own palette: charcoal, ember, ochre and ash paper. */
+:root{
+  --char-9:#120806; --char-8:#1c0e09; --char-7:#2a160e; --char-6:#3d2014;
+  --ember:#FF6A2B; --ember-h:#FF8A4F; --ember-ink:#1a0803; --ochre:#F5A742; --flame:#FFD27A; --ash:#F4EEE8; --ash-2:#E9DFD5; --paper:#FBF7F2;
+  --fg:#F8F1EA; --fg2:#E2CFC2; --fg3:#B89C8A; --ln:rgba(248,241,234,.13); --ln2:rgba(248,241,234,.24); --card:rgba(248,241,234,.04);
+  --sans:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; --disp:"Archivo","IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",Consolas,monospace; --serif:"Instrument Serif",Georgia,serif;
+  --ease:cubic-bezier(.22,.61,.36,1); --gut:clamp(16px,4vw,56px); --wide:1320px;
+}
+.paper{--ember:#C2410C;--ember-h:#A33C14;--ember-ink:#FBF7F2;--fg:#2A160E;--fg2:#4A2A1C;--fg3:#7A5644;--ln:rgba(42,22,14,.14);--ln2:rgba(42,22,14,.26);--card:rgba(251,247,242,.86);
+  background:var(--ash) radial-gradient(1200px 700px at 80% 0%,rgba(245,167,66,.10),transparent 60%);color:var(--fg)}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--char-9);scroll-behavior:smooth}
+body{margin:0;background:var(--char-9);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none} img,svg,canvas{display:block}
+.micro{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg3)}
+.wrap{max-width:var(--wide);margin:0 auto;padding:0 var(--gut)}
+.disp{font-family:var(--disp);font-weight:850;font-stretch:88%;letter-spacing:-.01em;line-height:.96;text-transform:uppercase;margin:0}
+.disp em{font-family:var(--serif);font-style:italic;font-weight:400;text-transform:none;letter-spacing:0;color:var(--ember)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:999px;border:1px solid var(--ln2);font-weight:600;font-size:14px;background:rgba(0,0,0,.25);color:var(--fg);transition:all .2s var(--ease);cursor:pointer}
+.btn:hover{border-color:var(--ember);color:var(--ember)} .btn.p{background:var(--ember);border-color:var(--ember);color:var(--ember-ink)} .btn.p:hover{background:var(--ember-h);color:var(--ember-ink)}
+.paper .btn{background:rgba(255,255,255,.6)} .paper .btn.p{background:var(--ember);color:var(--ember-ink)}
+/* nav */
+.nav{position:fixed;z-index:30;top:0;left:0;right:0;display:flex;align-items:center;gap:22px;padding:12px var(--gut);transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
+.nav.solid{background:rgba(18,8,6,.86);backdrop-filter:blur(12px);border-color:var(--ln)}
+.nav .brand{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:800;letter-spacing:.24em;font-size:15px}
+.nav .brand img{height:26px;background:#fff;border-radius:5px;padding:2px 6px}
+.nav .links{margin-left:auto;display:flex;gap:22px;font-size:13.5px;color:var(--fg2)} .nav .links a:hover{color:var(--ember)}
+.nav .btn{padding:8px 16px;font-size:13px}
+@media(max-width:860px){.nav .links{display:none}.nav .btn{margin-left:auto}}
+/* hero: the 3D forest fire */
+#hero{position:relative;height:100vh;min-height:620px;overflow:hidden;background:#020408}
+#hero canvas#fire{position:absolute;inset:0;width:100%;height:100%}
+#hero .veil{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(6,3,2,.78) 0%,rgba(6,3,2,.45) 42%,transparent 70%),linear-gradient(0deg,rgba(6,3,2,.85) 0%,transparent 30%)}
+#hero .copy{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:clamp(60px,12vh,130px);transition:opacity .6s}
+#hero h1{font-size:clamp(40px,6vw,92px);max-width:12ch}
+#hero .lede{max-width:52ch;color:var(--fg2);margin:22px 0 26px;font-size:clamp(15px,1.3vw,18px)}
+#hero .cta{display:flex;gap:10px;flex-wrap:wrap}
+.going #hero .copy,.going .nav{opacity:0;pointer-events:none}
+.flash{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0;background:#ffcc73;transition:opacity .5s}
+body.no-gl #hero{background:radial-gradient(60% 40% at 60% 80%,rgba(255,106,43,.5),transparent 70%),linear-gradient(180deg,#02040a,#120805)}
+/* sections */
+section.sec{padding:clamp(80px,12vh,140px) 0;position:relative}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:18px} .kicker::before{content:"";width:28px;height:1px;background:var(--ember)}
+h2.disp{font-size:clamp(38px,5.4vw,78px)}
+/* 2022 */
+.story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(24px,5vw,80px)}
+.story .steps{display:flex;flex-direction:column} .story .step{min-height:78vh;display:flex;flex-direction:column;justify-content:center}
+.story .step .date{font-family:var(--disp);font-size:clamp(28px,3vw,44px);font-weight:700;margin:18px 0 16px}
+.stats{display:flex;gap:42px;flex-wrap:wrap} .stats b{display:block;font-family:var(--disp);font-size:clamp(32px,3.4vw,50px);font-weight:800;line-height:1} .stats span{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3)}
+.story .src{font-size:12px;color:var(--fg3);max-width:52ch;margin-top:22px}
+.story .viz{position:sticky;top:12vh;height:76vh;align-self:start}
+.story .viz figure{margin:0;position:relative;height:100%;border-radius:6px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(42,22,14,.45);background:#2a160e}
+.story .viz img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s var(--ease)} .story .viz img.on{opacity:1}
+.story .viz .tag{position:absolute;left:12px;top:12px;z-index:2;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;background:rgba(18,8,6,.78);color:#fff;padding:5px 9px;border-radius:3px}
+.story .viz .key{position:absolute;left:12px;bottom:12px;z-index:2;font-family:var(--mono);font-size:10.5px;background:rgba(18,8,6,.78);color:#fff;padding:6px 10px;border-radius:3px;display:flex;gap:14px}
+.key i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+/* intensity */
+.ladder{display:grid;grid-template-columns:340px minmax(0,1fr);gap:clamp(20px,4vw,56px);align-items:start}
+.ladder .side{position:sticky;top:12vh}
+.ladder .read b{font-family:var(--disp);font-size:clamp(48px,5vw,76px);font-weight:850;line-height:1}
+.ladder .read .unit{font-family:var(--mono);font-size:12px;color:var(--fg3);margin-left:6px}
+.ladder ol{list-style:none;padding:0;margin:18px 0}.ladder li{display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-radius:6px;font-size:13.5px;color:var(--fg3);transition:all .3s}
+.ladder li code{font-family:var(--mono);font-size:11px;min-width:96px} .ladder li.on{background:#fff;color:var(--fg);box-shadow:0 6px 18px -10px rgba(42,22,14,.5)}
+.ladder .means{background:#fff;border-radius:8px;padding:14px 16px;font-size:14px;box-shadow:0 10px 30px -18px rgba(42,22,14,.5)}
+.ladder .means b{display:block;margin-bottom:4px}
+.ladder .scene{position:sticky;top:12vh;height:76vh;border-radius:6px;overflow:hidden;background:linear-gradient(180deg,#f7efe6,#efe3d6)}
+.ladder .scene svg{width:100%;height:100%}
+.ladder .track{height:330vh}
+/* capabilities */
+.caps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:42px}
+.cap{background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:18px 18px 20px;min-height:220px;display:flex;flex-direction:column}
+.cap .n{font-family:var(--mono);font-size:11px;color:var(--fg3)} .cap h3{font-family:var(--disp);font-size:16px;letter-spacing:.02em;text-transform:uppercase;margin:auto 0 8px} .cap p{margin:0;font-size:13.5px;color:var(--fg2)}
+.cap .vis{height:70px;margin:10px 0 16px;display:flex;align-items:center}
+@media(max-width:1000px){.caps{grid-template-columns:repeat(2,minmax(0,1fr))}.story,.ladder{grid-template-columns:1fr}.story .viz,.ladder .side,.ladder .scene{position:relative;top:0;height:60vh}.ladder .track{height:auto}.story .step{min-height:auto;padding:30px 0}}
+/* modes */
+#modes{background:var(--char-8)}
+.mode{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(24px,5vw,72px);align-items:center;padding:clamp(40px,8vh,90px) 0;border-top:1px solid var(--ln)}
+.mode h3{font-family:var(--disp);font-weight:850;font-size:clamp(40px,4.6vw,66px);text-transform:uppercase;line-height:.95;margin:0}
+.mode h3 em{display:block;font-family:var(--serif);font-weight:400;font-style:italic;text-transform:none;color:var(--ember)}
+.mode p{color:var(--fg2);max-width:46ch} .chips{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 20px}.chips span{font-size:12px;border:1px solid var(--ln2);border-radius:999px;padding:5px 11px;color:var(--fg2)}
+.mode .kv{display:flex;gap:30px;margin-bottom:22px}.mode .kv b{display:block;font-family:var(--mono);font-size:13px;color:var(--fg)}
+.mode .shot{border-radius:8px;overflow:hidden;border:1px solid var(--ln2);box-shadow:0 30px 70px -30px rgba(0,0,0,.8)} .mode .shot img{width:100%}
+@media(max-width:900px){.mode{grid-template-columns:1fr}}
+/* manual */
+.man{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:60px;align-items:center}
+.man ul{columns:2;padding-left:18px;color:var(--fg2)} .mcover img{width:100%;border-radius:4px;box-shadow:0 40px 70px -30px rgba(42,22,14,.6);transform:rotate(2deg)}
+@media(max-width:860px){.man{grid-template-columns:1fr}.man ul{columns:1}}
+footer{padding:44px 0;border-top:1px solid var(--ln);font-size:13px;color:var(--fg3)} footer .wrap{display:flex;gap:20px;flex-wrap:wrap;justify-content:space-between}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}.story .viz img{transition:none}}
 </style>
 </head>
 <body>
-<canvas id="fire" aria-hidden="true"></canvas>
-<div class="veil" aria-hidden="true"></div>
 <div class="flash" id="flash" aria-hidden="true"></div>
-
-<header class="top">
-  <div class="left">
-    <span class="agn-logo"><img src="/static/agn-logo.png" alt="AI Geo Navigators" width="170" height="80"></span>
-    <span class="brand">PAKFIRE</span>
-  </div>
-  <span class="tag">Wildfire modelling &middot; Pakistan</span>
+<header class="nav" id="nav">
+  <a class="brand" href="#hero"><img src="/static/agn-logo.png" alt="AI Geo Navigators">PAKFIRE</a>
+  <nav class="links" aria-label="Sections"><a href="#y2022">2022</a><a href="#intensity">Intensity</a><a href="#caps">Capabilities</a><a href="#modes">Modes</a><a href="/manual" target="_blank" rel="noopener">User manual</a></nav>
+  <a class="btn p go" href="/instant">PAKFIRE Instant</a>
 </header>
 
-<main>
-  <div class="rise" style="display:contents">
-    <h1>PAKFIRE</h1>
-    <p class="full"><b>Pakistan</b> wildfire spread simulation, exposure &amp; response analytics</p>
-    <div class="rule" aria-hidden="true"></div>
-    <div class="choices">
-      <a class="open" id="openInstant" href="/instant" title="Place a fire, pick the weather, see where it spreads in about a second">
-        PAKFIRE Instant
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg>
-      </a>
-      <a class="open" id="open" href="/app" title="The full physical fire spread model: terrain, fuel, weather, exposure and evacuation">
-        PAKFIRE Physics
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg>
-      </a>
+<section id="hero">
+  <canvas id="fire" aria-hidden="true"></canvas>
+  <div class="veil"></div>
+  <div class="copy wrap">
+    <div class="micro">Pakistan wildfire spread simulation, exposure &amp; response analytics</div>
+    <h1 class="disp" id="heroTitle">Know where the fire goes <em>before</em> it gets there.</h1>
+    <p class="lede">Place an ignition anywhere in Pakistan. PAKFIRE runs a physical spread model over the real terrain, fuel and weather, and returns when the fire arrives, how hot it burns, who is in its way, and which fuel break would hold it.</p>
+    <div class="cta">
+      <a class="btn p go" id="open" href="/app">PAKFIRE Physics <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+      <a class="btn go" id="openInstant" href="/instant">PAKFIRE Instant</a>
+      <a class="btn" href="#y2022">Why it exists</a>
+      <a class="btn" href="/manual" target="_blank" rel="noopener">User manual (PDF)</a>
     </div>
   </div>
-</main>
-<footer class="meta"><span>Wildfire intelligence for Pakistan</span><span>Research prototype</span></footer>
+</section>
 
+<section id="y2022" class="sec paper">
+  <div class="wrap story">
+    <div class="steps">
+      <div class="step" data-img="0">
+        <div class="kicker micro">01 / Why it exists &middot; Sherani, Balochistan, 2022</div>
+        <h2 class="disp">In eleven days a pine forest became <em>ash</em>.</h2>
+        <div class="date">12 May 2022 <span class="micro">day 3</span></div>
+        <div class="stats"><div><b>49</b><span>satellite fire detections</span></div><div><b>4.9 km&sup2;</b><span>burned so far</span></div></div>
+        <p class="src">The fire started on 10 May in the chilgoza pine forest of the Koh-e-Sulaiman range, one of the largest stands of chilgoza in the world, on steep slopes with almost no roads.</p>
+      </div>
+      <div class="step" data-img="1">
+        <div class="date">15 May 2022 <span class="micro">day 6</span></div>
+        <div class="stats"><div><b>131</b><span>satellite fire detections</span></div><div><b>22.9 km&sup2;</b><span>burned so far</span></div></div>
+        <p class="src">The front climbed ridge after ridge. Crews on foot could not reach the head of the fire.</p>
+      </div>
+      <div class="step" data-img="2">
+        <div class="date">21 May 2022 <span class="micro">day 12</span></div>
+        <div class="stats"><div><b>275</b><span>satellite fire detections</span></div><div><b>36.4 km&sup2;</b><span>burned</span></div></div>
+        <p class="src">After a lull it flared again on 19 and 20 May and spread to a second ridge. Three people died fighting it. PAKFIRE exists so the next fire's path, timing and access routes are known on the first day, not the twelfth.</p>
+        <p class="src">Detections: NASA FIRMS VIIRS (375 m). Burned area: MODIS MCD64A1, mapped burn dates. Relief: SRTM. Counts are for the frame shown and computed by PAKFIRE from those datasets.</p>
+      </div>
+    </div>
+    <div class="viz"><figure>
+      <img src="/static/landing/img/sherani-0512.jpg" alt="Burned area and detections on 12 May 2022" class="on">
+      <img src="/static/landing/img/sherani-0515.jpg" alt="Burned area and detections on 15 May 2022">
+      <img src="/static/landing/img/sherani-0521.jpg" alt="Burned area and detections on 21 May 2022">
+      <div class="tag">VIIRS + MODIS &middot; SHERANI &middot; 31.4&deg;N 70.0&deg;E</div>
+      <div class="key"><span><i style="background:#ffbe50"></i>last 2 days</span><span><i style="background:#ff5f1e"></i>earlier</span><span><i style="background:#2a1209"></i>burned</span></div>
+    </figure></div>
+  </div>
+</section>
+
+<section id="intensity" class="sec paper" style="background:var(--paper)">
+  <div class="wrap">
+    <div class="kicker micro">02 / Heat that means something</div>
+    <h2 class="disp" style="max-width:16ch">Every kilowatt changes <em>the plan.</em></h2>
+    <p style="max-width:58ch;color:var(--fg2)">Scroll to raise the fire's intensity. Flame length follows from it (Byram), and so does what crews on the ground can still do: the standard fire-behaviour interpretation used by fire services.</p>
+  </div>
+  <div class="wrap ladder" style="margin-top:30px">
+    <div class="side">
+      <div class="read"><b id="iVal">50</b><span class="unit">kW per metre of front</span></div>
+      <div class="micro" style="margin-top:6px">flame length <span id="lVal">0.5</span> m</div>
+      <ol id="iList">
+        <li data-max="350"><code>&lt; 350</code>Hand tools at the head</li>
+        <li data-max="1700"><code>350 - 1,700</code>Equipment needed at the head</li>
+        <li data-max="3500"><code>1,700 - 3,500</code>Head attack likely to fail</li>
+        <li data-max="1e9"><code>&gt; 3,500</code>Crowning, spotting, major runs</li>
+      </ol>
+      <div class="means"><b id="mTitle">A creeping ground fire.</b><span id="mText">People with hand tools and water can work right at the flaming edge.</span></div>
+    </div>
+    <div>
+      <div class="scene"><svg id="iScene" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMax slice" aria-label="Flame length beside a person, a pickup and a house">
+        <defs>
+          <linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff4c2"/><stop offset=".25" stop-color="#ffc44d"/><stop offset=".6" stop-color="#ff6a2b"/><stop offset="1" stop-color="#b3260b" stop-opacity="0"/></linearGradient>
+          <radialGradient id="glw" cx=".5" cy="1" r=".9"><stop offset="0" stop-color="#ff8a3d" stop-opacity=".55"/><stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient>
+        </defs>
+        <rect x="0" y="600" width="1000" height="100" fill="#d9c7b4"/>
+        <g id="ruler" font-family="IBM Plex Mono" font-size="12" fill="#7a5644"></g>
+        <!-- pine tree -->
+        <g transform="translate(800 600)"><rect x="-8" y="-120" width="16" height="120" fill="#5a3a26"/><path d="M0 -420 L60 -300 L28 -300 L80 -200 L36 -200 L95 -110 L-95 -110 L-36 -200 L-80 -200 L-28 -300 L-60 -300 Z" fill="#3e5a3a"/></g>
+        <!-- house -->
+        <g transform="translate(560 600)"><rect x="0" y="-110" width="150" height="110" fill="#e7d3bd" stroke="#7a5644" stroke-width="2"/><path d="M-12 -110 L75 -175 L162 -110 Z" fill="#a34a2a"/><rect x="58" y="-62" width="34" height="62" fill="#5a3a26"/><rect x="18" y="-82" width="28" height="24" fill="#9fc4d6"/></g>
+        <!-- pickup -->
+        <g transform="translate(330 600)"><rect x="0" y="-48" width="170" height="30" rx="5" fill="#c2410c"/><path d="M20 -48 L45 -82 L100 -82 L112 -48 Z" fill="#c2410c"/><rect x="50" y="-76" width="48" height="24" fill="#cfe1ea"/><circle cx="38" cy="-14" r="15" fill="#2a160e"/><circle cx="136" cy="-14" r="15" fill="#2a160e"/></g>
+        <!-- person with a rake -->
+        <g transform="translate(250 600)" fill="#2a160e"><circle cx="0" cy="-160" r="13"/><path d="M-14 -144 h28 l6 72 h-12 l-4 72 h-8 l-2 -60 l-2 60 h-8 l-4 -72 h-12 z" fill="#5a6b7a"/><path d="M14 -132 l42 -60" stroke="#7a5644" stroke-width="5"/><path d="M48 -198 l18 12" stroke="#7a5644" stroke-width="6"/></g>
+        <!-- flames -->
+        <ellipse id="glow" cx="120" cy="600" rx="140" ry="80" fill="url(#glw)"/>
+        <g id="flames" transform="translate(120 600)"></g>
+        <text id="hLab" x="40" y="580" font-family="IBM Plex Mono" font-size="13" fill="#7a5644"></text>
+      </svg></div>
+      <div class="track"></div>
+    </div>
+  </div>
+</section>
+
+<section id="caps" class="sec">
+  <div class="wrap">
+    <div class="kicker micro">03 / What it does</div>
+    <h2 class="disp" style="max-width:15ch">Built for the hour <em>the fire</em> is reported.</h2>
+    <div class="caps">
+      <div class="cap"><span class="n">01</span><div class="vis"><svg width="120" height="60"><circle cx="30" cy="30" r="6" fill="#FF6A2B"/><path d="M30 30 C50 10 80 20 110 12" stroke="#F5A742" stroke-dasharray="4 4" fill="none"/></svg></div><h3>Any place in Pakistan</h3><p>Click a point, search a district, upload a file, or start from a satellite detection.</p></div>
+      <div class="cap"><span class="n">02</span><div class="vis"><svg width="120" height="60"><rect x="4" y="10" width="40" height="40" rx="4" fill="none" stroke="#B89C8A"/><rect x="62" y="10" width="54" height="40" rx="4" fill="#FF6A2B" opacity=".8"/></svg></div><h3>A second, then physics</h3><p>Instant gives the footprint in about a second; Physics runs the full model on the GPU for up to 120 hours.</p></div>
+      <div class="cap"><span class="n">03</span><div class="vis"><svg width="120" height="60"><g fill="none" stroke-width="2"><path d="M10 50 Q60 0 110 50" stroke="#FFD27A"/><path d="M25 50 Q60 15 95 50" stroke="#F5A742"/><path d="M40 50 Q60 30 80 50" stroke="#FF6A2B"/></g></svg></div><h3>When it arrives</h3><p>Time of arrival and intensity in every cell, hour by hour, with spotting and crown fire.</p></div>
+      <div class="cap"><span class="n">04</span><div class="vis"><svg width="120" height="60"><g fill="#B89C8A"><rect x="8" y="26" width="18" height="24"/><rect x="32" y="18" width="18" height="32"/><rect x="56" y="30" width="18" height="20"/></g><path d="M80 50 C90 20 100 40 112 10" stroke="#FF6A2B" stroke-width="3" fill="none"/></svg></div><h3>Who is in the way</h3><p>People, kacha and pakka houses, informal settlements, hospitals, schools and power lines, with arrival times.</p></div>
+      <div class="cap"><span class="n">05</span><div class="vis"><svg width="120" height="60"><path d="M6 40 H50 L60 20 H114" stroke="#F5A742" stroke-width="3" fill="none"/><circle cx="60" cy="20" r="5" fill="#FF6A2B"/></svg></div><h3>Ways out</h3><p>Evacuation routes over the road network and the drive from the nearest fire station, with the time each road is cut.</p></div>
+      <div class="cap"><span class="n">06</span><div class="vis"><svg width="120" height="60"><rect x="6" y="12" width="108" height="36" fill="none" stroke="#B89C8A"/><path d="M60 12 V48" stroke="#FFD27A" stroke-width="5"/><path d="M10 30 h40" stroke="#FF6A2B" stroke-width="8"/></svg></div><h3>Breaks that hold</h3><p>Draw a fuel break or a treated area and compare the fire with and without it.</p></div>
+      <div class="cap"><span class="n">07</span><div class="vis"><svg width="120" height="60"><g fill="#FF6A2B"><circle cx="20" cy="30" r="10" opacity=".25"/><circle cx="20" cy="30" r="6" opacity=".5"/><circle cx="20" cy="30" r="3"/></g><path d="M40 30 h70" stroke="#B89C8A" stroke-dasharray="3 5"/></svg></div><h3>Fires burning now</h3><p>Districts and hotspots from NASA's satellite feed, and automatic scenarios when a watched place lights up.</p></div>
+      <div class="cap"><span class="n">08</span><div class="vis"><svg width="120" height="60"><rect x="20" y="6" width="40" height="50" rx="2" fill="none" stroke="#B89C8A"/><path d="M28 18h24M28 26h24M28 34h16" stroke="#B89C8A"/><rect x="68" y="20" width="44" height="30" rx="3" fill="#FF6A2B" opacity=".8"/></svg></div><h3>Every figure has a source</h3><p>PDF reports, time-lapse video, GIS contours, and the validation record against 1,464 observed fires.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="modes" class="sec">
+  <div class="wrap">
+    <div class="kicker micro">04 / Modes</div>
+    <h2 class="disp">Two modes.<br><em>One map.</em></h2>
+    <div class="mode">
+      <div><span class="micro">01 / 03</span><h3>PAKFIRE <em>Physics</em></h3>
+        <p>The full spread model on the GPU: real hourly weather with a moisture lead-in, terrain-shaped wind, ember spotting and crown fire, then exposure, evacuation, ensembles and mitigation.</p>
+        <div class="chips"><span>Rothermel + MTT</span><span>Ensemble</span><span>Fuel breaks</span><span>3D replay</span></div>
+        <div class="kv"><div><span class="micro">Run</span><b>up to 120 h</b></div><div><span class="micro">Cell</span><b>50 - 100 m</b></div></div>
+        <a class="btn go" href="/app">Open PAKFIRE Physics &rarr;</a></div>
+      <div class="shot"><img src="/static/landing/img/mode-physics.jpg" alt="PAKFIRE Physics with a finished run" loading="lazy"></div>
+    </div>
+    <div class="mode">
+      <div><span class="micro">02 / 03</span><h3>PAKFIRE <em>Instant</em></h3>
+        <p>Click a place, pick the weather, and see how far a fire could run in 1, 3 and 6 hours, in about a second. For the moment a call comes in.</p>
+        <div class="chips"><span>Calm</span><span>Breezy</span><span>Strong wind</span><span>Extreme, dry</span><span>Live weather</span></div>
+        <div class="kv"><div><span class="micro">Window</span><b>24 km</b></div><div><span class="micro">Answer in</span><b>~1 s</b></div></div>
+        <a class="btn go" href="/instant">Open PAKFIRE Instant &rarr;</a></div>
+      <div class="shot"><img src="/static/landing/img/mode-instant.jpg" alt="PAKFIRE Instant result" loading="lazy"></div>
+    </div>
+    <div class="mode">
+      <div><span class="micro">03 / 03</span><h3>Discover <em>&amp; monitor</em></h3>
+        <p>Inside Physics: districts ranked by satellite detections, the strongest recent hotspots, and live watches that run a scenario as soon as a new fire is detected.</p>
+        <div class="chips"><span>NASA FIRMS VIIRS</span><span>164 districts</span><span>Webhooks</span></div>
+        <a class="btn go" href="/app">Open the Discover tab &rarr;</a></div>
+      <div class="shot"><img src="/static/landing/img/mode-discover.jpg" alt="The Discover tab" loading="lazy"></div>
+    </div>
+  </div>
+</section>
+
+<section id="manual" class="sec paper">
+  <div class="wrap man">
+    <div><div class="kicker micro">User manual</div><h2 class="disp" style="font-size:clamp(34px,4vw,56px)">Learn PAKFIRE, step by step.</h2>
+      <p style="color:var(--fg2);max-width:56ch">A complete guide with numbered screenshots of every screen: placing a fire, running the model, reading the 3D view, exposure and evacuation, fuel breaks, and how far to trust the numbers.</p>
+      <ul><li>Walkthrough of both modes</li><li>Every tab of the panel</li><li>Messages and fixes</li><li>Glossary and data sources</li></ul>
+      <div class="cta" style="display:flex;gap:10px;margin-top:20px"><a class="btn p" href="/manual" target="_blank" rel="noopener">Open the user manual</a><a class="btn" href="/manual.pdf" download>Download PDF</a></div></div>
+    <a class="mcover" href="/manual" target="_blank" rel="noopener" aria-label="Open the PAKFIRE user manual"><img src="/static/landing/img/manual-cover.jpg" alt="PAKFIRE User Manual cover"></a>
+  </div>
+</section>
+
+<footer><div class="wrap"><span class="micro">PAKFIRE &middot; research prototype &middot; <a href="/manual" target="_blank" rel="noopener" style="text-decoration:underline">User manual</a> &middot; NASA FIRMS &middot; MODIS &middot; SRTM &middot; OpenStreetMap</span><span class="micro">AI Geo Navigators &middot; Islamabad</span></div></footer>
+
+<script>
+// nav background after the hero; 2022 images follow the step in view; intensity follows the scroll
+(function () {
+  const nav = document.getElementById("nav");
+  const onScroll = () => nav.classList.toggle("solid", scrollY > innerHeight * 0.6);
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  const imgs = document.querySelectorAll(".story .viz img");
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) imgs.forEach((im, i) => im.classList.toggle("on", i === +e.target.dataset.img)); }), { rootMargin: "-45% 0px -45% 0px" });
+  document.querySelectorAll(".story .step").forEach((s) => io.observe(s));
+  // intensity ladder (Byram 1959: flame length L = 0.0775 I^0.46, L in m, I in kW/m)
+  const svg = document.getElementById("iScene"), fl = document.getElementById("flames"), glow = document.getElementById("glow"), ruler = document.getElementById("ruler");
+  const PX = 52;                                                    // px per metre in the scene (the person is 1.7 m)
+  for (let m = 1; m <= 11; m++) ruler.insertAdjacentHTML("beforeend", `<line x1="30" x2="44" y1="${600 - m * PX}" y2="${600 - m * PX}" stroke="#b89c8a"/><text x="48" y="${604 - m * PX}">${m} m</text>`);
+  const MEANS = [["A creeping ground fire.", "People with hand tools and water can work right at the flaming edge."],
+                 ["Too hot to stand at.", "Hand lines will not hold at the head; dozers, tankers and water pumps are needed."],
+                 ["Control at the head is likely to fail.", "Torching trees and short-range spotting; work the flanks and protect what is in front."],
+                 ["A crown fire.", "Fire runs through the canopy and throws embers far ahead. Get people out; attack at the head is ineffective."]];
+  const track = document.querySelector("#intensity .track"), items = [...document.querySelectorAll("#iList li")];
+  let tongues = "";
+  for (let k = 0; k < 9; k++) tongues += `<path data-k="${k}" fill="url(#fl)"/>`;
+  fl.innerHTML = tongues; const paths = [...fl.querySelectorAll("path")];
+  let I = 50, t = 0;
+  function draw() {
+    const L = 0.0775 * Math.pow(I, 0.46), h = L * PX, w = 60 + 14 * Math.sqrt(L) * 10;
+    paths.forEach((p, k) => {
+      const off = (k - 4) * w / 9, hk = h * (0.55 + 0.45 * Math.abs(Math.sin(k * 1.7 + t * 2.1 + k))) * (k === 4 ? 1 : 0.85), wk = w / 5;
+      const sway = Math.sin(t * 3 + k) * 0.12 * hk;
+      p.setAttribute("d", `M${off - wk} 0 C${off - wk * 0.6} ${-hk * 0.4} ${off + sway - wk * 0.3} ${-hk * 0.7} ${off + sway} ${-hk} C${off + sway + wk * 0.3} ${-hk * 0.7} ${off + wk * 0.6} ${-hk * 0.4} ${off + wk} 0 Z`);
+    });
+    glow.setAttribute("rx", 80 + w); glow.setAttribute("ry", 40 + h * 0.5);
+    document.getElementById("iVal").textContent = Math.round(I).toLocaleString();
+    document.getElementById("lVal").textContent = L.toFixed(1);
+    const s = I < 350 ? 0 : I < 1700 ? 1 : I < 3500 ? 2 : 3;
+    items.forEach((li, i) => li.classList.toggle("on", i === s));
+    document.getElementById("mTitle").textContent = MEANS[s][0]; document.getElementById("mText").textContent = MEANS[s][1];
+  }
+  function fromScroll() {
+    const r = track.getBoundingClientRect(), span = r.height - innerHeight * 0.5;
+    const k = Math.min(1, Math.max(0, -r.top / Math.max(span, 1)));
+    I = 50 * Math.pow(20000 / 50, k);                               // 50 kW/m to 20,000 kW/m, logarithmic
+  }
+  addEventListener("scroll", fromScroll, { passive: true }); fromScroll();
+  (function loop() { t += 0.016; draw(); requestAnimationFrame(loop); })();
+})();
+</script>
 <script type="importmap">{"imports":{"three":"/static/vendor/three/three.module.min.js","three/addons/":"/static/vendor/three/addons/"}}</script>
 <script type="module">
-// a shared link (#ign=...) goes straight to the application
+// the hero is the 3D forest; pressing a mode button makes the fire run through it, then opens the page
 if (/ign=/.test(location.hash)) { location.replace("/app" + location.search + location.hash); }
 else {
-  const links = document.querySelectorAll("a.open"), flash = document.getElementById("flash"), canvas = document.getElementById("fire");
+  const flash = document.getElementById("flash"), canvas = document.getElementById("fire"), hero = document.getElementById("hero");
   const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const DURATION = 4800;                                          // ms from the click to the next page
+  const DURATION = 4800;
   let scene = null, busy = false;
   const enter = (href) => { try { sessionStorage.setItem("pakfireEnter", "1"); } catch (e) {} location.href = href; };
-  links.forEach((link) => link.addEventListener("click", (e) => {
+  document.querySelectorAll("a.go").forEach((link) => link.addEventListener("click", (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (reduce || busy) { if (reduce) try { sessionStorage.setItem("pakfireEnter", "1"); } catch (x) {} return; }
-    e.preventDefault(); busy = true; document.body.classList.add("going");
-    if (scene) scene.surge(DURATION).then(() => { flash.style.opacity = "1"; enter(link.href); });
-    else { flash.style.transition = "opacity .9s ease-in"; flash.style.opacity = "1"; setTimeout(() => enter(link.href), 1000); }
+    if (reduce || busy || !scene) { try { sessionStorage.setItem("pakfireEnter", "1"); } catch (x) {} return; }
+    e.preventDefault(); busy = true;
+    window.scrollTo({ top: 0, behavior: "auto" }); window.__pkPaused = false;
+    document.body.classList.add("going");
+    scene.surge(DURATION).then(() => { flash.style.opacity = "1"; setTimeout(() => enter(link.href), 250); });
   }));
-  function fallback() { document.body.classList.add("no-gl"); canvas.style.display = "none"; }
+  new IntersectionObserver((es) => { window.__pkPaused = !es[0].isIntersecting && !busy; }).observe(hero);   // no rendering while scrolled away
   try { const m = await import("/static/landing/scene.js"); scene = m.init({ canvas }); window.__pakfireScene = scene; }
-  catch (err) { console.warn("landing scene unavailable:", err); fallback(); }
+  catch (err) { console.warn("landing scene unavailable:", err); document.body.classList.add("no-gl"); canvas.style.display = "none"; }
 }
 </script>
 </body>

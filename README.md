@@ -11,7 +11,7 @@ ssh -L 8020:localhost:8020 aliyan@<host>           # to open it from another mac
 node tools/forestfire_test.mjs                     # fire model of the start page
 ```
 
-Pages: `/` start page (a 3D forest where a fire spreads when you press a button), `/instant` PAKFIRE Instant (fire footprint in about a second), `/app` the full model (four tiers: instant footprint, spread run, ensemble, mitigation; discovery, monitoring, exposure, evacuation, reports).
+Pages: `/` start page (a long scrolling page whose hero is a 3D forest where a fire spreads when you press a button), `/instant` PAKFIRE Instant (fire footprint in about a second), `/app` the full model (drawer tabs Fire, Runs, Impact, Mitigation, Discover), `/manual` the user manual.
 
 ## Layout
 
@@ -27,6 +27,7 @@ Pages: `/` start page (a 3D forest where a fire spreads when you press a button)
 
 ## Documents
 
+- `docs/PAKFIRE_User_Manual.pdf`: illustrated user manual (also at `/manual` in the app); rebuild with `tools/manual/capture.py` then `tools/manual/build_manual.py`.
 - `docs/PAKFIRE_Technical_Reference.pdf`: physics, data, features, validation record, bugs found, limitations.
 - `docs/PAKFIRE_ARCH_Document.pdf`: every file, input and output path, the process of one run, the API, libraries and versions.
 - `LICENSES.md`: data and software credits.

@@ -68,23 +68,18 @@ def review(p, name, vp):
     pg.wait_for_timeout(1500)
     tiers = pg.evaluate("[...document.querySelectorAll('[data-tier],.tier,button.tab')].map(e=>e.id||e.innerText).slice(0,12)")
     rep["tier_buttons"] = tiers
-    for t in range(1, 5):
-        try:
-            pg.evaluate(f"showTier({t})")
-            pg.wait_for_timeout(500)
-            rep[f"tier{t}"] = pg.evaluate(AUDIT)
-        except Exception as e:
-            rep[f"tier{t}"] = f"error: {str(e)[:120]}"
     pg.evaluate(f"openRun('{RID}')")
     pg.wait_for_timeout(9000)
-    for det in ("expoDet-runOut", "evacDet-runOut"):
-        try:
-            pg.evaluate(f"(()=>{{const d=document.getElementById('{det}'); if(d){{d.open=true; d.dispatchEvent(new Event('toggle'))}}}})()")
-        except Exception as e:
-            rep[det] = f"error {e}"
+    pg.evaluate("showPane('impact'); impactLoad('expo'); impactLoad('evac')")
     pg.wait_for_timeout(15000)
-    rep["exposure_text"] = pg.evaluate("(document.getElementById('expoBox-runOut')||{}).innerText||null")
-    rep["evac_text"] = pg.evaluate("(document.getElementById('evacBox-runOut')||{}).innerText||null")
+    rep["exposure_text"] = pg.evaluate("$('impExpoBox').innerText")
+    rep["evac_text"] = pg.evaluate("$('impEvacBox').innerText")
+    pg.screenshot(path=f"{OUT}/{name}_pane_impact.png")
+    for pane in ("fire", "runs", "mitigate", "discover"):
+        pg.evaluate(f"showPane('{pane}')"); pg.wait_for_timeout(700)
+        rep[f"pane_{pane}"] = pg.evaluate(AUDIT)
+        pg.screenshot(path=f"{OUT}/{name}_pane_{pane}.png")
+    pg.evaluate("showPane('runs')")
     rep["result"] = pg.evaluate(AUDIT)
     pg.screenshot(path=f"{OUT}/{name}_result.png")
     if name == "desktop":

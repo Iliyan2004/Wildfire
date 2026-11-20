@@ -51,6 +51,24 @@ def index():
     return resp
 
 
+MANUAL_PDF = os.path.join(os.path.dirname(WEB), os.pardir, "docs", "PAKFIRE_User_Manual.pdf")
+
+
+@app.route("/manual")
+def user_manual():
+    """The illustrated user manual, shown in the browser's PDF viewer."""
+    if not os.path.exists(MANUAL_PDF):
+        return Response("The user manual is not installed on this server yet.", status=404, mimetype="text/plain")
+    return send_file(os.path.abspath(MANUAL_PDF), mimetype="application/pdf", download_name="PAKFIRE_User_Manual.pdf", as_attachment=False, max_age=3600)
+
+
+@app.route("/manual.pdf")
+def user_manual_download():
+    if not os.path.exists(MANUAL_PDF):
+        return Response("The user manual is not installed on this server yet.", status=404, mimetype="text/plain")
+    return send_file(os.path.abspath(MANUAL_PDF), mimetype="application/pdf", download_name="PAKFIRE_User_Manual.pdf", as_attachment=True, max_age=3600)
+
+
 @app.route("/instant")
 def instant_page():
     """PAKFIRE Instant: place a fire, pick a weather scenario, see the footprint in about a second (the full model stays at /app)."""
@@ -87,6 +105,23 @@ def api_hw():
 @app.route("/api/status")
 def api_status():
     return jsonify(gpu=kernel_gpu.available(), order="GPU, then RAM, then CPU", firms=bool(geo.FIRMS_KEY), running=RUN_LOCK.locked())
+
+
+_PK_OUTLINE = {}
+
+
+@app.route("/api/pakistan.geojson")
+def api_pakistan():
+    """Pakistan outline (union of the districts, simplified) and a world mask with Pakistan cut out, for the Pakistan-only map."""
+    if "g" not in _PK_OUTLINE:
+        from shapely.geometry import box, mapping
+        pk = geo.districts().geometry.union_all().buffer(0.01).simplify(0.02)
+        _PK_OUTLINE["g"] = dict(type="FeatureCollection", features=[
+            dict(type="Feature", properties=dict(kind="mask"), geometry=mapping(box(-179.9, -85, 179.9, 85).difference(pk))),
+            dict(type="Feature", properties=dict(kind="outline"), geometry=mapping(pk.boundary))])
+    resp = jsonify(_PK_OUTLINE["g"])
+    resp.headers["Cache-Control"] = "max-age=86400"
+    return resp
 
 
 @app.route("/api/queue")

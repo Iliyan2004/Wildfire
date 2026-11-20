@@ -89,7 +89,7 @@
     <button class="btn" id="satBtn" title="Satellite imagery">Satellite</button>
     <button class="btn" id="threeD" title="Tilt the map and show terrain relief">3D</button>
     <button class="btn" id="themeToggle" title="Switch between dark and light mode" aria-label="Switch between dark and light mode">&#9680;</button>
-    <a class="btn" id="fullLink" href="/app" title="The full physical fire model">Full model &rarr;</a>
+    <a class="btn on" href="/instant" title="Fire footprint in about a second">Instant</a><a class="btn" id="fullLink" href="/app" title="The full physical fire model">Physics</a><a class="btn" href="/manual" target="_blank" rel="noopener" title="User manual (PDF)">Manual</a>
   </div>
 </div>
 <div id="busy" class="glass">Simulating...</div>
@@ -129,6 +129,7 @@
 <div id="legend" class="glass"><b>Fire front after</b><div><span class="sw" style="background:#ffd24a"></span>1 hour</div><div><span class="sw" style="background:#ff6a2b"></span>3 hours</div><div><span class="sw" style="background:#e0431c"></span>6-12 hours</div></div>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<script src="/static/pkmask.js"></script>
 <script>
 mapboxgl.accessToken = "__MAPBOX_TOKEN__";
 const $ = id => document.getElementById(id);
@@ -144,8 +145,9 @@ let scen = "breezy", ign = null, seq = 0, timer = null, marker = null;
 // ---- theme, basemap, map
 (function () { let t = "dark"; try { t = localStorage.getItem("pakfireTheme") || "dark"; } catch (e) {} document.documentElement.setAttribute("data-theme", t); })();
 $("themeToggle").onclick = () => { const t = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light"; document.documentElement.setAttribute("data-theme", t); try { localStorage.setItem("pakfireTheme", t); } catch (e) {} };
-const map = new mapboxgl.Map({ container: "map", style: "mapbox://styles/mapbox/dark-v11", center: [72.5, 31.5], zoom: 5.2, projection: "globe", preserveDrawingBuffer: true });
+const map = new mapboxgl.Map({ container: "map", style: "mapbox://styles/mapbox/dark-v11", center: [72.5, 31.5], zoom: 5.2, projection: "mercator", preserveDrawingBuffer: true });
 map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+pkMask(map);
 map.on("style.load", () => {
   map.setFog({ color: "rgb(10,16,22)", "high-color": "rgb(20,30,45)", "space-color": "rgb(4,6,10)", "star-intensity": .4 });
   if (!map.getSource("sat")) { map.addSource("sat", { type: "raster", tileSize: 512, tiles: [`https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/512/{z}/{x}/{y}?access_token=${mapboxgl.accessToken}`] }); map.addLayer({ id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } }); }

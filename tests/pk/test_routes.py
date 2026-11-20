@@ -25,10 +25,12 @@ def test_pages(client):
     land = client.get("/").data
     assert b"PAKFIRE" in land and b'href="/app"' in land and b'href="/instant"' in land and b"/static/landing/scene.js" in land   # landing page: scene module and both buttons
     assert client.get("/static/landing/scene.js").status_code == 200 and client.get("/static/vendor/three/three.module.min.js").status_code == 200
+    assert client.get("/api/pakistan.geojson").get_json()["features"][0]["properties"]["kind"] == "mask"
+    assert client.get("/manual").status_code in (200, 404)                                     # manual route
     inst = client.get("/instant").data
     assert b"PAKFIRE Instant" in inst and b"__MAPBOX_TOKEN__" not in inst
     app = client.get("/app").data
-    assert b"welcomeOverlay" in app and b"__MAPBOX_TOKEN__" not in app                       # the application, with the Mapbox token inserted
+    assert b"welcomeOverlay" in app and b'id="ptabs"' in app and b"__MAPBOX_TOKEN__" not in app                       # the application, with the Mapbox token inserted
     assert client.get("/static/agn-logo.png").status_code == 200
     assert client.get(f"/runs/{RID}/mapbox3d").status_code == 200
     assert client.get("/runs/not-a-run/mapbox3d").status_code == 404
